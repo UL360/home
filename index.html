@@ -1966,8 +1966,11 @@ const App = {
   panelOpen: true,
   favs: [],
 
-  init() {
-    this._loadData();
+  async init() {
+    // Inicializar Firebase primero
+    await this._initFirebase();
+    await this._loadData();
+
     // Splash dots animation
     let d = 0;
     const dots = document.querySelectorAll('.sp-dot');
@@ -1988,24 +1991,111 @@ const App = {
     history.replaceState({ screen: 'explore' }, '', '#explore');
   },
 
-  _loadData() {
+  // ── FIREBASE HELPERS ──
+  _db: null,
+  _uid: 'anonUser', // sin auth: todos comparten el mismo userId, se puede cambiar a auth real
+
+  async _initFirebase() {
+    try {
+      const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, getDocs } =
+        await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyACvfJCrmCvP-C1ELYIPwqlZAdRmrh4mpo",
+        authDomain: "urbanloop360.firebaseapp.com",
+        projectId: "urbanloop360",
+        storageBucket: "urbanloop360.firebasestorage.app",
+        messagingSenderId: "1002543875761",
+        appId: "1:1002543875761:web:6cd4ec5e8b76178c720490"
+      };
+
+      const fbApp = initializeApp(firebaseConfig);
+      this._db = getFirestore(fbApp);
+      this._fs = { doc, getDoc, setDoc, deleteDoc, collection, getDocs };
+      return true;
+    } catch(e) {
+      console.warn('Firebase no disponible, usando localStorage:', e);
+      return false;
+    }
+  },
+
+  async _loadData() {
+    this.favs  = [];
+    this.likes = [];
+    this.pts   = 0;
+    this.grabType = 'running';
+
+    // Intentar cargar desde Firebase
+    if (this._db) {
+      try {
+        this.toast('☁️ Cargando loops...');
+        const { collection, getDocs } = this._fs;
+        const snap = await getDocs(collection(this._db, 'users', this._uid, 'loops'));
+        const custom = [];
+        snap.forEach(d => custom.push(d.data()));
+        this.routes = [...DEFAULTS, ...custom.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
+        // Leer pts desde Firestore también
+        const { doc, getDoc } = this._fs;
+        const metaSnap = await getDoc(doc(this._db, 'users', this._uid, 'meta', 'stats'));
+        if (metaSnap.exists()) {
+          const m = metaSnap.data();
+          this.pts   = m.pts   || 0;
+          this.likes = m.likes || [];
+        }
+        return;
+      } catch(e) {
+        console.warn('Error leyendo Firestore:', e);
+      }
+    }
+
+    // Fallback: localStorage
     try {
       const raw = localStorage.getItem('ul360_routes');
       const custom = raw ? JSON.parse(raw) : [];
       this.routes = [...DEFAULTS, ...custom.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
     } catch(e) { this.routes = [...DEFAULTS]; }
-    try { this.favs = JSON.parse(localStorage.getItem('ul360_favs') || '[]'); } catch(e) { this.favs = []; }
-    try { this.likes = JSON.parse(localStorage.getItem('ul360_likes') || '[]'); } catch(e) { this.likes = []; }
-    try { this.pts = parseInt(localStorage.getItem('ul360_pts') || '0'); } catch(e) { this.pts = 0; }
-    try { this.grabType = 'running'; } catch(e) {}
+    try { this.pts   = parseInt(localStorage.getItem('ul360_pts')   || '0'); } catch(e) {}
+    try { this.likes = JSON.parse(localStorage.getItem('ul360_likes') || '[]'); } catch(e) {}
   },
 
-  _saveData() {
-    const custom = this.routes.filter(r=>!DEFAULTS.find(d=>d.id===r.id));
+  async _saveData() {
+    const custom = this.routes.filter(r => !DEFAULTS.find(d=>d.id===r.id));
+
+    // Guardar en Firebase
+    if (this._db) {
+      try {
+        const { doc, setDoc, collection, getDocs, deleteDoc } = this._fs;
+        // Borrar todos los loops del usuario y reescribir (más simple y seguro)
+        const snap = await getDocs(collection(this._db, 'users', this._uid, 'loops'));
+        const deletes = [];
+        snap.forEach(d => deletes.push(deleteDoc(doc(this._db, 'users', this._uid, 'loops', d.id))));
+        await Promise.all(deletes);
+        // Guardar los actuales
+        for (const r of custom) {
+          await setDoc(doc(this._db, 'users', this._uid, 'loops', r.id), r);
+        }
+        return;
+      } catch(e) {
+        console.warn('Error guardando en Firestore:', e);
+      }
+    }
+
+    // Fallback: localStorage
     localStorage.setItem('ul360_routes', JSON.stringify(custom));
   },
-  _savePts() {
-    localStorage.setItem('ul360_pts', this.pts);
+
+  async _savePts() {
+    if (this._db) {
+      try {
+        const { doc, setDoc } = this._fs;
+        await setDoc(doc(this._db, 'users', this._uid, 'meta', 'stats'), {
+          pts: this.pts, likes: this.likes || []
+        });
+        return;
+      } catch(e) { console.warn('Error guardando pts:', e); }
+    }
+    localStorage.setItem('ul360_pts',   this.pts);
     localStorage.setItem('ul360_likes', JSON.stringify(this.likes||[]));
   },
   _addPts(n, reason) {
@@ -2748,7 +2838,7 @@ const App = {
       : '<div style="text-align:center;font-size:13px;color:var(--gr);padding:6px 0;">No hay POIs todavía</div>';
   },
 
-  saveRoute() {
+  async saveRoute() {
     const name = document.getElementById('adm-name').value.trim();
     const desc = document.getElementById('adm-desc').value.trim();
     const type = document.getElementById('adm-type').value;
@@ -2769,7 +2859,7 @@ const App = {
           pts:[...this.aPts],
           pois:this.aPois.filter(p=>p.name).map(p=>({...p}))
         };
-        this._saveData();
+        await this._saveData();
         // Redibujar en el mapa
         if (this.mainMap && this._layers && this._layers[this._editingId]) {
           this._layers[this._editingId].forEach(l=>{ try{ this.mainMap.removeLayer(l); }catch(e){} });
@@ -2792,7 +2882,7 @@ const App = {
         pois:this.aPois.filter(p=>p.name).map(p=>({...p}))
       };
       this.routes.push(r);
-      this._saveData();
+      await this._saveData();
       if (this.mainMap) this._drawRoute(r);
       this._addPts(50,'Loop publicado');
       if((r.pois||[]).length>0) this._addPts((r.pois.length)*15,'POIs agregados');
@@ -3294,15 +3384,16 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         <!-- DEBUG / DIAGNÓSTICO -->
         <details style="margin-top:18px;" id="loop-debug-details">
           <summary style="font-size:11px;color:var(--gr);cursor:pointer;user-select:none;padding:6px 0;">
-            🔧 Diagnóstico (${savedParsed.length} loops en localStorage · ${userLoops.length} en memoria)
+            🔧 Diagnóstico (${savedParsed.length} en storage · ${userLoops.length} en memoria · ${this._db ? '☁️ Firebase' : '💾 localStorage'})
           </summary>
           <div style="margin-top:8px;background:var(--bg0);border-radius:10px;padding:10px 12px;font-size:11px;color:var(--gr);line-height:1.7;">
-            <div>📦 <b>localStorage key:</b> <code style="color:var(--or);font-size:10px;">ul360_routes</code></div>
-            <div>💾 <b>Guardados:</b> ${savedParsed.length > 0 ? savedParsed.map(r=>`<span style="color:var(--dk)">${r.name||r.id}</span>`).join(', ') : '<span style="color:#EF4444">Vacío — nada guardado aún</span>'}</div>
+            <div>🔌 <b>Modo:</b> <span style="color:${this._db?'#16A34A':'#D97706'}">${this._db ? '☁️ Firebase Firestore conectado' : '⚠️ localStorage (Firebase no disponible)'}</span></div>
+            <div>👤 <b>Usuario:</b> <code style="color:var(--or);font-size:10px;">${this._uid}</code></div>
+            <div>💾 <b>Guardados:</b> ${savedParsed.length > 0 ? savedParsed.map(r=>`<span style="color:var(--dk)">${r.name||r.id}</span>`).join(', ') : '<span style="color:#EF4444">Vacío</span>'}</div>
             <div>🧠 <b>En memoria:</b> ${userLoops.length > 0 ? userLoops.map(r=>`<span style="color:var(--dk)">${r.name}</span>`).join(', ') : 'ninguno'}</div>
             <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
-              <button onclick="App._debugForceReload()" style="background:var(--lt);border:0.5px solid var(--bd);border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--or);">↺ Recargar desde storage</button>
-              <button onclick="App._debugClearStorage()" style="background:var(--lt);border:0.5px solid #EF4444;border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;color:#EF4444;">🗑 Borrar storage (reset)</button>
+              <button onclick="App._debugForceReload()" style="background:var(--lt);border:0.5px solid var(--bd);border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;color:var(--or);">↺ Recargar</button>
+              <button onclick="App._debugClearStorage()" style="background:var(--lt);border:0.5px solid #EF4444;border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;color:#EF4444;">🗑 Borrar todo</button>
             </div>
           </div>
         </details>
@@ -3344,7 +3435,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   },
 
   // ── ELIMINAR LOOP ──
-  deleteRoute(id) {
+  async deleteRoute(id) {
     const r = this.routes.find(x=>x.id===id);
     if (!r) return;
     if (!confirm(`¿Eliminar el loop "${r.name}"? Esta acción no se puede deshacer.`)) return;
@@ -3355,8 +3446,8 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     }
     // Quitar del array
     this.routes = this.routes.filter(x=>x.id!==id);
-    // Persistir solo los custom (igual que _saveData)
-    this._saveData();
+    // Persistir en Firebase/localStorage
+    await this._saveData();
     // Cerrar modal y refrescar
     this.closeLoopModal();
     if (this.selId === id) {
@@ -3372,11 +3463,11 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   },
 
   // ── DEBUG / DIAGNÓSTICO ──
-  _debugForceReload() {
-    this._loadData();
+  async _debugForceReload() {
+    await this._loadData();
     this.closeLoopModal();
     setTimeout(()=>this.openLoopModal(), 200);
-    this.toast('♻️ Recargado desde localStorage');
+    this.toast('♻️ Recargado desde Firebase');
   },
   _debugClearStorage() {
     if (!confirm('¿Borrar TODOS los loops guardados? Esto no se puede deshacer.')) return;
