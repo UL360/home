@@ -3308,6 +3308,8 @@ const App = {
     const markersPane = container.querySelector('.leaflet-marker-pane');
     if (markersPane) markersPane.style.transform = `rotate(${-deg}deg)`;
   },
+
+  _togglePanel() {
     const s=document.getElementById('srch-wrap');
     if(s) s.style.display=s.style.display==='flex'?'none':'flex';
   },
