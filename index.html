@@ -1695,6 +1695,32 @@ svg.leaflet-image-layer.leaflet-interactive path {
       </button>
     </div>
 
+    <!-- Imagen card -->
+    <div class="ac">
+      <div class="act">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Foto del Loop
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <!-- Preview -->
+        <div id="adm-img-preview" style="display:none;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:var(--bg0);">
+          <img id="adm-img-thumb" style="width:100%;height:100%;object-fit:cover;" src="" alt="preview">
+          <button onclick="App._clearImg()" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.55);border:none;color:white;cursor:pointer;display:flex;align-items:center;justify-content:center;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <div id="adm-img-size" style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.55);color:white;font-size:10px;padding:2px 7px;border-radius:10px;"></div>
+        </div>
+        <!-- Upload button -->
+        <label id="adm-img-label" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);transition:border-color .2s;"
+          onmouseover="this.style.borderColor='var(--or)'" onmouseout="this.style.borderColor='var(--bd)'">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span style="font-size:13px;color:var(--md);">Elegir foto del celu / galería</span>
+          <input type="file" id="adm-img-input" accept="image/*" style="display:none" onchange="App._handleImgUpload(this)">
+        </label>
+        <div style="font-size:11px;color:var(--gr);text-align:center;">La imagen se comprime automáticamente · máx. ~150 KB</div>
+      </div>
+    </div>
+
     <button class="btn-save" onclick="App.saveRoute()">Guardar Loop 🚀</button>
     <div style="height:24px;"></div>
   </div>
@@ -2030,13 +2056,25 @@ const App = {
     if (this._db) {
       try {
         this.toast('☁️ Cargando loops...');
-        const { collection, getDocs } = this._fs;
+        const { collection, getDocs, doc, getDoc } = this._fs;
         const snap = await getDocs(collection(this._db, 'users', this._uid, 'loops'));
         const custom = [];
-        snap.forEach(d => custom.push(d.data()));
+        snap.forEach(d => custom.push({ ...d.data(), _docId: d.id }));
+
+        // Restaurar imágenes desde loop_imgs
+        for (const r of custom) {
+          if (r.img === '[[base64]]') {
+            try {
+              const imgSnap = await getDoc(doc(this._db, 'users', this._uid, 'loop_imgs', r.id));
+              if (imgSnap.exists()) r.img = imgSnap.data().img || '';
+              else r.img = '';
+            } catch(e) { r.img = ''; }
+          }
+        }
+
         this.routes = [...DEFAULTS, ...custom.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
-        // Leer pts desde Firestore también
-        const { doc, getDoc } = this._fs;
+
+        // Leer pts
         const metaSnap = await getDoc(doc(this._db, 'users', this._uid, 'meta', 'stats'));
         if (metaSnap.exists()) {
           const m = metaSnap.data();
@@ -2046,6 +2084,7 @@ const App = {
         return;
       } catch(e) {
         console.warn('Error leyendo Firestore:', e);
+        this.toast('⚠️ Sin conexión — cargando local');
       }
     }
 
@@ -2062,22 +2101,38 @@ const App = {
   async _saveData() {
     const custom = this.routes.filter(r => !DEFAULTS.find(d=>d.id===r.id));
 
-    // Guardar en Firebase
+    // Guardar en Firebase — setDoc individual por loop (más confiable que delete+rewrite)
     if (this._db) {
       try {
         const { doc, setDoc, collection, getDocs, deleteDoc } = this._fs;
-        // Borrar todos los loops del usuario y reescribir (más simple y seguro)
+
+        // IDs actuales
+        const currentIds = new Set(custom.map(r=>r.id));
+
+        // Borrar loops que ya no existen
         const snap = await getDocs(collection(this._db, 'users', this._uid, 'loops'));
-        const deletes = [];
-        snap.forEach(d => deletes.push(deleteDoc(doc(this._db, 'users', this._uid, 'loops', d.id))));
-        await Promise.all(deletes);
-        // Guardar los actuales
-        for (const r of custom) {
-          await setDoc(doc(this._db, 'users', this._uid, 'loops', r.id), r);
+        for (const d of snap.docs) {
+          if (!currentIds.has(d.id)) {
+            await deleteDoc(doc(this._db, 'users', this._uid, 'loops', d.id));
+          }
         }
+
+        // Guardar/actualizar cada loop — imagen va aparte (máx 900KB en Firestore por doc)
+        for (const r of custom) {
+          // Separar img si es base64 pesada — la guardamos en un doc aparte
+          const imgData = r.img && r.img.startsWith('data:') ? r.img : null;
+          const rToSave = { ...r, img: imgData ? '[[base64]]' : (r.img||'') };
+          await setDoc(doc(this._db, 'users', this._uid, 'loops', r.id), rToSave);
+          if (imgData) {
+            // Guardar imagen en sub-colección para no superar límite de 1MB por doc
+            await setDoc(doc(this._db, 'users', this._uid, 'loop_imgs', r.id), { img: imgData });
+          }
+        }
+        this.toast('☁️ Guardado en Firebase ✓');
         return;
       } catch(e) {
-        console.warn('Error guardando en Firestore:', e);
+        console.error('Error guardando en Firestore:', e);
+        this.toast('⚠️ Error Firebase: ' + e.message);
       }
     }
 
@@ -2857,7 +2912,8 @@ const App = {
           emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
           dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
           pts:[...this.aPts],
-          pois:this.aPois.filter(p=>p.name).map(p=>({...p}))
+          pois:this.aPois.filter(p=>p.name).map(p=>({...p})),
+          img: this._imgBase64 || existing.img || ''
         };
         await this._saveData();
         // Redibujar en el mapa
@@ -2878,7 +2934,7 @@ const App = {
         id:`custom-${Date.now()}`, name, type, desc:desc||`Loop ${name}, La Paz.`,
         emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
         dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
-        img:'', pts:[...this.aPts],
+        img: this._imgBase64 || '', pts:[...this.aPts],
         pois:this.aPois.filter(p=>p.name).map(p=>({...p}))
       };
       this.routes.push(r);
@@ -2891,6 +2947,7 @@ const App = {
 
     document.getElementById('adm-name').value='';
     document.getElementById('adm-desc').value='';
+    this._clearImg();
     this.clearPts(); this.aPois=[]; this._renderPois();
     this._renderCards('', this._activeFilter||'all');
     setTimeout(()=>this.go('explore'),1100);
@@ -3430,6 +3487,8 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       this._editingId = id;
       const btn = document.querySelector('.btn-save');
       if(btn) btn.textContent = '💾 Actualizar Loop';
+      // Cargar imagen si tiene
+      this._loadImgIntoEditor(r);
       this.toast('✏️ Editando "' + r.name + '"');
     }, 200);
   },
@@ -3460,6 +3519,79 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     this.toast('🗑️ Loop "' + r.name + '" eliminado');
     // Re-abrir modal con lista actualizada después de pequeño delay
     setTimeout(()=>this.openLoopModal(), 400);
+  },
+
+  // ── IMAGEN DEL LOOP ──
+  _imgBase64: null,
+
+  _handleImgUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    const maxW = 900, maxH = 600, quality = 0.72;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        // Calcular nuevas dimensiones
+        let w = img.width, h = img.height;
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW/w, maxH/h);
+          w = Math.round(w*ratio); h = Math.round(h*ratio);
+        }
+        // Canvas para comprimir
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        const b64 = canvas.toDataURL('image/jpeg', quality);
+        this._imgBase64 = b64;
+
+        // Preview
+        const prev = document.getElementById('adm-img-preview');
+        const thumb = document.getElementById('adm-img-thumb');
+        const sizeEl = document.getElementById('adm-img-size');
+        const label = document.getElementById('adm-img-label');
+        if (prev) prev.style.display = 'block';
+        if (thumb) thumb.src = b64;
+        if (label) label.style.display = 'none';
+        // Tamaño KB
+        const kb = Math.round(b64.length * 0.75 / 1024);
+        if (sizeEl) sizeEl.textContent = `${kb} KB · ${w}×${h}px`;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  },
+
+  _clearImg() {
+    this._imgBase64 = null;
+    const prev = document.getElementById('adm-img-preview');
+    const thumb = document.getElementById('adm-img-thumb');
+    const label = document.getElementById('adm-img-label');
+    const input = document.getElementById('adm-img-input');
+    if (prev) prev.style.display = 'none';
+    if (thumb) thumb.src = '';
+    if (label) label.style.display = 'flex';
+    if (input) input.value = '';
+  },
+
+  _loadImgIntoEditor(r) {
+    // Al editar un loop que tiene imagen, mostrarla en el editor
+    this._imgBase64 = r.img && r.img.startsWith('data:') ? r.img : null;
+    const prev  = document.getElementById('adm-img-preview');
+    const thumb = document.getElementById('adm-img-thumb');
+    const label = document.getElementById('adm-img-label');
+    const sizeEl= document.getElementById('adm-img-size');
+    if (this._imgBase64) {
+      if (prev) prev.style.display = 'block';
+      if (thumb) thumb.src = this._imgBase64;
+      if (label) label.style.display = 'none';
+      const kb = Math.round(this._imgBase64.length * 0.75 / 1024);
+      if (sizeEl) sizeEl.textContent = `${kb} KB · foto guardada`;
+    } else {
+      if (prev) prev.style.display = 'none';
+      if (label) label.style.display = 'flex';
+    }
   },
 
   // ── DEBUG / DIAGNÓSTICO ──
