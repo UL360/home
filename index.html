@@ -2101,28 +2101,53 @@ const App = {
   favs: [],
 
   async init() {
-    // Inicializar Firebase primero
-    await this._initFirebase();
-    await this._loadData();
-
-    // Splash dots animation
-    let d = 0;
-    const dots = document.querySelectorAll('.sp-dot');
-    const di = setInterval(() => { d++; dots.forEach((x,i)=>x.classList.toggle('on',i===d%3)); }, 500);
-    setTimeout(() => { clearInterval(di); this.go('explore'); }, 2800);
-
-    // Search — delegated on document to handle dynamic screens
+    // Escuchar input de búsqueda
     document.addEventListener('input', e => {
       if (e.target.id === 'srch') this._renderCards(e.target.value, this._activeFilter||'all');
     });
-
-    // ── BOTÓN ATRÁS del navegador ──
+    // Botón atrás del navegador
     window.addEventListener('popstate', e => {
       const s = (e.state && e.state.screen) || 'explore';
-      App.go(s, false); // false = no volver a hacer pushState
+      App.go(s, false);
     });
-    // Estado inicial en el historial
     history.replaceState({ screen: 'explore' }, '', '#explore');
+
+    // Splash animation
+    let d = 0;
+    const dots = document.querySelectorAll('.sp-dot');
+    const di = setInterval(() => { d++; dots.forEach((x,i)=>x.classList.toggle('on',i===d%3)); }, 500);
+
+    // Inicializar Firebase (espera hasta que SDK cargue)
+    await this._initFirebase();
+
+    // Si Firebase conectó, esperar a que auth resuelva (máx 4s)
+    // onAuthStateChanged dispara _loadData y _renderCards
+    // Si no hay Firebase, cargar desde localStorage directamente
+    if (this._db) {
+      // auth ya registrado en _initFirebase, esperar primer disparo
+      await new Promise(res => {
+        const unsub = this._auth.onAuthStateChanged(async user => {
+          unsub(); // solo primera vez
+          this._user = user;
+          this._uid  = user ? user.uid : 'public';
+          this._updateProfileUI();
+          await this._loadData();
+          this._renderCards('', this._activeFilter || 'all');
+          if (this.mainMap) this._refreshMain();
+          res();
+        });
+        // timeout de seguridad: si auth tarda más de 4s, seguir igual
+        setTimeout(res, 4000);
+      });
+    } else {
+      // Sin Firebase: cargar desde localStorage
+      await this._loadData();
+      this._renderCards('', this._activeFilter || 'all');
+    }
+
+    clearInterval(di);
+    this._appReady = true;
+    this.go('explore');
   },
 
   // ── FIREBASE ──
@@ -2131,6 +2156,7 @@ const App = {
   _user: null,
   _uid: 'public',
   _fs: null,
+  _appReady: false,
 
   async _initFirebase() {
     // Esperar hasta 5s a que los scripts de Firebase carguen
@@ -2160,8 +2186,10 @@ const App = {
       this._db   = firebase.firestore();
       this._auth = firebase.auth();
 
-      // Escuchar cambios de sesión
+      // Escuchar cambios de sesión POSTERIORES al arranque (login/logout mientras usa la app)
       this._auth.onAuthStateChanged(async (user) => {
+        // Solo actuar si ya pasó el init (this._appReady evita doble disparo al arrancar)
+        if (!this._appReady) return;
         this._user = user;
         this._uid  = user ? user.uid : 'public';
         this._updateProfileUI();
