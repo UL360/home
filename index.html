@@ -2368,8 +2368,7 @@ const App = {
             await this._db.collection('loop_imgs').doc(r.id).set({ img: imgData });
           }
         }
-        this.toast('☁️ Guardado en la nube ✓');
-        return;
+        return; // éxito — el caller muestra el mensaje
       } catch(e) {
         console.error('Error en Firestore:', e);
         this.toast('⚠️ Error al guardar: ' + e.message);
@@ -3588,68 +3587,96 @@ const App = {
     const type = document.getElementById('adm-type').value;
     if (!name) { this.toast('⚠️ Ingresá un nombre'); return; }
     if (this.aPts.length<2) { this.toast('⚠️ Necesitás al menos 2 puntos en el mapa'); return; }
-    const cfg = {trad:{color:'#FF5F00',emoji:'☕',badge:'bt'},pesca:{color:'#2563EB',emoji:'🎣',badge:'bp'},gastro:{color:'#16A34A',emoji:'🍽️',badge:'bg'},atardecer:{color:'#DB2777',emoji:'🌅',badge:'ba'},otra:{color:'#6B7280',emoji:'🗺️',badge:'bt'},running:{color:'#7C3AED',emoji:'🏃',badge:'bsport'},mtb:{color:'#16A34A',emoji:'🚵',badge:'bmtb'},ciclismo:{color:'#0891B2',emoji:'🚴',badge:'brelax'},caminata:{color:'#D97706',emoji:'🥾',badge:'btrab'},paseo:{color:'#059669',emoji:'🌳',badge:'bg'},relax:{color:'#0891B2',emoji:'🧘',badge:'brelax'},trabajo:{color:'#D97706',emoji:'💼',badge:'btrab'},vacaciones:{color:'#DB2777',emoji:'🏖️',badge:'ba'},salidas:{color:'#7C3AED',emoji:'🎉',badge:'bsport'}}[type]||{color:'#6B7280',emoji:'🗺️',badge:'bt'};
+    const cfg = {trad:{color:'#FF5F00',emoji:'☕',badge:'bt'},pesca:{color:'#2563EB',emoji:'🎣',badge:'bp'},gastro:{color:'#16A34A',emoji:'🍽️',badge:'bg'},atardecer:{color:'#DB2777',emoji:'🌅',badge:'ba'},otra:{color:'#6B7280',emoji:'🗺️',badge:'bt'},running:{color:'#7C3AED',emoji:'🏃',badge:'bsport'},mtb:{color:'#16A34A',emoji:'🚵',badge:'bmtb'},ciclismo:{color:'#0891B2',emoji:'🚴',badge:'brelax'},caminata:{color:'#D97706',emoji:'🥾',badge:'btrab'},paseo:{color:'#059669',emoji:'🌳',badge:'bg'},relax:{color:'#0891B2',emoji:'🧘',badge:'brelax'},trabajo:{color:'#D97706',emoji:'💼',badge:'btrab'},vacaciones:{color:'#DB2777',emoji:'🏖️',badge:'ba'},salidas:{color:'#7C3AED',emoji:'🎉',badge:'bsport'},perro:{color:'#D97706',emoji:'🐕',badge:'btrab'}}[type]||{color:'#6B7280',emoji:'🗺️',badge:'bt'};
     const dist = this._calcDist(this.aPts);
 
-    // ── MODO EDICIÓN ──
-    if (this._editingId) {
-      const idx = this.routes.findIndex(x=>x.id===this._editingId);
-      if (idx > -1) {
-        const existing = this.routes[idx];
-        this.routes[idx] = {
-          ...existing, name, type, desc:desc||existing.desc,
+    // Deshabilitar botón mientras guarda
+    const btn = document.querySelector('.btn-save');
+    if(btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
+
+    try {
+      // ── MODO EDICIÓN ──
+      if (this._editingId) {
+        const idx = this.routes.findIndex(x=>x.id===this._editingId);
+        if (idx > -1) {
+          const existing = this.routes[idx];
+          this.routes[idx] = {
+            ...existing, name, type, desc:desc||existing.desc,
+            emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
+            dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
+            pts:[...this.aPts],
+            pois:this.aPois.filter(p=>p.name).map(p=>({...p})),
+            img: this._imgBase64 || existing.img || ''
+          };
+          await this._saveData();
+          if (this.mainMap && this._layers && this._layers[this._editingId]) {
+            this._layers[this._editingId].forEach(l=>{ try{ this.mainMap.removeLayer(l); }catch(e){} });
+            delete this._layers[this._editingId];
+          }
+          if (this.mainMap) this._drawRoute(this.routes[idx]);
+          this._showSaveSuccess(name, '💾 Loop actualizado en la nube');
+        }
+      } else {
+        // ── MODO CREAR ──
+        if (this._db && !this._user) {
+          this.toast('⚠️ Iniciá sesión para crear un loop');
+          this.go('profile');
+          return;
+        }
+        const r = {
+          id:`custom-${Date.now()}`, name, type, desc:desc||`Loop ${name}, La Paz.`,
           emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
           dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
-          pts:[...this.aPts],
-          pois:this.aPois.filter(p=>p.name).map(p=>({...p}))
+          img: this._imgBase64 || '', pts:[...this.aPts],
+          pois:this.aPois.filter(p=>p.name).map(p=>({...p})),
+          authorId: this._uid,
+          authorName: this._user ? (this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo') : 'Anónimo',
+          createdAt: Date.now()
         };
+        this.routes.push(r);
         await this._saveData();
-        // Redibujar en el mapa
-        if (this.mainMap && this._layers && this._layers[this._editingId]) {
-          this._layers[this._editingId].forEach(l=>{ try{ this.mainMap.removeLayer(l); }catch(e){} });
-          delete this._layers[this._editingId];
-        }
-        if (this.mainMap) this._drawRoute(this.routes[idx]);
-        this.toast(`✅ "${name}" actualizado`);
+        if (this.mainMap) this._drawRoute(r);
+        this._addPts(50,'Loop publicado');
+        if((r.pois||[]).length>0) this._addPts((r.pois.length)*15,'POIs agregados');
+        this._showSaveSuccess(name, '☁️ Loop subido a la nube');
       }
-      // Restaurar botón y limpiar modo edición
+    } catch(e) {
+      this.toast('⚠️ Error al guardar: ' + e.message);
+    } finally {
+      // Limpiar formulario siempre
+      document.getElementById('adm-name').value='';
+      document.getElementById('adm-desc').value='';
+      this._clearAdmImg();
       this._editingId = null;
-      const btn = document.querySelector('.btn-save');
-      if(btn) btn.textContent = 'Guardar Loop 🚀';
-    } else {
-      // ── MODO CREAR ──
-      if (this._db && !this._user) {
-        this.toast('⚠️ Iniciá sesión para crear un loop');
-        this.go('profile');
-        return;
-      }
-      const r = {
-        id:`custom-${Date.now()}`, name, type, desc:desc||`Loop ${name}, La Paz.`,
-        emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
-        dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
-        img: this._imgBase64 || '', pts:[...this.aPts],
-        pois:this.aPois.filter(p=>p.name).map(p=>({...p})),
-        authorId: this._uid,
-        authorName: this._user ? (this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo') : 'Anónimo',
-        createdAt: Date.now()
-      };
-      this.routes.push(r);
-      await this._saveData();
-      if (this.mainMap) this._drawRoute(r);
-      this._addPts(50,'Loop publicado');
-      if((r.pois||[]).length>0) this._addPts((r.pois.length)*15,'POIs agregados');
-      this.toast(`✅ "${name}" guardada exitosamente`);
+      if(btn) { btn.disabled = false; btn.textContent = 'Guardar Loop 🚀'; }
+      this.clearPts(); this.aPois=[]; this._renderPois();
+      this._renderCards('', this._activeFilter||'all');
+      setTimeout(()=>this.go('explore'), 1200);
     }
+  },
 
-    document.getElementById('adm-name').value='';
-    document.getElementById('adm-desc').value='';
-    this._clearAdmImg();
-    this._editingId = null;
-    const btn = document.querySelector('.btn-save');
-    if(btn) btn.textContent = 'Guardar Loop 🚀';
-    this.clearPts(); this.aPois=[]; this._renderPois();
-    this._renderCards('', this._activeFilter||'all');
-    setTimeout(()=>this.go('explore'),1100);
+  // Banner de éxito visible y duradero
+  _showSaveSuccess(name, msg) {
+    // Toast largo (5 segundos)
+    const t = document.getElementById('toast');
+    if (t) {
+      t.textContent = `${msg}: "${name}" ✓`;
+      t.classList.add('show');
+      clearTimeout(this._toastTimer);
+      this._toastTimer = setTimeout(() => t.classList.remove('show'), 5000);
+    }
+    // Banner flotante adicional sobre el mapa
+    let banner = document.getElementById('save-banner');
+    if (!banner) {
+      banner = document.createElement('div');
+      banner.id = 'save-banner';
+      banner.style.cssText = 'position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:9999;background:#16A34A;color:white;border-radius:14px;padding:14px 22px;font-size:14px;font-weight:600;box-shadow:0 6px 24px rgba(0,0,0,.4);text-align:center;min-width:240px;max-width:calc(100vw - 32px);animation:fadeUp .3s ease;';
+      document.body.appendChild(banner);
+    }
+    banner.innerHTML = `<div style="font-size:20px;margin-bottom:4px;">☁️</div><div>${msg}</div><div style="font-size:12px;font-weight:400;margin-top:3px;opacity:.85;">"${name}"</div>`;
+    banner.style.display = 'block';
+    clearTimeout(this._bannerTimer);
+    this._bannerTimer = setTimeout(() => { if(banner) banner.style.display = 'none'; }, 5000);
   },
 
   _calcDist(pts) {
@@ -3873,9 +3900,9 @@ const App = {
 
     // ← Subir directamente a Firebase
     this._saveData().then(() => {
-      this.toast(`✅ Loop subido a la nube · ${dist.toFixed(2)} km 🎉`);
-    }).catch(() => {
-      this.toast(`✅ Loop guardado · ${dist.toFixed(2)} km`);
+      this._showSaveSuccess(r.name, '☁️ Loop subido a la nube');
+    }).catch(e => {
+      this.toast(`⚠️ Error al subir: ${e.message}`);
     });
 
     if(this.mainMap) this._drawRoute(r);
