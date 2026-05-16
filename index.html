@@ -2346,37 +2346,45 @@ const App = {
 
     if (this._db) {
       if (!this._user) {
-        this.toast('⚠️ Iniciá sesión para guardar loops');
-        return;
+        throw new Error('No hay sesión iniciada. Iniciá sesión para guardar.');
       }
-      try {
-        // Guardar solo los loops del usuario actual
-        const myLoops = custom.filter(r => !r.authorId || r.authorId === this._uid);
-        for (const r of myLoops) {
-          const imgData = r.img && r.img.startsWith('data:') ? r.img : null;
-          const rToSave = {
-            ...r,
-            img: imgData ? '[[base64]]' : (r.img || ''),
-            authorId: this._uid,
-            authorName: this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo',
-            updatedAt: Date.now()
-          };
-          // Eliminar campos undefined que Firestore no acepta
-          Object.keys(rToSave).forEach(k => rToSave[k] === undefined && delete rToSave[k]);
+      // Solo loops propios del usuario logueado
+      const myLoops = custom.filter(r => r.authorId === this._uid);
+      console.log(`[saveData] Usuario: ${this._uid} · loops a guardar: ${myLoops.length}`);
+
+      for (const r of myLoops) {
+        const imgData = r.img && r.img.startsWith('data:') ? r.img : null;
+        const rToSave = {
+          ...r,
+          img: imgData ? '[[base64]]' : (r.img || ''),
+          authorId: this._uid,
+          authorName: this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo',
+          updatedAt: Date.now()
+        };
+        // Firestore no acepta undefined
+        Object.keys(rToSave).forEach(k => { if (rToSave[k] === undefined) delete rToSave[k]; });
+        console.log(`[saveData] Guardando loop "${r.name}" (${r.id})...`);
+        try {
           await this._db.collection('loops').doc(r.id).set(rToSave);
-          if (imgData) {
-            await this._db.collection('loop_imgs').doc(r.id).set({ img: imgData });
+          console.log(`[saveData] ✓ "${r.name}" guardado en Firestore`);
+        } catch(setErr) {
+          if (setErr.code === 'permission-denied') {
+            throw new Error(`Permiso denegado en Firestore. Revisá las reglas de seguridad. (${r.id})`);
           }
+          throw setErr;
         }
-        return; // éxito — el caller muestra el mensaje
-      } catch(e) {
-        console.error('Error en Firestore:', e);
-        this.toast('⚠️ Error al guardar: ' + e.message);
-        // Guardar local como backup
-        localStorage.setItem('ul360_routes', JSON.stringify(custom));
+        if (imgData) {
+          await this._db.collection('loop_imgs').doc(r.id).set({ img: imgData });
+          console.log(`[saveData] ✓ imagen de "${r.name}" guardada`);
+        }
       }
+      // También backup en localStorage
+      localStorage.setItem('ul360_routes', JSON.stringify(custom));
+      return;
     }
-    // Sin Firebase: localStorage
+
+    // Sin Firebase: solo localStorage
+    console.log('[saveData] Sin Firebase — guardando en localStorage');
     localStorage.setItem('ul360_routes', JSON.stringify(custom));
   },
 
@@ -3606,8 +3614,12 @@ const App = {
             dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
             pts:[...this.aPts],
             pois:this.aPois.filter(p=>p.name).map(p=>({...p})),
-            img: this._imgBase64 || existing.img || ''
+            img: this._imgBase64 || existing.img || '',
+            authorId: existing.authorId || this._uid,  // preservar autor original
+            authorName: existing.authorName || (this._user?.displayName || 'Anónimo'),
+            updatedAt: Date.now()
           };
+          console.log(`[saveRoute] Actualizando "${name}" authorId=${this.routes[idx].authorId}`);
           await this._saveData();
           if (this.mainMap && this._layers && this._layers[this._editingId]) {
             this._layers[this._editingId].forEach(l=>{ try{ this.mainMap.removeLayer(l); }catch(e){} });
@@ -3629,10 +3641,11 @@ const App = {
           dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
           img: this._imgBase64 || '', pts:[...this.aPts],
           pois:this.aPois.filter(p=>p.name).map(p=>({...p})),
-          authorId: this._uid,
+          authorId: this._uid,   // ← debe estar ANTES de _saveData
           authorName: this._user ? (this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo') : 'Anónimo',
           createdAt: Date.now()
         };
+        console.log(`[saveRoute] Creando loop "${name}" authorId=${r.authorId}`);
         this.routes.push(r);
         await this._saveData();
         if (this.mainMap) this._drawRoute(r);
@@ -3895,6 +3908,7 @@ const App = {
       authorName: this._user ? (this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo') : 'Anónimo',
       createdAt: Date.now()
     };
+    console.log(`[grabStop] Guardando loop GPS "${r.name}" authorId=${r.authorId}`);
 
     this.routes.push(r);
 
