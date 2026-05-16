@@ -7,10 +7,10 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
-<!-- Firebase SDKs compat -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<!-- Firebase SDKs compat — v9.23.0 estable -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
 :root {
   --or: #FF5F00;  --or2: #FF8C42;  --orL: rgba(255,95,0,.15);  --orD: #C44D00;
@@ -2133,9 +2133,17 @@ const App = {
   _fs: null,
 
   async _initFirebase() {
+    // Esperar hasta 5s a que los scripts de Firebase carguen
+    let attempts = 0;
+    while (typeof firebase === 'undefined' && attempts < 20) {
+      await new Promise(r => setTimeout(r, 250));
+      attempts++;
+    }
+    if (typeof firebase === 'undefined') {
+      console.warn('Firebase SDK no disponible después de esperar');
+      return false;
+    }
     try {
-      // Usar API compat (cargada como script en el head, sin imports dinámicos)
-      if (typeof firebase === 'undefined') throw new Error('Firebase SDK no cargado');
 
       const firebaseConfig = {
         apiKey: "AIzaSyACvfJCrmCvP-C1ELYIPwqlZAdRmrh4mpo",
