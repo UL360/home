@@ -3547,6 +3547,18 @@ const App = {
     this._renderPts(); this._updatePtBadge();
     this.toast(`Punto ${n} agregado`);
   },
+  _updatePtBadge() {
+    const el = document.getElementById('adm-pts-count');
+    if (el) el.textContent = this.aPts.length
+      ? `${this.aPts.length} punto${this.aPts.length!==1?'s':''}` : '';
+    const distEl = document.getElementById('adm-dist-live');
+    if (distEl && this.aPts.length >= 2) {
+      const d = this._calcDist(this.aPts);
+      distEl.textContent = `${d.toFixed(2)} km`;
+    } else if (distEl) {
+      distEl.textContent = '';
+    }
+  },
   _renderPts() {
     const c = document.getElementById('pts-list');
     c.innerHTML = this.aPts.length
