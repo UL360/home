@@ -1757,12 +1757,19 @@ svg.leaflet-image-layer.leaflet-interactive path {
         <button onclick="App._clearAdmImg()" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:white;font-size:18px;line-height:1;cursor:pointer;">×</button>
         <div id="adm-img-size" style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.55);color:white;font-size:10px;padding:2px 8px;border-radius:10px;"></div>
       </div>
-      <!-- Upload label -->
-      <label id="adm-img-label" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        <span style="font-size:13px;color:var(--or);font-weight:600;">Sacar foto o elegir de galería</span>
-        <input type="file" id="adm-img-input" accept="image/*" capture="environment" style="display:none" onchange="App._handleAdmImg(this)">
-      </label>
+      <!-- Upload label: cámara + galería -->
+      <div id="adm-img-label" style="display:flex;gap:8px;">
+        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span style="font-size:12px;color:var(--or);font-weight:600;">Cámara</span>
+          <input type="file" accept="image/*" capture="environment" style="display:none" onchange="App._handleAdmImg(this)">
+        </label>
+        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span style="font-size:12px;color:var(--or);font-weight:600;">Galería</span>
+          <input type="file" id="adm-img-input" accept="image/*" style="display:none" onchange="App._handleAdmImg(this)">
+        </label>
+      </div>
       <div style="font-size:11px;color:var(--gr);text-align:center;margin-top:6px;">Se comprime a ~75 KB automáticamente</div>
     </div>
 
@@ -1838,11 +1845,18 @@ svg.leaflet-image-layer.leaflet-interactive path {
           <button onclick="App._clearGrabCover()" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:white;font-size:15px;line-height:1;cursor:pointer;">×</button>
           <div id="grab-cover-size" style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.6);color:white;font-size:10px;padding:2px 7px;border-radius:8px;"></div>
         </div>
-        <label id="grab-cover-label" style="display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;border:1.5px dashed rgba(255,255,255,.4);border-radius:10px;cursor:pointer;background:rgba(255,255,255,.08);">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <span style="font-size:12px;color:rgba(255,255,255,.85);">Elegir foto (~75 KB)</span>
-          <input type="file" id="grab-cover-input" accept="image/*" capture="environment" style="display:none" onchange="App._handleGrabCover(this)">
-        </label>
+        <div id="grab-cover-label" style="display:flex;gap:8px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:1.5px dashed rgba(255,255,255,.4);border-radius:10px;cursor:pointer;background:rgba(255,255,255,.08);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span style="font-size:11px;color:rgba(255,255,255,.85);">Cámara</span>
+            <input type="file" accept="image/*" capture="environment" style="display:none" onchange="App._handleGrabCover(this)">
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:1.5px dashed rgba(255,255,255,.4);border-radius:10px;cursor:pointer;background:rgba(255,255,255,.08);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span style="font-size:11px;color:rgba(255,255,255,.85);">Galería</span>
+            <input type="file" id="grab-cover-input" accept="image/*" style="display:none" onchange="App._handleGrabCover(this)">
+          </label>
+        </div>
       </div>
     </div>
   </div>
@@ -1977,40 +1991,58 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
 <!-- ════════════ MODAL FOTO LOOP (compartir parada pública) ════════════ -->
 <div id="foto-loop-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)App.closeFotoLoop()">
-  <div style="background:var(--wh);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 20px 36px;animation:slideUp .3s ease;">
+  <div style="background:var(--wh);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 20px 36px;animation:slideUp .3s ease;max-height:92vh;overflow-y:auto;">
     <div style="width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 18px;"></div>
     <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);margin-bottom:4px;">📍 Foto Loop — Compartí tu parada</div>
-    <div style="font-size:12px;color:var(--gr);margin-bottom:16px;">Publicá un lugar con foto para que todos puedan encontrarlo. Queda como punto en el mapa.</div>
+    <div style="font-size:12px;color:var(--gr);margin-bottom:12px;">Publicá un lugar con foto para que todos puedan encontrarlo.</div>
 
-    <!-- Preview -->
+    <!-- Preview foto -->
     <div id="fl-preview" style="display:none;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:4/3;background:var(--bg0);margin-bottom:12px;">
       <img id="fl-thumb" style="width:100%;height:100%;object-fit:cover;" src="" alt="">
       <button onclick="App._clearFotoLoop()" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:white;cursor:pointer;font-size:16px;line-height:1;">×</button>
     </div>
 
-    <label id="fl-cam-label" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:16px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);margin-bottom:12px;">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-      <span style="font-size:14px;font-weight:600;color:var(--or);">Sacar / elegir foto</span>
-      <input type="file" id="fl-input" accept="image/*" capture="environment" style="display:none" onchange="App._handleFotoLoopImg(this)">
-    </label>
+    <!-- Botones foto: cámara + galería separados -->
+    <div id="fl-cam-label" style="display:flex;gap:8px;margin-bottom:12px;">
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span style="font-size:13px;font-weight:600;color:var(--or);">Cámara</span>
+        <input type="file" id="fl-input-cam" accept="image/*" capture="environment" style="display:none" onchange="App._handleFotoLoopImg(this)">
+      </label>
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span style="font-size:13px;font-weight:600;color:var(--or);">Galería</span>
+        <input type="file" id="fl-input" accept="image/*" style="display:none" onchange="App._handleFotoLoopImg(this)">
+      </label>
+    </div>
 
     <input id="fl-name" type="text" placeholder="Nombre del lugar (ej: Costanera Norte, Bar El Viejo)" class="fi" style="margin-bottom:10px;width:100%;box-sizing:border-box;">
-    <textarea id="fl-desc" placeholder="Contales a los demás por qué vale la pena parar acá..." style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:72px;font-family:var(--fS);margin-bottom:10px;"></textarea>
+    <textarea id="fl-desc" placeholder="Contales a los demás por qué vale la pena parar acá..." style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:60px;font-family:var(--fS);margin-bottom:10px;"></textarea>
 
     <!-- Categoría -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;" id="fl-cat-row">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
       <button class="fl-cat on" data-c="lugar" onclick="App._setFLCat(this)">📍 Lugar</button>
       <button class="fl-cat" data-c="gastro" onclick="App._setFLCat(this)">🍽️ Gastro</button>
-      <button class="fl-cat" data-c="naturaleza" onclick="App._setFLCat(this)">🌿 Naturaleza</button>
+      <button class="fl-cat" data-c="naturaleza" onclick="App._setFLCat(this)">🌿 Natural</button>
       <button class="fl-cat" data-c="rio" onclick="App._setFLCat(this)">🌊 Río</button>
       <button class="fl-cat" data-c="museo" onclick="App._setFLCat(this)">🏛️ Cultura</button>
       <button class="fl-cat" data-c="deporte" onclick="App._setFLCat(this)">⚽ Deporte</button>
-      <button class="fl-cat" data-c="perro" onclick="App._setFLCat(this)">🐕 Pet friendly</button>
+      <button class="fl-cat" data-c="perro" onclick="App._setFLCat(this)">🐕 Pet</button>
     </div>
 
-    <div id="fl-option-loop" style="background:var(--bg0);border-radius:12px;padding:12px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">
+    <!-- Mapa de ubicación -->
+    <div style="margin-bottom:12px;">
+      <div style="font-size:12px;font-weight:600;color:var(--md);margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+        📌 Ubicación en el mapa
+        <button onclick="App._flUseMyLocation()" style="margin-left:auto;background:var(--orL);border:none;color:var(--or);font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px;cursor:pointer;">📍 Usar mi ubicación</button>
+      </div>
+      <div id="fl-map" style="height:160px;border-radius:12px;border:0.5px solid var(--bd);overflow:hidden;background:var(--bg0);"></div>
+      <div id="fl-coords" style="font-size:11px;color:var(--gr);margin-top:4px;text-align:center;">Tocá el mapa para marcar el lugar</div>
+    </div>
+
+    <div id="fl-option-loop" style="background:var(--bg0);border-radius:12px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
       <input type="checkbox" id="fl-make-loop" style="width:18px;height:18px;accent-color:var(--or);">
-      <label for="fl-make-loop" style="font-size:13px;color:var(--dk);cursor:pointer;line-height:1.4;">También crear un <b>mini-loop</b> para llegar a este lugar desde el mapa</label>
+      <label for="fl-make-loop" style="font-size:12px;color:var(--dk);cursor:pointer;line-height:1.4;">Crear también un <b>mini-loop</b> para llegar a este lugar</label>
     </div>
 
     <div style="display:flex;gap:10px;">
@@ -3226,6 +3258,22 @@ const App = {
       if (label) label.style.display = 'flex';
     }
   },
+  _loadAdmImgPreview(r) {
+    this._imgBase64 = r.img && r.img.startsWith('data:') ? r.img : null;
+    const prev  = document.getElementById('adm-img-preview');
+    const thumb = document.getElementById('adm-img-thumb');
+    const label = document.getElementById('adm-img-label');
+    const sizeEl= document.getElementById('adm-img-size');
+    if (this._imgBase64) {
+      if (prev)  prev.style.display  = 'block';
+      if (label) label.style.display = 'none';
+      if (thumb) thumb.src = this._imgBase64;
+      if (sizeEl) sizeEl.textContent = `${Math.round(this._imgBase64.length*0.75/1024)} KB · guardada`;
+    } else {
+      if (prev)  prev.style.display  = 'none';
+      if (label) label.style.display = 'flex';
+    }
+  },
 
   // ── Grab loop: foto de portada ──
   _handleGrabCover(input) {
@@ -3353,13 +3401,19 @@ const App = {
     document.getElementById('fl-desc').value = '';
     document.getElementById('fl-make-loop').checked = false;
     this._fotoLoopCat = 'lugar';
+    this._flLat = null; this._flLng = null;
     document.querySelectorAll('.fl-cat').forEach(b => b.classList.toggle('on', b.dataset.c === 'lugar'));
     this._clearFotoLoop();
+    // Inicializar mapa del modal (con pequeño delay para que el DOM esté visible)
+    setTimeout(() => this._initFLMap(), 150);
   },
 
   closeFotoLoop() {
     const ov = document.getElementById('foto-loop-overlay');
     if (ov) ov.style.display = 'none';
+    // Destruir mapa para que se pueda reiniciar la próxima vez
+    if (this._flMap) { this._flMap.remove(); this._flMap = null; this._flMarker = null; }
+    this._flLat = null; this._flLng = null;
   },
 
   _clearFotoLoop() {
@@ -3367,36 +3421,28 @@ const App = {
     const prev  = document.getElementById('fl-preview');
     const thumb = document.getElementById('fl-thumb');
     const label = document.getElementById('fl-cam-label');
-    const input = document.getElementById('fl-input');
+    const inputCam = document.getElementById('fl-input-cam');
+    const inputGal = document.getElementById('fl-input');
     if (prev)  prev.style.display  = 'none';
     if (label) label.style.display = 'flex';
     if (thumb) thumb.src = '';
-    if (input) input.value = '';
+    if (inputCam) inputCam.value = '';
+    if (inputGal) inputGal.value = '';
   },
 
   _handleFotoLoopImg(input) {
     const file = input.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = new Image();
-      img.onload = () => {
-        const maxW = 900, maxH = 600, q = 0.72;
-        let w = img.width, h = img.height;
-        if (w > maxW || h > maxH) { const ratio = Math.min(maxW/w, maxH/h); w=Math.round(w*ratio); h=Math.round(h*ratio); }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        this._fotoLoopImg = canvas.toDataURL('image/jpeg', q);
-        const prev = document.getElementById('fl-preview');
-        const thumb = document.getElementById('fl-thumb');
-        const label = document.getElementById('fl-cam-label');
-        if (prev)  prev.style.display  = 'block';
-        if (label) label.style.display = 'none';
-        if (thumb) thumb.src = this._fotoLoopImg;
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
+    this.toast('⏳ Comprimiendo...');
+    this._compressImg(file, (b64, kb, w, h) => {
+      this._fotoLoopImg = b64;
+      const prev  = document.getElementById('fl-preview');
+      const thumb = document.getElementById('fl-thumb');
+      const label = document.getElementById('fl-cam-label');
+      if (prev)  prev.style.display  = 'block';
+      if (label) label.style.display = 'none';
+      if (thumb) thumb.src = b64;
+      this.toast(`✅ Foto lista · ${kb} KB`);
+    });
   },
 
   _setFLCat(btn) {
@@ -3405,25 +3451,83 @@ const App = {
     btn.classList.add('on');
   },
 
+  // ── FOTO LOOP MAP ──
+  _flMap: null,
+  _flMarker: null,
+  _flLat: null,
+  _flLng: null,
+
+  _initFLMap() {
+    const el = document.getElementById('fl-map');
+    if (!el || this._flMap) return;
+    const center = this._locMarker
+      ? [this._locMarker.getLatLng().lat, this._locMarker.getLatLng().lng]
+      : [-30.749, -59.644];
+    this._flMap = L.map('fl-map', { zoomControl:false, attributionControl:false }).setView(center, 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this._flMap);
+    L.control.zoom({ position:'bottomright' }).addTo(this._flMap);
+    this._flMap.on('click', e => {
+      this._flLat = e.latlng.lat;
+      this._flLng = e.latlng.lng;
+      if (this._flMarker) this._flMap.removeLayer(this._flMarker);
+      this._flMarker = L.marker([this._flLat, this._flLng], {
+        icon: L.divIcon({ className:'', html:'<div style="width:28px;height:28px;border-radius:50%;background:var(--or);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4);"></div>', iconSize:[28,28], iconAnchor:[14,14] })
+      }).addTo(this._flMap);
+      const coords = document.getElementById('fl-coords');
+      if (coords) coords.textContent = `📌 ${this._flLat.toFixed(5)}, ${this._flLng.toFixed(5)}`;
+    });
+    // Si hay ubicación del usuario, poner marker de referencia
+    if (this._locMarker) {
+      const ll = this._locMarker.getLatLng();
+      this._flLat = ll.lat; this._flLng = ll.lng;
+      this._flMarker = L.marker([ll.lat, ll.lng], {
+        icon: L.divIcon({ className:'', html:'<div style="width:28px;height:28px;border-radius:50%;background:var(--or);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4);"></div>', iconSize:[28,28], iconAnchor:[14,14] })
+      }).addTo(this._flMap);
+      const coords = document.getElementById('fl-coords');
+      if (coords) coords.textContent = `📌 Mi ubicación actual`;
+    }
+    setTimeout(() => this._flMap.invalidateSize(), 300);
+  },
+
+  _flUseMyLocation() {
+    if (!this._flMap) return;
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      this._flLat = lat; this._flLng = lng;
+      this._flMap.setView([lat, lng], 16);
+      if (this._flMarker) this._flMap.removeLayer(this._flMarker);
+      this._flMarker = L.marker([lat, lng], {
+        icon: L.divIcon({ className:'', html:'<div style="width:28px;height:28px;border-radius:50%;background:var(--or);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4);"></div>', iconSize:[28,28], iconAnchor:[14,14] })
+      }).addTo(this._flMap);
+      const coords = document.getElementById('fl-coords');
+      if (coords) coords.textContent = `📌 Mi ubicación: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    }, () => this.toast('⚠️ No se pudo obtener la ubicación'));
+  },
+
   async publishFotoLoop() {
     const name = document.getElementById('fl-name')?.value?.trim();
     const desc = document.getElementById('fl-desc')?.value?.trim();
     if (!name) return this.toast('⚠️ Poné un nombre al lugar');
     if (!this._fotoLoopImg) return this.toast('⚠️ Agregá una foto del lugar');
 
-    // Obtener ubicación actual
-    let lat = null, lng = null;
-    if (this._locMarker) {
-      const ll = this._locMarker.getLatLng();
-      lat = ll.lat; lng = ll.lng;
-    } else {
-      try {
-        const pos = await new Promise((res, rej) =>
-          navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000 }));
-        lat = pos.coords.latitude;
-        lng = pos.coords.longitude;
-      } catch(e) {}
+    // Usar ubicación seleccionada en el mapa del modal
+    let lat = this._flLat, lng = this._flLng;
+
+    // Fallback: GPS actual si no marcó en el mapa
+    if (!lat || !lng) {
+      if (this._locMarker) {
+        const ll = this._locMarker.getLatLng();
+        lat = ll.lat; lng = ll.lng;
+      } else {
+        try {
+          const pos = await new Promise((res, rej) =>
+            navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000 }));
+          lat = pos.coords.latitude; lng = pos.coords.longitude;
+        } catch(e) {}
+      }
     }
+
+    if (!lat || !lng) return this.toast('⚠️ Marcá la ubicación en el mapa');
 
     const catEmojis = { lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', museo:'🏛️', deporte:'⚽', perro:'🐕' };
     const catColors = { lugar:'#FF5F00', gastro:'#DB2777', naturaleza:'#059669', rio:'#0891B2', museo:'#7C3AED', deporte:'#16A34A', perro:'#D97706' };
@@ -3450,9 +3554,7 @@ const App = {
       if (this._db) {
         if (!this._user) {
           this.toast('⚠️ Iniciá sesión primero');
-          this.closeFotoLoop();
-          this.go('profile');
-          return;
+          this.closeFotoLoop(); this.go('profile'); return;
         }
         await this._db.collection('fotostops').doc(stopId).set(stopData);
         if (this._fotoLoopImg) {
@@ -3460,8 +3562,8 @@ const App = {
         }
       }
 
-      // Si eligió crear mini-loop
-      if (makeLoop && lat && lng) {
+      // Mini-loop (sin arrays anidados)
+      if (makeLoop) {
         const loopData = {
           id: stopId + '-loop',
           name, type: 'fotostop',
@@ -3469,44 +3571,38 @@ const App = {
           emoji, color, badge: 'ba',
           dist: '0 km', dur: '—',
           img: this._fotoLoopImg ? '[[base64]]' : '',
-          pts: [[lat, lng]],
+          pts: [{ lat, lng }],   // ← objeto, no array anidado
           pois: [{ name, lat, lng }],
           authorId: this._uid,
           authorName: this._user?.displayName || 'Anónimo',
           createdAt: Date.now()
         };
-        this.routes.push({ ...loopData, img: this._fotoLoopImg || '' });
+        const loopForMap = { ...loopData, img: this._fotoLoopImg || '', pts: [[lat, lng]] };
+        this.routes.push(loopForMap);
         if (this._db) {
-          await this._db.collection('loops').doc(loopData.id).set({...loopData, img: this._fotoLoopImg ? '[[base64]]' : ''});
+          await this._db.collection('loops').doc(loopData.id).set(loopData);
           if (this._fotoLoopImg) await this._db.collection('loop_imgs').doc(loopData.id).set({ img: this._fotoLoopImg });
         }
-        if (this.mainMap && lat && lng) this._drawRoute({ ...loopData, img: this._fotoLoopImg || '' });
+        if (this.mainMap) this._drawRoute(loopForMap);
       }
 
-      // Poner marcador en mapa principal
-      if (this.mainMap && lat && lng) {
+      // Marcador en mapa principal
+      if (this.mainMap) {
         L.marker([lat, lng], {
           icon: L.divIcon({
             className: '',
             html: `<div style="width:36px;height:36px;border-radius:50%;background:${color};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.4);">${emoji}</div>`,
             iconSize: [36, 36], iconAnchor: [18, 18]
           })
-        }).addTo(this.mainMap)
-          .bindPopup(`<b>${emoji} ${name}</b><br><small>${desc||''}</small>`);
+        }).addTo(this.mainMap).bindPopup(`<b>${emoji} ${name}</b><br><small>${desc||''}</small>`);
       }
 
       this.closeFotoLoop();
       this._addPts(30, 'Parada publicada');
-      this.toast(`✅ "${name}" publicado para todos 🎉`);
+      this._showSaveSuccess(name, '🌐 Parada publicada');
     } catch(e) {
       console.error('publishFotoLoop error:', e);
-      this.toast('⚠️ Error: ' + (e.message || 'No se pudo publicar'));
-      // Fallback visible si el toast no se ve
-      setTimeout(() => {
-        if (document.getElementById('foto-loop-overlay')?.style.display !== 'none') {
-          alert('Error al publicar: ' + (e.message || 'revisá la consola'));
-        }
-      }, 400);
+      alert('❌ Error al publicar:\n\n' + e.message);
     }
   },
 
