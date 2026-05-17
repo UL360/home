@@ -2345,7 +2345,16 @@ const App = {
         const snap = await this._db.collection('loops').get({ source: 'server' })
           .catch(() => this._db.collection('loops').get()); // fallback a caché si no hay red
         const allLoops = [];
-        snap.forEach(d => allLoops.push({ ...d.data(), id: d.id }));
+        snap.forEach(d => {
+          const loop = { ...d.data(), id: d.id };
+          // Reconvertir pts de objetos a arrays [lat, lng]
+          if (Array.isArray(loop.pts)) {
+            loop.pts = loop.pts.map(p =>
+              (p && typeof p === 'object' && 'lat' in p) ? [p.lat, p.lng] : p
+            );
+          }
+          allLoops.push(loop);
+        });
 
         // Restaurar imágenes
         for (const r of allLoops) {
@@ -2423,6 +2432,18 @@ const App = {
       rClean.authorId   = this._uid;
       rClean.authorName = this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo';
       rClean.updatedAt  = Date.now();
+      // Firestore no soporta arrays anidados — convertir pts a objetos
+      if (Array.isArray(rClean.pts)) {
+        rClean.pts = rClean.pts.map(p => Array.isArray(p) ? {lat:p[0],lng:p[1]} : p);
+      }
+      // Convertir pois que puedan tener arrays internos
+      if (Array.isArray(rClean.pois)) {
+        rClean.pois = rClean.pois.map(poi => {
+          const p = {...poi};
+          Object.keys(p).forEach(k => { if (p[k] === undefined) delete p[k]; });
+          return p;
+        });
+      }
 
       console.log(`[_saveData] → set loops/${r.id} nombre="${r.name}"`);
 
