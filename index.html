@@ -3464,7 +3464,7 @@ const App = {
       ? [this._locMarker.getLatLng().lat, this._locMarker.getLatLng().lng]
       : [-30.749, -59.644];
     this._flMap = L.map('fl-map', { zoomControl:false, attributionControl:false }).setView(center, 15);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(this._flMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(this._flMap);
     L.control.zoom({ position:'bottomright' }).addTo(this._flMap);
     this._flMap.on('click', e => {
       this._flLat = e.latlng.lat;
@@ -3713,7 +3713,7 @@ const App = {
     }
     const C=[-30.7490,-59.6450];
     this.admMap=L.map('admin-map',{center:C,zoom:14,zoomControl:true,attributionControl:false});
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'©CARTO',subdomains:'abcd',maxZoom:19}).addTo(this.admMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(this.admMap);
     this.admMap.on('click',e=>this._addAdmPt(e.latlng.lat,e.latlng.lng));
     this._renderPts(); this._renderPois();
   },
@@ -4032,7 +4032,7 @@ const App = {
     if(this.grabMap){ this.grabMap.invalidateSize(); return; }
     const C = [-30.7490,-59.6450];
     this.grabMap = L.map('grab-map',{center:C,zoom:14,zoomControl:true,attributionControl:false});
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{attribution:'©CARTO',subdomains:'abcd',maxZoom:19}).addTo(this.grabMap);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(this.grabMap);
     this.grabPts=[]; this.grabSecs=0; this.grabState='idle';
     this._grabLine=null; this._grabSim=null;
     document.getElementById('grab-type-row').addEventListener('click',e=>{
@@ -4584,7 +4584,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       const tile = isDark
         ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
         : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-      L.tileLayer(tile, { attribution:'© <a href="https://carto.com">CARTO</a>', subdomains:'abcd', maxZoom:19 }).addTo(this.mainMap);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(this.mainMap);
     }
   },
 
