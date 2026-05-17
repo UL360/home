@@ -2152,7 +2152,34 @@ const App = {
 
     clearInterval(di);
     this._appReady = true;
+
+    // Detectar AdBlock — puede bloquear Firestore
+    this._checkAdBlock();
+
     this.go('explore');
+  },
+
+  async _checkAdBlock() {
+    if (!this._db) return;
+    try {
+      // Intento de fetch a Firestore para detectar bloqueo
+      const resp = await fetch('https://firestore.googleapis.com/v1/projects/urbanloop360/databases/(default)/documents/_ping', {
+        method: 'GET', signal: AbortSignal.timeout(3000)
+      });
+      // Si llega acá sin error de red, no hay AdBlock bloqueando
+    } catch(e) {
+      if (e.message === 'Failed to fetch' || e.name === 'TypeError') {
+        // Probablemente AdBlock
+        let banner = document.getElementById('adblock-warn');
+        if (!banner) {
+          banner = document.createElement('div');
+          banner.id = 'adblock-warn';
+          banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#DC2626;color:white;font-size:12px;font-weight:600;text-align:center;padding:8px 12px;line-height:1.4;';
+          banner.innerHTML = '⚠️ Tu bloqueador de anuncios está bloqueando Firebase. Los loops NO se van a guardar. <span style="text-decoration:underline;cursor:pointer;" onclick="this.parentElement.remove()">Desactivá AdBlock para este sitio → cerrar</span>';
+          document.body.prepend(banner);
+        }
+      }
+    }
   },
 
   // ── FIREBASE ──
@@ -2376,20 +2403,26 @@ const App = {
     for (const r of mine) {
       const imgData = r.img && r.img.startsWith('data:') ? r.img : null;
       const rClean = { ...r, img: imgData ? '[[base64]]' : (r.img || '') };
-      // Firestore rechaza undefined
       Object.keys(rClean).forEach(k => { if (rClean[k] === undefined) delete rClean[k]; });
-      // Asegurar campos obligatorios
       rClean.authorId   = this._uid;
       rClean.authorName = this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo';
       rClean.updatedAt  = Date.now();
 
       console.log(`[_saveData] → set loops/${r.id} nombre="${r.name}"`);
-      await this._db.collection('loops').doc(r.id).set(rClean);
+
+      // Timeout de 10s — si tarda más, probablemente AdBlock está bloqueando
+      const setPromise = this._db.collection('loops').doc(r.id).set(rClean);
+      const timeoutPromise = new Promise((_, rej) =>
+        setTimeout(() => rej(new Error('TIMEOUT: Firestore no respondió en 10s. Si tenés un bloqueador de anuncios (AdBlock, uBlock), desactivalo para este sitio.')), 10000)
+      );
+
+      await Promise.race([setPromise, timeoutPromise]);
       console.log(`[_saveData] ✓ loops/${r.id} OK`);
 
       if (imgData) {
         console.log(`[_saveData] → set loop_imgs/${r.id}`);
-        await this._db.collection('loop_imgs').doc(r.id).set({ img: imgData });
+        const imgPromise = this._db.collection('loop_imgs').doc(r.id).set({ img: imgData });
+        await Promise.race([imgPromise, new Promise((_,rej) => setTimeout(() => rej(new Error('TIMEOUT imagen')), 10000))]);
         console.log(`[_saveData] ✓ loop_imgs/${r.id} OK`);
       }
     }
@@ -3537,12 +3570,12 @@ const App = {
     this._renderPts(); this._updatePtBadge();
   },
 
-  clearPts() {
-    if(this._admMarkers){ this._admMarkers.forEach(m=>this.admMap.removeLayer(m)); this._admMarkers=[]; }
-    if(this._admLine){ this.admMap.removeLayer(this._admLine); this._admLine=null; }
+  clearPts(silent=false) {
+    if(this._admMarkers){ this._admMarkers.forEach(m=>this.admMap&&this.admMap.removeLayer(m)); this._admMarkers=[]; }
+    if(this._admLine){ this.admMap&&this.admMap.removeLayer(this._admLine); this._admLine=null; }
     this.aPts=[];
     this._renderPts(); this._updatePtBadge();
-    this.toast('Puntos eliminados');
+    if(!silent) this.toast('Puntos eliminados');
   },
 
   _addAdmPt(lat,lng) {
@@ -3685,7 +3718,7 @@ const App = {
       this._clearAdmImg();
       this._editingId = null;
       if(btn) { btn.disabled = false; btn.textContent = 'Guardar Loop 🚀'; }
-      this.clearPts(); this.aPois=[]; this._renderPois();
+      this.clearPts(true); this.aPois=[]; this._renderPois();
       this._renderCards('', this._activeFilter||'all');
       setTimeout(()=>this.go('explore'), 1200);
     }
