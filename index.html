@@ -12,15 +12,22 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
+/* ── NIGHT MODE (default) — grises más claros y secciones con color ── */
 :root {
   --or: #FF5F00;  --or2: #FF8C42;  --orL: rgba(255,95,0,.15);  --orD: #C44D00;
-  --dk: #F5F5F5;  --md: #C0C0C8;   --gr: #5A5A68;
-  --lt: #1C1C1E;  --bd: #2C2C2E;   --wh: #141416;
-  --bg0: #0F0F11; --bg1: #141416;  --bg2: #1C1C1E;  --bg3: #252528;
-  --sh: 0 2px 16px rgba(0,0,0,.5); --shL: 0 8px 40px rgba(0,0,0,.7);
+  --dk: #EBEBF0;  --md: #C8C8D4;   --gr: #7A7A8A;
+  --lt: #272730;  --bd: #38383F;   --wh: #1E1E26;
+  --bg0: #16161C; --bg1: #1E1E26;  --bg2: #272730;  --bg3: #2F2F38;
+  --sh: 0 2px 16px rgba(0,0,0,.4); --shL: 0 8px 40px rgba(0,0,0,.6);
   --r: 14px; --rs: 10px; --navH: 0px;
   --fH: 'Syne', system-ui, sans-serif;
   --fB: 'DM Sans', system-ui, sans-serif;
+  /* Colores secciones modo oscuro */
+  --c-verde:  #1A2E1A;  --c-verde-b:  #2A5A2A;  --c-verde-t:  #6FCF97;
+  --c-azul:   #1A1E2E;  --c-azul-b:   #2A3A6A;  --c-azul-t:   #56B4F5;
+  --c-naranja:#2E1E12;  --c-naranja-b:#6A3A1A;  --c-naranja-t:#FF9A5C;
+  --c-viola:  #1E1A2E;  --c-viola-b:  #3A2A6A;  --c-viola-t:  #B794F4;
+  --c-rojo:   #2E1A1A;  --c-rojo-b:   #6A2A2A;  --c-rojo-t:   #FC8181;
 }
 /* ── DAY MODE ── */
 body.day {
@@ -28,7 +35,20 @@ body.day {
   --lt: #EFEFF5;  --bd: #DCDCEC;   --wh: #FFFFFF;
   --bg0: #F2F2FA; --bg1: #FFFFFF;  --bg2: #EFEFF5;  --bg3: #E5E5F0;
   --sh: 0 2px 16px rgba(0,0,0,.09); --shL: 0 8px 40px rgba(0,0,0,.16);
+  /* Colores secciones modo claro */
+  --c-verde:  #EAF7EE;  --c-verde-b:  #4CAF78;  --c-verde-t:  #1E6B3A;
+  --c-azul:   #E8F2FC;  --c-azul-b:   #3B82C4;  --c-azul-t:   #1A4F8A;
+  --c-naranja:#FFF1E8;  --c-naranja-b:#FF7A35;  --c-naranja-t:#8B3A00;
+  --c-viola:  #F0EAFA;  --c-viola-b:  #8B5CF6;  --c-viola-t:  #4C1D95;
+  --c-rojo:   #FEE8E8;  --c-rojo-b:   #EF4444;  --c-rojo-t:   #7F1D1D;
 }
+
+/* Secciones de color aplicadas a badges/chips de tipo */
+.badge-verde  { background:var(--c-verde)!important;  border-color:var(--c-verde-b)!important;  color:var(--c-verde-t)!important; }
+.badge-azul   { background:var(--c-azul)!important;   border-color:var(--c-azul-b)!important;   color:var(--c-azul-t)!important; }
+.badge-naranja{ background:var(--c-naranja)!important;border-color:var(--c-naranja-b)!important;color:var(--c-naranja-t)!important; }
+.badge-viola  { background:var(--c-viola)!important;  border-color:var(--c-viola-b)!important;  color:var(--c-viola-t)!important; }
+.badge-rojo   { background:var(--c-rojo)!important;   border-color:var(--c-rojo-b)!important;   color:var(--c-rojo-t)!important; }
 /* Day mode: force inline dark backgrounds to light */
 body.day #explore > button[style*="background:#1C1C1E"],
 body.day #explore > div[style*="background:#1C1C1E"],
@@ -1447,14 +1467,14 @@ svg.leaflet-image-layer.leaflet-interactive path {
 
 <div id="side-panel"
   style="position:fixed;top:0;left:-310px;width:290px;height:100%;
-         background:#0F0F11;z-index:91;
-         border-right:0.5px solid #2C2C2E;
-         box-shadow:8px 0 40px rgba(0,0,0,.7);
+         background:var(--bg1);z-index:91;
+         border-right:0.5px solid var(--bd);
+         box-shadow:8px 0 40px rgba(0,0,0,.35);
          transition:left .3s cubic-bezier(.4,0,.2,1);
          overflow-y:auto;padding-bottom:40px;">
 
   <!-- Header -->
-  <div style="padding:18px 16px 14px;border-bottom:0.5px solid #1C1C1E;display:flex;align-items:center;justify-content:space-between;">
+  <div style="padding:18px 16px 14px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;">
     <div>
       <div style="font-family:var(--fH);font-size:18px;font-weight:700;color:var(--dk);">
         Urban <span style="color:var(--or);">Loop</span>
@@ -1462,14 +1482,13 @@ svg.leaflet-image-layer.leaflet-interactive path {
       <div style="font-size:11px;color:var(--gr);margin-top:2px;" id="side-city-name">📍 La Paz, Entre Ríos</div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;">
-      <!-- Toggle Día/Noche -->
       <button onclick="App.toggleTheme()" id="theme-toggle-btn"
         title="Modo día / noche"
-        style="width:34px;height:34px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s;">
-        🌙
+        style="width:34px;height:34px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s;">
+        ☀️
       </button>
       <button onclick="App.closeSidePanel()"
-        style="width:34px;height:34px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gr);font-size:18px;">×</button>
+        style="width:34px;height:34px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--md);font-size:18px;font-weight:300;">×</button>
     </div>
   </div>
 
@@ -2831,7 +2850,18 @@ const App = {
     }
   },
 
-  // Ruta real de navegación: ubicación → inicio del loop (OSRM)
+  // ── MODO DE TRANSPORTE ──
+  _navMode: 'foot',  // foot | bike | car
+
+  _navModes: {
+    foot:      { label:'🚶 Caminando',   emoji:'🚶', osrm:'foot',    speed:5,  voz:'caminando' },
+    bike:      { label:'🚴 En bici',     emoji:'🚴', osrm:'bike',    speed:18, voz:'en bicicleta' },
+    scooter:   { label:'🛴 Monopatin',   emoji:'🛴', osrm:'bike',    speed:15, voz:'en monopatín' },
+    moto:      { label:'🏍 Moto',        emoji:'🏍', osrm:'car',     speed:40, voz:'en moto' },
+    car:       { label:'🚗 Auto',        emoji:'🚗', osrm:'car',     speed:40, voz:'en auto' },
+    bus:       { label:'🚌 Colectivo',   emoji:'🚌', osrm:'foot',    speed:20, voz:'en colectivo' },
+  },
+
   async _drawNavToLoop(r) {
     if (this._navLine) {
       if (Array.isArray(this._navLine)) { this._navLine.forEach(l=>{ try{ this.mainMap.removeLayer(l); }catch(e){} }); }
@@ -2843,23 +2873,78 @@ const App = {
     const boundsArr = [...r.pts];
 
     if (!this._locMarker) {
-      // Sin GPS: solo encuadrar la ruta
       this.mainMap.flyToBounds(L.latLngBounds(boundsArr), { padding:[80,90], maxZoom:16, duration:0.9 });
       return;
     }
 
+    // Mostrar selector de transporte antes de calcular
+    this._showTransportPicker(r);
+  },
+
+  _showTransportPicker(r) {
+    let picker = document.getElementById('transport-picker');
+    if (picker) picker.remove();
+
+    picker = document.createElement('div');
+    picker.id = 'transport-picker';
+    picker.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);z-index:50;background:var(--wh);border-radius:18px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.4);min-width:300px;max-width:calc(100vw - 32px);border:1px solid var(--bd);animation:fadeUp .25s ease;';
+
+    const modes = Object.entries(this._navModes);
+    picker.innerHTML = `
+      <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);margin-bottom:10px;">¿Cómo vas a ir?</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        ${modes.map(([key, m]) => `
+          <button onclick="App._selectTransport('${key}')" data-tmode="${key}"
+            style="display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 12px;border-radius:12px;
+                   border:1.5px solid ${this._navMode===key?'var(--or)':'var(--bd)'};
+                   background:${this._navMode===key?'var(--orL)':'var(--lt)'};
+                   cursor:pointer;font-size:11px;color:${this._navMode===key?'var(--or)':'var(--md)'};min-width:52px;transition:all .15s;">
+            <span style="font-size:22px;">${m.emoji}</span>
+            <span>${m.label.split(' ').slice(1).join(' ')}</span>
+          </button>`).join('')}
+      </div>
+      <button onclick="App._confirmTransport()" style="width:100%;padding:11px;border-radius:12px;border:none;background:var(--or);color:white;font-size:14px;font-weight:700;cursor:pointer;">
+        Calcular ruta →
+      </button>
+      <button onclick="document.getElementById('transport-picker').remove()" style="width:100%;padding:8px;border-radius:12px;border:none;background:transparent;color:var(--gr);font-size:12px;cursor:pointer;margin-top:4px;">Cancelar</button>`;
+
+    this._pendingNavRoute = r;
+    document.body.appendChild(picker);
+  },
+
+  _selectTransport(key) {
+    this._navMode = key;
+    document.querySelectorAll('[data-tmode]').forEach(b => {
+      const active = b.dataset.tmode === key;
+      b.style.borderColor = active ? 'var(--or)' : 'var(--bd)';
+      b.style.background  = active ? 'var(--orL)' : 'var(--lt)';
+      b.style.color       = active ? 'var(--or)' : 'var(--md)';
+    });
+  },
+
+  async _confirmTransport() {
+    const picker = document.getElementById('transport-picker');
+    if (picker) picker.remove();
+    const r = this._pendingNavRoute;
+    if (r) await this._calcAndDrawNav(r);
+  },
+
+  async _calcAndDrawNav(r) {
+    if (!r.pts || !r.pts.length) return;
+    const loopStart = r.pts[0];
+    const boundsArr = [...r.pts];
     const uLL = this._locMarker.getLatLng();
     boundsArr.push([uLL.lat, uLL.lng]);
-    this.toast('📡 Calculando ruta...');
 
-    // Mostrar línea provisoria mientras carga
+    const mode = this._navModes[this._navMode] || this._navModes.foot;
+    this.toast(`${mode.emoji} Calculando ruta ${mode.label}...`);
+
     const provisional = L.polyline([[uLL.lat, uLL.lng], loopStart], {
       color:'#FF5F00', weight:2.5, opacity:0.5, dashArray:'8,6'
     }).addTo(this.mainMap);
 
     try {
-      // OSRM routing (pública, sin key)
-      const url = `https://router.project-osrm.org/route/v1/foot/${uLL.lng},${uLL.lat};${loopStart[1]},${loopStart[0]}?overview=full&geometries=geojson&steps=true&annotations=false`;
+      const url = `https://router.project-osrm.org/route/v1/${mode.osrm}/${uLL.lng},${uLL.lat};${loopStart[1]},${loopStart[0]}?overview=full&geometries=geojson&steps=true&annotations=false`;
       const resp = await fetch(url, { signal: AbortSignal.timeout(6000) });
       const data = await resp.json();
       this.mainMap.removeLayer(provisional);
@@ -2868,28 +2953,21 @@ const App = {
         const route = data.routes[0];
         const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
         const distM = Math.round(route.distance);
-        const durMin = Math.round(route.duration / 60);
+        const durMin = Math.round(route.distance / (mode.speed * 1000 / 60));
         const distTxt = distM < 1000 ? `${distM} m` : `${(distM/1000).toFixed(1)} km`;
 
-        // Línea real de la ruta
         const shadow = L.polyline(coords, { color:'#000', weight:8, opacity:0.18, lineCap:'round' }).addTo(this.mainMap);
         const line   = L.polyline(coords, { color:'#FF5F00', weight:5, opacity:0.92, lineCap:'round', lineJoin:'round' }).addTo(this.mainMap);
         this._navLine = [shadow, line];
 
-        // Panel de info de navegación
-        this._showNavPanel(r, distTxt, durMin);
-
-        // Encuadrar
+        this._showNavPanel(r, distTxt, durMin, mode);
         const allPts = [...coords, ...r.pts];
         this.mainMap.flyToBounds(L.latLngBounds(allPts), { padding:[80,100], maxZoom:16, duration:0.9 });
-
-        // Voz de navegación
-        this._startVoiceNav(r, route.legs[0]?.steps || [], distTxt, durMin);
+        this._startVoiceNav(r, route.legs[0]?.steps || [], distTxt, durMin, mode);
       } else {
         throw new Error('No route');
       }
     } catch(e) {
-      // Fallback: línea recta punteada
       try { this.mainMap.removeLayer(provisional); } catch(_) {}
       const fallback = L.polyline([[uLL.lat, uLL.lng], loopStart], {
         color:'#FF5F00', weight:3, opacity:0.75, dashArray:'10,8'
@@ -2900,8 +2978,8 @@ const App = {
     }
   },
 
-  // Panel flotante de navegación
-  _showNavPanel(r, dist, durMin) {
+  _showNavPanel(r, dist, durMin, mode) {
+    mode = mode || this._navModes[this._navMode] || this._navModes.foot;
     let panel = document.getElementById('nav-panel');
     if (!panel) {
       panel = document.createElement('div');
@@ -2911,12 +2989,10 @@ const App = {
     }
     const voiceActive = this._voiceOn;
     panel.innerHTML = `
-      <div style="width:40px;height:40px;border-radius:50%;background:var(--or);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      </div>
+      <div style="width:40px;height:40px;border-radius:50%;background:var(--or);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;">${mode.emoji}</div>
       <div style="flex:1;min-width:0;">
         <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.emoji} ${r.name}</div>
-        <div style="font-size:12px;color:var(--gr);margin-top:2px;">🚶 ${dist} · ~${durMin} min caminando</div>
+        <div style="font-size:12px;color:var(--gr);margin-top:2px;">${mode.label} · ${dist} · ~${durMin} min</div>
       </div>
       <button onclick="App._toggleVoice()" id="voice-btn" title="${voiceActive?'Silenciar voz':'Activar voz'}"
         style="width:36px;height:36px;border-radius:10px;border:1.5px solid ${voiceActive?'var(--or)':'var(--bd)'};background:${voiceActive?'var(--orL)':'var(--lt)'};cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;">
@@ -2948,11 +3024,11 @@ const App = {
   _voiceOn: false,
   _voiceUtter: null,
 
-  _startVoiceNav(r, steps, dist, durMin) {
+  _startVoiceNav(r, steps, dist, durMin, mode) {
     if (!('speechSynthesis' in window)) { this.toast('🔇 Tu dispositivo no soporta voz'); return; }
+    mode = mode || this._navModes[this._navMode] || this._navModes.foot;
     this._voiceOn = true;
-    // Mensaje inicial
-    const msg = `Iniciando navegación a ${r.name}. Distancia: ${dist}, tiempo estimado: ${durMin} minutos caminando.`;
+    const msg = `Iniciando navegación a ${r.name}. Distancia: ${dist}, tiempo estimado: ${durMin} minutos ${mode.voz}.`;
     this._speak(msg);
 
     // Instrucciones de giro (si hay steps)
@@ -4574,18 +4650,11 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
 
   // ── TEMA DÍA / NOCHE ──
   toggleTheme() {
-    const isDark = !document.body.classList.contains('day');
-    document.body.classList.toggle('day', isDark);
+    const goingDark = document.body.classList.contains('day');
+    document.body.classList.toggle('day', !goingDark);
+    localStorage.setItem('ul360_theme', goingDark ? 'dark' : 'light');
     const btn = document.getElementById('theme-toggle-btn');
-    if (btn) btn.textContent = isDark ? '☀️' : '🌙';
-    // Cambiar tile del mapa principal si ya está inicializado
-    if (this.mainMap) {
-      this.mainMap.eachLayer(l => { if (l._url) this.mainMap.removeLayer(l); });
-      const tile = isDark
-        ? 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-        : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© <a href="https://openstreetmap.org">OpenStreetMap</a>',maxZoom:19}).addTo(this.mainMap);
-    }
+    if (btn) btn.textContent = goingDark ? '☀️' : '🌙';
   },
 
   // ── FILTROS COLAPSABLES ──
@@ -4607,7 +4676,16 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   }
 };
 
-document.addEventListener('DOMContentLoaded',()=>App.init());
+document.addEventListener('DOMContentLoaded',()=>{
+  // Arrancar en modo claro por defecto
+  const saved = localStorage.getItem('ul360_theme');
+  if (saved === 'dark') {
+    document.body.classList.remove('day');
+  } else {
+    document.body.classList.add('day');
+  }
+  App.init();
+});
 </script>
 </body>
 </html>
