@@ -2227,13 +2227,10 @@ const App = {
       // Habilitar persistencia offline — guarda localmente y reintenta al servidor
       try {
         await this._db.enablePersistence({ synchronizeTabs: false });
-        console.log('[Firebase] Persistencia offline habilitada');
+        console.log('[Firebase] Persistencia offline habilitada ✓');
       } catch(err) {
-        if (err.code === 'failed-precondition') {
-          console.warn('[Firebase] Persistencia: múltiples tabs abiertas');
-        } else if (err.code === 'unimplemented') {
-          console.warn('[Firebase] Persistencia no soportada en este browser');
-        }
+        console.warn('[Firebase] Persistencia no disponible:', err.code, err.message);
+        // No es fatal — seguimos sin persistencia offline
       }
 
       // Escuchar cambios de sesión POSTERIORES al arranque (login/logout mientras usa la app)
@@ -2432,10 +2429,24 @@ const App = {
       // Timeout de 10s — si tarda más, probablemente AdBlock está bloqueando
       const setPromise = this._db.collection('loops').doc(r.id).set(rClean);
       const timeoutPromise = new Promise((_, rej) =>
-        setTimeout(() => rej(new Error('TIMEOUT: Firestore no respondió en 10s. Si tenés un bloqueador de anuncios (AdBlock, uBlock), desactivalo para este sitio.')), 10000)
+        setTimeout(() => rej(new Error(
+          'Timeout: Firestore no respondió en 10 segundos.\n' +
+          'Posibles causas:\n' +
+          '• Extensión de Chrome bloqueando firestore.googleapis.com\n' +
+          '• Problema de red o firewall\n' +
+          '• Reglas de Firestore incorrectas\n\n' +
+          'Revisá la consola (F12) para más detalle.'
+        )), 10000)
       );
 
-      await Promise.race([setPromise, timeoutPromise]);
+      try {
+        await Promise.race([setPromise, timeoutPromise]);
+      } catch(writeErr) {
+        console.error('[_saveData] Error escribiendo en Firestore:', writeErr);
+        console.error('[_saveData] Código de error:', writeErr.code);
+        console.error('[_saveData] Stack:', writeErr.stack);
+        throw writeErr;
+      }
       console.log(`[_saveData] ✓ loops/${r.id} OK`);
 
       if (imgData) {
@@ -3745,7 +3756,9 @@ const App = {
         this._showSaveSuccess(name, '☁️ Loop subido a la nube');
       }
     } catch(e) {
-      this.toast('⚠️ Error al guardar: ' + e.message);
+      console.error('[saveRoute] ERROR:', e);
+      // Usar alert para que no desaparezca
+      alert('❌ Error al guardar el loop:\n\n' + e.message + '\n\nCopiá este mensaje y mandáselo al desarrollador.');
     } finally {
       // Limpiar formulario siempre
       document.getElementById('adm-name').value='';
