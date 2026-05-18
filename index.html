@@ -12,22 +12,22 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
-/* ── NIGHT MODE (default) — grises más claros y secciones con color ── */
+/* ── NIGHT MODE (default) — azul marino profundo estilo mapa nocturno ── */
 :root {
   --or: #FF5F00;  --or2: #FF8C42;  --orL: rgba(255,95,0,.15);  --orD: #C44D00;
-  --dk: #EBEBF0;  --md: #C8C8D4;   --gr: #7A7A8A;
-  --lt: #272730;  --bd: #38383F;   --wh: #1E1E26;
-  --bg0: #16161C; --bg1: #1E1E26;  --bg2: #272730;  --bg3: #2F2F38;
-  --sh: 0 2px 16px rgba(0,0,0,.4); --shL: 0 8px 40px rgba(0,0,0,.6);
+  --dk: #D6EAFF;  --md: #7EB8E8;   --gr: #3D6B99;
+  --lt: #0C1F35;  --bd: #163352;   --wh: #071426;
+  --bg0: #040D1A; --bg1: #071426;  --bg2: #0C1F35;  --bg3: #112844;
+  --sh: 0 2px 16px rgba(0,0,0,.55); --shL: 0 8px 40px rgba(0,0,0,.75);
   --r: 14px; --rs: 10px; --navH: 0px;
   --fH: 'Syne', system-ui, sans-serif;
   --fB: 'DM Sans', system-ui, sans-serif;
-  /* Colores secciones modo oscuro */
-  --c-verde:  #1A2E1A;  --c-verde-b:  #2A5A2A;  --c-verde-t:  #6FCF97;
-  --c-azul:   #1A1E2E;  --c-azul-b:   #2A3A6A;  --c-azul-t:   #56B4F5;
-  --c-naranja:#2E1E12;  --c-naranja-b:#6A3A1A;  --c-naranja-t:#FF9A5C;
-  --c-viola:  #1E1A2E;  --c-viola-b:  #3A2A6A;  --c-viola-t:  #B794F4;
-  --c-rojo:   #2E1A1A;  --c-rojo-b:   #6A2A2A;  --c-rojo-t:   #FC8181;
+  /* Colores secciones modo oscuro — tono azul marino */
+  --c-verde:  #0A2218;  --c-verde-b:  #1A6040;  --c-verde-t:  #4DE8A0;
+  --c-azul:   #071A30;  --c-azul-b:   #1A4A8A;  --c-azul-t:   #4DC8FF;
+  --c-naranja:#2A1200;  --c-naranja-b:#7A3800;  --c-naranja-t:#FFAA6A;
+  --c-viola:  #150D2E;  --c-viola-b:  #3A1A7A;  --c-viola-t:  #C4A0FF;
+  --c-rojo:   #2A0808;  --c-rojo-b:   #7A1A1A;  --c-rojo-t:   #FF8080;
 }
 /* ── DAY MODE ── */
 body.day {
@@ -61,6 +61,10 @@ body.day #city-notif { background:#FFFFFF !important; }
 body.day .cn-sym-bubble { background:#F0F0F8 !important; border-color:#DCDCEC !important; }
 body.day .qr-sheet { background:#FFFFFF !important; }
 body.day .qr-close-btn { background:#EFEFF5 !important; color:#44445A !important; }
+/* Night mode: searchbar / chips con borde azul sutil */
+body:not(.day) .searchbar { border: 1px solid var(--bd); box-shadow: 0 4px 24px rgba(0,0,0,.7), 0 0 0 1px rgba(70,160,255,.12); }
+body:not(.day) .chip { background:var(--lt); border-color:var(--bd); color:var(--md); }
+body:not(.day) .chip:hover, body:not(.day) .chip.on { background:var(--or); border-color:var(--or); color:#fff; }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); color:var(--dk); background:var(--lt); -webkit-tap-highlight-color:transparent; }
@@ -114,6 +118,10 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 ═══════════════════════ */
 
 #main-map { position:absolute; inset:0; z-index:1; }
+/* Modo noche: filtro azul marino sobre el mapa CartoDB dark */
+body:not(.day) #main-map {
+  filter: hue-rotate(195deg) saturate(1.3) brightness(0.92);
+}
 
 .ex-header {
   position:absolute; top:0; left:0; right:0; z-index:10;
@@ -2625,7 +2633,7 @@ const App = {
       preferCanvas: false
     });
     const TILE_DAY   = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+    const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
     const _tileUrl   = document.body.classList.contains('day') ? TILE_DAY : TILE_NIGHT;
     this._mainTileLayer = L.tileLayer(_tileUrl, {
       attribution: '© <a href="https://openstreetmap.org">OSM</a> / <a href="https://carto.com">CARTO</a>',
@@ -4660,7 +4668,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (btn) btn.textContent = goingDark ? '☀️' : '🌙';
     if (this.mainMap && this._mainTileLayer) {
       const TILE_DAY   = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-      const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+      const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
       this._mainTileLayer.setUrl(document.body.classList.contains('day') ? TILE_DAY : TILE_NIGHT);
     }
   },
