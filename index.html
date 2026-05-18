@@ -2624,8 +2624,11 @@ const App = {
       attributionControl: true,
       preferCanvas: false
     });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '© <a href="https://carto.com">CARTO</a>',
+    const TILE_DAY   = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+    const _tileUrl   = document.body.classList.contains('day') ? TILE_DAY : TILE_NIGHT;
+    this._mainTileLayer = L.tileLayer(_tileUrl, {
+      attribution: '© <a href="https://openstreetmap.org">OSM</a> / <a href="https://carto.com">CARTO</a>',
       subdomains: 'abcd', maxZoom: 19
     }).addTo(this.mainMap);
     L.control.zoom({ position: 'topright' }).addTo(this.mainMap);
@@ -4655,6 +4658,11 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     localStorage.setItem('ul360_theme', goingDark ? 'dark' : 'light');
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) btn.textContent = goingDark ? '☀️' : '🌙';
+    if (this.mainMap && this._mainTileLayer) {
+      const TILE_DAY   = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+      const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+      this._mainTileLayer.setUrl(document.body.classList.contains('day') ? TILE_DAY : TILE_NIGHT);
+    }
   },
 
   // ── FILTROS COLAPSABLES ──
