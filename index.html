@@ -1562,7 +1562,7 @@ svg.leaflet-image-layer.leaflet-interactive path {
   <div class="dt-hero" id="dt-hero">
     <img id="dt-img" class="dt-hero-img" src="" alt="">
     <div class="dt-hero-grad"></div>
-    <button class="dt-back" onclick="App.go(App._detailFrom||'explore')">
+    <button class="dt-back" onclick="App.go('explore')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
     </button>
     <button class="dt-fav" id="dt-fav-btn" onclick="App.toggleFav()">
@@ -1586,9 +1586,9 @@ svg.leaflet-image-layer.leaflet-interactive path {
     <div class="stops" id="stops-list"></div>
   </div>
   <div class="cta-fixed">
-    <button class="btn-go" onclick="App.viewLoopOnMap()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      Ver Loop en el Mapa
+    <button class="btn-go" onclick="App.startLoop()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Iniciar Loop
     </button>
   </div>
 </div>
@@ -3138,11 +3138,10 @@ const App = {
   },
 
   // ── SHOW DETAIL ──
-  showDetail(id, from) {
+  showDetail(id) {
     const r = this.routes.find(x=>x.id===id);
     if (!r) return;
     this.selId = id;
-    this._detailFrom = from || 'explore';
 
     document.getElementById('dt-title').textContent = r.name;
     document.getElementById('dt-sub').textContent = `La Paz, Entre Ríos · ${r.pois?r.pois.length:0} paradas`;
@@ -3204,16 +3203,6 @@ const App = {
     else { this.favs.push(this.selId); this.toast('❤️ Guardado en favoritos'); }
     localStorage.setItem('ul360_favs', JSON.stringify(this.favs));
     this.showDetail(this.selId);
-  },
-
-  viewLoopOnMap() {
-    if (!this.selId) return;
-    const id = this.selId;
-    this.go('explore');
-    setTimeout(() => {
-      this.selectRoute(id);
-      this.toast('🗺️ Mostrando el loop en el mapa');
-    }, 350);
   },
 
   startLoop() {
@@ -3777,7 +3766,7 @@ const App = {
   // ── VUELTAS LIST ──
   _renderLoops() {
     document.getElementById('loops-body').innerHTML = this.routes.map(r=>`
-      <div class="rli" onclick="App.showDetail('${r.id}','loops')">
+      <div class="rli" onclick="App.showDetail('${r.id}')">
         <div class="rli-em" style="background:linear-gradient(135deg,${r.color}18,${r.color}33)">${r.emoji}</div>
         <div class="rli-info">
           <h3>${r.name}</h3>
@@ -4027,7 +4016,7 @@ const App = {
       const liked = (this.likes||[]).includes(r.id);
       const lkCt = r.likes||0;
       return `
-      <div class="com-card" onclick="App.showDetail('${r.id}','comunidad')" style="cursor:pointer;">
+      <div class="com-card">
         <div class="com-card-hdr">
           <div class="com-avatar" style="background:${uCol}">${uInit}</div>
           <div class="com-user-info">
@@ -4045,15 +4034,15 @@ const App = {
           <div class="com-stat"><svg width="12" height="12" viewBox="0 0 24 24" fill="${liked?'#FF5F00':'none'}" stroke="${liked?'#FF5F00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${lkCt} likes</div>
         </div>
         <div class="com-actions">
-          <button class="com-action-btn ${liked?'liked':''}" onclick="event.stopPropagation();App.likeLoop('${r.id}');App._renderComunidad()">
+          <button class="com-action-btn ${liked?'liked':''}" onclick="App.likeLoop('${r.id}');App._renderComunidad()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="${liked?'#FF5F00':'none'}" stroke="${liked?'#FF5F00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             ${liked?'Me gustó':'Me gusta'}
           </button>
-          <button class="com-action-btn" onclick="event.stopPropagation();App.showDetail('${r.id}','comunidad')">
+          <button class="com-action-btn" onclick="App.showDetail('${r.id}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             Ver loop
           </button>
-          <button class="com-action-btn" onclick="event.stopPropagation();App.showQR('${r.id}')">
+          <button class="com-action-btn" onclick="App.showQR('${r.id}')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><rect x="16" y="16" width="5" height="5"/></svg>
             QR
           </button>
@@ -4597,10 +4586,25 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       this._layers[id].forEach(l => { try{ this.mainMap && this.mainMap.removeLayer(l); }catch(e){} });
       delete this._layers[id];
     }
-    // Quitar del array
+    // Quitar del array local
     this.routes = this.routes.filter(x=>x.id!==id);
-    // Persistir en Firebase/localStorage
-    await this._saveData();
+
+    // ── BORRAR DE FIRESTORE (el bug principal) ──
+    if (this._db) {
+      try {
+        await this._db.collection('loops').doc(id).delete();
+        console.log(`[deleteRoute] ✅ loops/${id} eliminado de Firestore`);
+        // Borrar imagen asociada si existe
+        try { await this._db.collection('loop_imgs').doc(id).delete(); } catch(_) {}
+      } catch(e) {
+        console.error('[deleteRoute] Error borrando de Firestore:', e);
+        this.toast('⚠️ Error al eliminar del servidor. Reintentando...');
+        try { await this._db.collection('loops').doc(id).delete(); } catch(_) {}
+      }
+    }
+    // Actualizar localStorage (sin el loop eliminado)
+    const custom = this.routes.filter(x => !DEFAULTS.find(d=>d.id===x.id));
+    localStorage.setItem('ul360_routes', JSON.stringify(custom));
     // Cerrar modal y refrescar
     this.closeLoopModal();
     if (this.selId === id) {
