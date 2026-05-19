@@ -2621,7 +2621,7 @@ const App = {
       preferCanvas: false
     });
     const TILE_DAY   = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-    const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+    const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
     const _tileUrl   = document.body.classList.contains('day') ? TILE_DAY : TILE_NIGHT;
     this._mainTileLayer = L.tileLayer(_tileUrl, {
       attribution: '© <a href="https://openstreetmap.org">OSM</a> / <a href="https://carto.com">CARTO</a>',
@@ -4586,25 +4586,10 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       this._layers[id].forEach(l => { try{ this.mainMap && this.mainMap.removeLayer(l); }catch(e){} });
       delete this._layers[id];
     }
-    // Quitar del array local
+    // Quitar del array
     this.routes = this.routes.filter(x=>x.id!==id);
-
-    // ── BORRAR DE FIRESTORE (el bug principal) ──
-    if (this._db) {
-      try {
-        await this._db.collection('loops').doc(id).delete();
-        console.log(`[deleteRoute] ✅ loops/${id} eliminado de Firestore`);
-        // Borrar imagen asociada si existe
-        try { await this._db.collection('loop_imgs').doc(id).delete(); } catch(_) {}
-      } catch(e) {
-        console.error('[deleteRoute] Error borrando de Firestore:', e);
-        this.toast('⚠️ Error al eliminar del servidor. Reintentando...');
-        try { await this._db.collection('loops').doc(id).delete(); } catch(_) {}
-      }
-    }
-    // Actualizar localStorage (sin el loop eliminado)
-    const custom = this.routes.filter(x => !DEFAULTS.find(d=>d.id===x.id));
-    localStorage.setItem('ul360_routes', JSON.stringify(custom));
+    // Persistir en Firebase/localStorage
+    await this._saveData();
     // Cerrar modal y refrescar
     this.closeLoopModal();
     if (this.selId === id) {
@@ -4671,7 +4656,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (btn) btn.textContent = goingDark ? '☀️' : '🌙';
     if (this.mainMap && this._mainTileLayer) {
       const TILE_DAY   = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-      const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png';
+      const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
       this._mainTileLayer.setUrl(document.body.classList.contains('day') ? TILE_DAY : TILE_NIGHT);
     }
   },
