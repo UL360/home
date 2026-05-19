@@ -602,6 +602,11 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 .maplibregl-ctrl-group button { color: var(--md) !important; background: transparent !important; }
 .maplibregl-ctrl-group button:hover { background: rgba(255,95,0,.12) !important; color: #FF5F00 !important; }
 .maplibregl-ctrl-attrib { font-size: 9px !important; background: rgba(20,20,22,.75) !important; color: #5A5A68 !important; }
+/* Mapa principal: ocultar todos los controles MapLibre — la app usa sus propios botones custom */
+#main-map .maplibregl-ctrl-top-right,
+#main-map .maplibregl-ctrl-top-left,
+#main-map .maplibregl-ctrl-bottom-left { display: none !important; }
+#main-map .maplibregl-ctrl-bottom-right { display: none !important; }
 .maplibregl-popup-content { background: var(--wh) !important; color: var(--dk) !important; border-radius: var(--rs) !important; box-shadow: var(--shL) !important; font-family: var(--fB) !important; font-size: 13px !important; padding: 10px 14px !important; }
 .maplibregl-popup-tip { display: none; }
 .maplibregl-ctrl-compass .maplibregl-ctrl-icon { filter: invert(0.6); }
@@ -1954,7 +1959,7 @@ const App = {
       zoom: 14,
       antialias: true
     });
-    this.mainMap.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
+    this.mainMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
     this._layers = {};      // { routeId: ['src-id','layer-glow','layer-line','layer-dot'] }
     this._layerSrc = {};    // { routeId: true } para rastrear fuentes
     this.mainMap.on('load', () => {
@@ -3253,7 +3258,7 @@ const App = {
       center: [-59.6450, -30.7490],
       zoom: 14
     });
-    this.admMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
+    this.admMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     this.admMap.on('load', () => {
       this.admMap.on('click', e => this._addAdmPt(e.lngLat.lat, e.lngLat.lng));
     });
@@ -3591,7 +3596,7 @@ const App = {
       center: [-59.6450, -30.7490],
       zoom: 14
     });
-    this.grabMap.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'top-right');
+    this.grabMap.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right');
     this.grabPts=[]; this.grabSecs=0; this.grabState='idle';
     this._grabLine=null; this._grabSim=null;
     document.getElementById('grab-type-row').addEventListener('click',e=>{
