@@ -607,6 +607,8 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 #main-map .maplibregl-ctrl-top-left,
 #main-map .maplibregl-ctrl-bottom-left { display: none !important; }
 #main-map .maplibregl-ctrl-bottom-right { display: none !important; }
+/* Botón 3D activo */
+#btn-3d.active { background: #FF5F00 !important; color: white !important; border-color: #FF5F00 !important; box-shadow: 0 4px 16px rgba(255,95,0,.4); }
 .maplibregl-popup-content { background: var(--wh) !important; color: var(--dk) !important; border-radius: var(--rs) !important; box-shadow: var(--shL) !important; font-family: var(--fB) !important; font-size: 13px !important; padding: 10px 14px !important; }
 .maplibregl-popup-tip { display: none; }
 .maplibregl-ctrl-compass .maplibregl-ctrl-icon { filter: invert(0.6); }
@@ -778,6 +780,11 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
         <path d="M12 22L8 14h8L12 22z" fill="#C0C0C8"/>
         <circle cx="12" cy="12" r="2" fill="#C0C0C8"/>
       </svg>
+    </button>
+    <!-- Toggle 3D -->
+    <button id="btn-3d" onclick="App.toggle3D()" title="Vista 3D"
+      style="width:40px;height:40px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#C0C0C8;font-size:11px;font-weight:700;font-family:var(--fH);transition:all .2s;margin-top:2px;">
+      3D
     </button>
     <!-- GPS accuracy badge -->
     <div id="gps-badge" style="text-align:center;font-size:9px;font-weight:600;color:#5A5A68;font-family:var(--fB);line-height:1.2;padding:2px 0;">GPS</div>
@@ -4145,11 +4152,71 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     localStorage.setItem('ul360_theme', goingDark ? 'dark' : 'light');
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) btn.textContent = goingDark ? '☀️' : '🌙';
-    if (this.mainMap && this._mainTileLayer) {
-      const TILE_DAY   = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-      const TILE_NIGHT = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-      this._mainTileLayer.setUrl(document.body.classList.contains('day') ? TILE_DAY : TILE_NIGHT);
+
+    if (this.mainMap) {
+      const newStyle = goingDark ? this._ML_STYLE_DARK : this._ML_STYLE_LIGHT;
+      this.mainMap.setStyle(newStyle);
+      // Re-agregar rutas y edificios 3D tras cambio de estilo
+      this.mainMap.once('styledata', () => {
+        this._layers = {};
+        this._poiMarkers = {};
+        this.routes.forEach(r => this._drawRoute(r));
+        if (this._is3D) this._add3DBuildings();
+      });
     }
+  },
+
+  // ── TOGGLE 3D EDIFICIOS ──
+  _is3D: false,
+
+  toggle3D() {
+    this._is3D = !this._is3D;
+    const btn = document.getElementById('btn-3d');
+    if (!this.mainMap) return;
+    if (this._is3D) {
+      this._add3DBuildings();
+      this.mainMap.easeTo({ pitch: 50, bearing: -15, zoom: 15.5, duration: 1200 });
+      if (btn) btn.classList.add('active');
+      this.toast('🏙️ Vista 3D activada');
+    } else {
+      this._remove3DBuildings();
+      this.mainMap.easeTo({ pitch: 0, bearing: 0, duration: 800 });
+      if (btn) btn.classList.remove('active');
+      this.toast('2D activado');
+    }
+  },
+
+  _add3DBuildings() {
+    if (!this.mainMap || this.mainMap.getLayer('ml-buildings-3d')) return;
+    // Insertar antes del primer layer de tipo symbol (texto/iconos) para que los labels queden arriba
+    const layers = this.mainMap.getStyle().layers;
+    let firstSymbolId;
+    for (const layer of layers) {
+      if (layer.type === 'symbol') { firstSymbolId = layer.id; break; }
+    }
+    try {
+      this.mainMap.addLayer({
+        id: 'ml-buildings-3d',
+        type: 'fill-extrusion',
+        source: 'openmaptiles',
+        'source-layer': 'building',
+        minzoom: 13,
+        paint: {
+          'fill-extrusion-color': document.body.classList.contains('day') ? '#CBD5E1' : '#2F2F3E',
+          'fill-extrusion-height': [
+            'interpolate', ['linear'], ['zoom'],
+            13, 0,
+            15, ['coalesce', ['get', 'render_height'], 10]
+          ],
+          'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+          'fill-extrusion-opacity': ['interpolate', ['linear'], ['zoom'], 13, 0, 15, 0.8]
+        }
+      }, firstSymbolId);
+    } catch(e) { console.warn('3D buildings:', e); }
+  },
+
+  _remove3DBuildings() {
+    try { if (this.mainMap && this.mainMap.getLayer('ml-buildings-3d')) this.mainMap.removeLayer('ml-buildings-3d'); } catch(e) {}
   },
 
   // ── FILTROS COLAPSABLES ──
