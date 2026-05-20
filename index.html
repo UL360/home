@@ -609,6 +609,11 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 #main-map .maplibregl-ctrl-bottom-right { display: none !important; }
 /* Botón 3D activo */
 #btn-3d.active { background: #FF5F00 !important; color: white !important; border-color: #FF5F00 !important; box-shadow: 0 4px 16px rgba(255,95,0,.4); }
+/* Brújula activa */
+#main-compass.rotating { background: #FF5F00 !important; border-color: #FF5F00 !important; }
+/* fl-cat chip más compacto con las nuevas etiquetas */
+.fl-cat { padding: 5px 10px; border-radius: 20px; border: 1px solid var(--bd); background: var(--lt); font-size: 12px; color: var(--md); cursor: pointer; font-family: var(--fB); font-weight: 500; transition: all .15s; white-space: nowrap; }
+.fl-cat.on { background: var(--orL); border-color: var(--or); color: var(--or); font-weight: 600; }
 .maplibregl-popup-content { background: var(--wh) !important; color: var(--dk) !important; border-radius: var(--rs) !important; box-shadow: var(--shL) !important; font-family: var(--fB) !important; font-size: 13px !important; padding: 10px 14px !important; }
 .maplibregl-popup-tip { display: none; }
 .maplibregl-ctrl-compass .maplibregl-ctrl-icon { filter: invert(0.6); }
@@ -1382,15 +1387,27 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
     <input id="fl-name" type="text" placeholder="Nombre del lugar (ej: Costanera Norte, Bar El Viejo)" class="fi" style="margin-bottom:10px;width:100%;box-sizing:border-box;">
     <textarea id="fl-desc" placeholder="Contales a los demás por qué vale la pena parar acá..." style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:60px;font-family:var(--fS);margin-bottom:10px;"></textarea>
 
-    <!-- Categoría -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+    <!-- Categorías / Etiquetas -->
+    <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">Etiqueta</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
       <button class="fl-cat on" data-c="lugar" onclick="App._setFLCat(this)">📍 Lugar</button>
       <button class="fl-cat" data-c="gastro" onclick="App._setFLCat(this)">🍽️ Gastro</button>
       <button class="fl-cat" data-c="naturaleza" onclick="App._setFLCat(this)">🌿 Natural</button>
       <button class="fl-cat" data-c="rio" onclick="App._setFLCat(this)">🌊 Río</button>
-      <button class="fl-cat" data-c="museo" onclick="App._setFLCat(this)">🏛️ Cultura</button>
+      <button class="fl-cat" data-c="playa" onclick="App._setFLCat(this)">🏖️ Playa</button>
+      <button class="fl-cat" data-c="parque" onclick="App._setFLCat(this)">🌳 Parque</button>
+      <button class="fl-cat" data-c="plaza" onclick="App._setFLCat(this)">🏛️ Plaza</button>
+      <button class="fl-cat" data-c="museo" onclick="App._setFLCat(this)">🖼️ Museo</button>
+      <button class="fl-cat" data-c="pesca" onclick="App._setFLCat(this)">🎣 Pesca</button>
+      <button class="fl-cat" data-c="aventura" onclick="App._setFLCat(this)">🧗 Aventura</button>
+      <button class="fl-cat" data-c="campo" onclick="App._setFLCat(this)">🌾 Campo</button>
       <button class="fl-cat" data-c="deporte" onclick="App._setFLCat(this)">⚽ Deporte</button>
+      <button class="fl-cat" data-c="ciclismo" onclick="App._setFLCat(this)">🚴 Ciclismo</button>
+      <button class="fl-cat" data-c="arte" onclick="App._setFLCat(this)">🎨 Arte</button>
+      <button class="fl-cat" data-c="nocturno" onclick="App._setFLCat(this)">🌙 Noche</button>
       <button class="fl-cat" data-c="perro" onclick="App._setFLCat(this)">🐕 Pet</button>
+      <button class="fl-cat" data-c="foto" onclick="App._setFLCat(this)">📸 Foto</button>
+      <button class="fl-cat" data-c="otro" onclick="App._setFLCat(this)">✳️ Otro</button>
     </div>
 
     <!-- Mapa de ubicación -->
@@ -1962,10 +1979,15 @@ const App = {
     this.mainMap = new maplibregl.Map({
       container: 'main-map',
       style: isDark ? this._ML_STYLE_DARK : this._ML_STYLE_LIGHT,
-      center: [-59.6450, -30.7490], // MapLibre: [lng, lat]
+      center: [-59.6450, -30.7490],
       zoom: 14,
-      antialias: true
+      antialias: true,
+      dragRotate: false,        // ← desactiva rotación con Ctrl+drag / dos dedos
+      touchZoomRotate: false,   // ← desactiva rotación táctil (solo permite pinch-zoom)
+      bearingSnap: 0            // ← no hace snap al norte al soltar
     });
+    // Re-habilitar solo el pinch-zoom sin rotación
+    this.mainMap.touchZoomRotate.disableRotation();
     this.mainMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
     this._layers = {};      // { routeId: ['src-id','layer-glow','layer-line','layer-dot'] }
     this._layerSrc = {};    // { routeId: true } para rastrear fuentes
@@ -1985,7 +2007,6 @@ const App = {
   _startGPSTracking() {
     if (!navigator.geolocation) { this.toast('GPS no disponible en este dispositivo'); return; }
 
-    // Crear elemento HTML del marcador pulsante
     const el = document.createElement('div');
     el.className = 'user-loc-wrap';
     el.innerHTML = '<div class="user-loc-pulse"></div><div class="user-loc-dot"></div>';
@@ -1994,32 +2015,30 @@ const App = {
     this._locCircle  = null;
     this._locCentered = true;
     this._locEl = el;
+    this._lastHeading = null;
 
     const onPos = (pos) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
       const acc = Math.min(pos.coords.accuracy, 200);
+      // Heading del GPS (disponible en móvil con movimiento)
+      const gpsHeading = pos.coords.heading; // puede ser null
 
       if (!this._locMarker) {
         this._locMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
           .setLngLat([lng, lat])
           .addTo(this.mainMap);
 
-        // Círculo de precisión como fuente GeoJSON
         this.mainMap.addSource('user-accuracy', {
           type: 'geojson',
           data: this._makeCircleGeoJSON(lat, lng, acc)
         });
         this.mainMap.addLayer({
-          id: 'user-accuracy-fill',
-          type: 'fill',
-          source: 'user-accuracy',
+          id: 'user-accuracy-fill', type: 'fill', source: 'user-accuracy',
           paint: { 'fill-color': '#3B82F6', 'fill-opacity': 0.12 }
         });
         this.mainMap.addLayer({
-          id: 'user-accuracy-line',
-          type: 'line',
-          source: 'user-accuracy',
+          id: 'user-accuracy-line', type: 'line', source: 'user-accuracy',
           paint: { 'line-color': '#2563EB', 'line-width': 1.5, 'line-opacity': 0.5 }
         });
 
@@ -2034,10 +2053,25 @@ const App = {
           this.mainMap.getSource('user-accuracy').setData(this._makeCircleGeoJSON(lat, lng, acc));
         }
         if (this._followMe) {
-          this.mainMap.panTo([lng, lat], { animate: true, duration: 500 });
+          // Seguir posición con easeTo (suave, sin saltos)
+          const bearing = this._mapRotating ? (this._compassHeading || 0) : (gpsHeading != null ? gpsHeading : this.mainMap.getBearing());
+          this.mainMap.easeTo({
+            center: [lng, lat],
+            bearing: this._mapRotating ? -bearing : bearing,
+            duration: 800,
+            easing: t => t
+          });
         }
       }
-      // Badge GPS
+
+      // Rotar mapa con heading GPS si no hay brújula del dispositivo
+      if (this._followMe && !this._mapRotating && gpsHeading != null && !isNaN(gpsHeading)) {
+        this._lastHeading = gpsHeading;
+        if (this.mainMap) this.mainMap.easeTo({ bearing: gpsHeading, duration: 600 });
+        const svgMain = document.getElementById('main-compass-svg');
+        if (svgMain) svgMain.style.transform = `rotate(${gpsHeading}deg)`;
+      }
+
       const badge = document.getElementById('gps-badge');
       if (badge) {
         badge.textContent = acc < 20 ? `GPS ±${Math.round(acc)}m` : acc < 50 ? `±${Math.round(acc)}m` : '...';
@@ -2053,7 +2087,7 @@ const App = {
     this._gpsWatcher = navigator.geolocation.watchPosition(onPos, onErr, {
       enableHighAccuracy: true,
       timeout: 10000,
-      maximumAge: 3000
+      maximumAge: 1000   // más frecuente para mejor seguimiento
     });
   },
 
@@ -2075,15 +2109,22 @@ const App = {
     this._followMe = !this._followMe;
     const btn = document.getElementById('locate-btn');
     if (btn) {
-      btn.style.background  = this._followMe ? '#FF5F00' : 'var(--wh)';
-      btn.style.color       = this._followMe ? 'white'   : 'var(--md)';
+      btn.style.background = this._followMe ? '#FF5F00' : 'var(--wh)';
+      btn.style.color      = this._followMe ? 'white'   : 'var(--md)';
     }
-    if (this._followMe && this._locMarker) {
-      const ll = this._locMarker.getLngLat();
-      this.mainMap.flyTo({ center: [ll.lng, ll.lat], zoom: 16, duration: 600 });
-      this.toast('🧭 Siguiendo tu ubicación');
+    if (this._followMe) {
+      if (this._locMarker) {
+        const ll = this._locMarker.getLngLat();
+        this.mainMap.flyTo({ center: [ll.lng, ll.lat], zoom: 17, pitch: 20, duration: 800 });
+      }
+      // Activar brújula automáticamente al seguir
+      if (!this._mapRotating) this._toggleMapRotation();
+      this.toast('🧭 Siguiendo — el mapa gira con vos');
     } else {
-      this.toast('Navegación libre');
+      // Desactivar brújula y volver a norte
+      if (this._mapRotating) this._toggleMapRotation();
+      this.mainMap.easeTo({ pitch: 0, bearing: 0, duration: 600 });
+      this.toast('📍 Navegación libre');
     }
   },
 
@@ -2294,6 +2335,9 @@ const App = {
     moto:      { label:'🏍 Moto',        emoji:'🏍', osrm:'car',     speed:40, voz:'en moto' },
     car:       { label:'🚗 Auto',        emoji:'🚗', osrm:'car',     speed:40, voz:'en auto' },
     bus:       { label:'🚌 Colectivo',   emoji:'🚌', osrm:'foot',    speed:20, voz:'en colectivo' },
+    horse:     { label:'🐴 A caballo',   emoji:'🐴', osrm:'foot',    speed:10, voz:'a caballo' },
+    kayak:     { label:'🛶 Kayak',       emoji:'🛶', osrm:'foot',    speed:6,  voz:'en kayak' },
+    run:       { label:'🏃 Corriendo',   emoji:'🏃', osrm:'foot',    speed:10, voz:'corriendo' },
   },
 
   async _drawNavToLoop(r) {
@@ -2484,10 +2528,9 @@ const App = {
     if (!('speechSynthesis' in window)) { this.toast('🔇 Tu dispositivo no soporta voz'); return; }
     mode = mode || this._navModes[this._navMode] || this._navModes.foot;
     this._voiceOn = true;
-    const msg = `Iniciando navegación a ${r.name}. Distancia: ${dist}, tiempo estimado: ${durMin} minutos ${mode.voz}.`;
+    // Mensaje de inicio con el modo de transporte correcto
+    const msg = `Iniciando navegación ${mode.voz} a ${r.name}. Distancia: ${dist}, tiempo estimado: ${durMin} minutos.`;
     this._speak(msg);
-
-    // Instrucciones de giro (si hay steps)
     if (steps && steps.length) {
       this._voiceSteps = steps.filter(s => s.maneuver && s.maneuver.type !== 'arrive' && s.distance > 15);
       this._voiceIdx = 0;
@@ -3076,8 +3119,18 @@ const App = {
 
     if (!lat || !lng) return this.toast('⚠️ Marcá la ubicación en el mapa');
 
-    const catEmojis = { lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', museo:'🏛️', deporte:'⚽', perro:'🐕' };
-    const catColors = { lugar:'#FF5F00', gastro:'#DB2777', naturaleza:'#059669', rio:'#0891B2', museo:'#7C3AED', deporte:'#16A34A', perro:'#D97706' };
+    const catEmojis = {
+      lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', playa:'🏖️', parque:'🌳',
+      plaza:'🏛️', museo:'🖼️', pesca:'🎣', aventura:'🧗', campo:'🌾', deporte:'⚽',
+      ciclismo:'🚴', arte:'🎨', nocturno:'🌙', perro:'🐕', foto:'📸', otro:'✳️'
+    };
+    const catColors = {
+      lugar:'#FF5F00', gastro:'#DB2777', naturaleza:'#059669', rio:'#0891B2',
+      playa:'#0284C7', parque:'#16A34A', plaza:'#7C3AED', museo:'#9333EA',
+      pesca:'#0369A1', aventura:'#EA580C', campo:'#65A30D', deporte:'#DC2626',
+      ciclismo:'#D97706', arte:'#C026D3', nocturno:'#4F46E5', perro:'#CA8A04',
+      foto:'#0F766E', otro:'#6B7280'
+    };
     const cat = this._fotoLoopCat;
     const emoji = catEmojis[cat] || '📍';
     const color = catColors[cat] || '#FF5F00';
@@ -3147,6 +3200,9 @@ const App = {
       }
 
       this.closeFotoLoop();
+      // Guardar en lista local para preview inmediato
+      if (!this._fotoPosts) this._fotoPosts = [];
+      this._fotoPosts.unshift({ ...stopData, img: this._fotoLoopImg || '' });
       this._addPts(30, 'Parada publicada');
       this._showSaveSuccess(name, '🌐 Parada publicada');
     } catch(e) {
@@ -3181,36 +3237,51 @@ const App = {
         this._startCompass();
       }
       if (compass) compass.style.background = 'var(--or)';
-      if (compassMain) compassMain.style.background = 'var(--or)';
+      if (compassMain) { compassMain.classList.add('rotating'); }
       this.toast('🧭 Mapa girando con vos');
     } else {
       this._stopCompass();
-      if (compass) compass.style.background = 'rgba(0,0,0,.55)';
-      if (compassMain) compassMain.style.background = 'rgba(0,0,0,.55)';
-      // Resetear rotación del mapa
-      const map = this.grabMap || this.mainMap;
-      if (map) map.setBearing ? map.setBearing(0) : this._rotateTilePane(map, 0);
-      this.toast('🧭 Mapa orientado al norte');
+      if (compass) { compass.style.background = 'rgba(0,0,0,.55)'; compass.style.color = '#C0C0C8'; }
+      if (compassMain) { compassMain.classList.remove('rotating'); compassMain.style.background = '#1C1C1E'; compassMain.style.border = '0.5px solid #2C2C2E'; }
+      // Volver suavemente al norte
+      const map = this.mainMap;
+      if (map) map.easeTo({ bearing: 0, pitch: 0, duration: 600 });
+      this.toast('🧭 Norte');
     }
   },
 
   _startCompass() {
+    let lastApplied = 0;
     this._orientationHandler = (e) => {
-      let heading = e.webkitCompassHeading || (e.alpha ? 360 - e.alpha : 0);
-      this._compassHeading = heading;
-      // Rotar SVG de brújula
-      const svg = document.getElementById('grab-compass-svg');
+      let heading = e.webkitCompassHeading != null
+        ? e.webkitCompassHeading
+        : (e.alpha != null ? (360 - e.alpha) : null);
+      if (heading == null || isNaN(heading)) return;
+
+      // Suavizar con promedio móvil simple
+      this._compassHeading = this._compassHeading == null
+        ? heading
+        : this._compassHeading * 0.7 + heading * 0.3;
+
+      const h = this._compassHeading;
+
+      // Rotar SVG de la brújula (siempre)
+      const svgGrab = document.getElementById('grab-compass-svg');
       const svgMain = document.getElementById('main-compass-svg');
-      if (svg) svg.style.transform = `rotate(${heading}deg)`;
-      if (svgMain) svgMain.style.transform = `rotate(${heading}deg)`;
-      // Rotar mapa
-      if (this._mapRotating) {
-        const map = this.grabMap || this.mainMap;
-        if (map) this._rotateTilePane(map, -heading);
-      }
+      if (svgGrab) svgGrab.style.transform = `rotate(${h}deg)`;
+      if (svgMain) svgMain.style.transform = `rotate(${h}deg)`;
+
+      // Rotar mapa — solo si está en modo rotación Y con throttle de 150ms
+      if (!this._mapRotating) return;
+      const now = Date.now();
+      if (now - lastApplied < 150) return;
+      lastApplied = now;
+
+      const map = this.mainMap;
+      if (map) map.easeTo({ bearing: -h, duration: 300, easing: t => t });
     };
     window.addEventListener('deviceorientationabsolute', this._orientationHandler, true);
-    window.addEventListener('deviceorientation', this._orientationHandler, true);
+    window.addEventListener('deviceorientation',         this._orientationHandler, true);
   },
 
   _stopCompass() {
@@ -3233,7 +3304,23 @@ const App = {
 
   // ── VUELTAS LIST ──
   _renderLoops() {
-    document.getElementById('loops-body').innerHTML = this.routes.map(r=>`
+    const FL_CATS = {
+      lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', playa:'🏖️', parque:'🌳',
+      plaza:'🏛️', museo:'🖼️', pesca:'🎣', aventura:'🧗', campo:'🌾', deporte:'⚽',
+      ciclismo:'🚴', arte:'🎨', nocturno:'🌙', perro:'🐕', foto:'📸', otro:'✳️'
+    };
+    const catLabel = c => {
+      const names = {
+        lugar:'Lugar', gastro:'Gastro', naturaleza:'Natural', rio:'Río', playa:'Playa',
+        parque:'Parque', plaza:'Plaza', museo:'Museo', pesca:'Pesca', aventura:'Aventura',
+        campo:'Campo', deporte:'Deporte', ciclismo:'Ciclismo', arte:'Arte',
+        nocturno:'Noche', perro:'Pet', foto:'Foto', otro:'Otro'
+      };
+      return `${FL_CATS[c]||'📍'} ${names[c]||c}`;
+    };
+
+    // ── Loops normales ──
+    const loopsHtml = this.routes.map(r=>`
       <div class="rli" onclick="App.showDetail('${r.id}')">
         <div class="rli-em" style="background:linear-gradient(135deg,${r.color}18,${r.color}33)">${r.emoji}</div>
         <div class="rli-info">
@@ -3243,6 +3330,65 @@ const App = {
         </div>
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
       </div>`).join('');
+
+    // ── FotoLoops ──
+    const fotoPosts = this._fotoPosts || [];
+    const fotoHtml = fotoPosts.length === 0
+      ? `<div style="text-align:center;padding:20px 0;color:var(--gr);font-size:13px;">
+           <div style="font-size:32px;margin-bottom:8px;">📸</div>
+           Aún no hay Foto Loops publicados.<br>¡Sé el primero en agregar uno!
+         </div>`
+      : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          ${fotoPosts.map(p=>`
+          <div onclick="App._showFotoDetail('${p.id}')"
+            style="border-radius:14px;overflow:hidden;background:var(--lt);border:0.5px solid var(--bd);cursor:pointer;transition:transform .15s;"
+            onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''" ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
+            ${p.img
+              ? `<div style="aspect-ratio:4/3;background:var(--bg0);overflow:hidden;">
+                   <img src="${p.img}" style="width:100%;height:100%;object-fit:cover;" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;\\'>${FL_CATS[p.cat]||'📍'}</div>'">
+                 </div>`
+              : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:40px;">${FL_CATS[p.cat]||'📍'}</div>`
+            }
+            <div style="padding:9px 10px 10px;">
+              <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+              <div style="font-size:11px;color:var(--or);font-weight:600;margin-top:2px;">${catLabel(p.cat)}</div>
+              <div style="font-size:11px;color:var(--gr);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.desc||''}</div>
+              <div style="font-size:10px;color:var(--gr);margin-top:5px;display:flex;align-items:center;gap:4px;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                ${p.lat?`${Number(p.lat).toFixed(4)}, ${Number(p.lng).toFixed(4)}`:'Sin ubicación'}
+              </div>
+            </div>
+          </div>`).join('')}
+        </div>`;
+
+    document.getElementById('loops-body').innerHTML = `
+      <!-- Loops -->
+      <div style="font-family:var(--fH);font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.8px;margin-bottom:10px;">RUTAS</div>
+      ${loopsHtml}
+
+      <!-- Foto Loops -->
+      <div style="font-family:var(--fH);font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.8px;margin:20px 0 10px;display:flex;align-items:center;justify-content:space-between;">
+        <span>FOTO LOOPS</span>
+        <button onclick="App.openFotoLoop()" style="background:var(--orL);border:none;color:var(--or);font-size:11px;font-weight:700;padding:4px 12px;border-radius:10px;cursor:pointer;font-family:var(--fH);">+ Agregar</button>
+      </div>
+      ${fotoHtml}
+    `;
+  },
+
+  // Detalle de FotoLoop
+  _showFotoDetail(id) {
+    const p = (this._fotoPosts||[]).find(x=>x.id===id);
+    if (!p) return;
+    const FL_CATS = {
+      lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', playa:'🏖️', parque:'🌳',
+      plaza:'🏛️', museo:'🖼️', pesca:'🎣', aventura:'🧗', campo:'🌾', deporte:'⚽',
+      ciclismo:'🚴', arte:'🎨', nocturno:'🌙', perro:'🐕', foto:'📸', otro:'✳️'
+    };
+    this.toast(`${FL_CATS[p.cat]||'📍'} ${p.name}`);
+    if (this.mainMap && p.lat && p.lng) {
+      this.go('explore');
+      setTimeout(()=>this.mainMap.flyTo({ center:[+p.lng,+p.lat], zoom:17, duration:900 }), 300);
+    }
   },
 
   // ── ADMIN MAP (MapLibre) ──
