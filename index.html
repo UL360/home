@@ -1624,6 +1624,23 @@ const App = {
       this._db   = firebase.firestore();
       this._auth = firebase.auth();
 
+      // ── Capturar resultado de signInWithRedirect (móvil/PWA) ──
+      // Se llama al volver de Google en móvil — debe ir ANTES del onAuthStateChanged
+      try {
+        const redirectResult = await this._auth.getRedirectResult();
+        if (redirectResult && redirectResult.user) {
+          console.log('[Auth] Redirect login exitoso:', redirectResult.user.email);
+          // onAuthStateChanged lo detectará automáticamente, solo mostramos toast
+          setTimeout(() => this.toast(`✅ Bienvenido, ${redirectResult.user.displayName || redirectResult.user.email}`), 800);
+        }
+      } catch(re) {
+        // Error en redirect (red, cuenta bloqueada, etc.)
+        if (re.code && re.code !== 'auth/no-auth-event') {
+          console.warn('[Auth] Redirect error:', re.code, re.message);
+          setTimeout(() => this.toast('⚠️ Error al iniciar con Google: ' + (re.message||re.code)), 800);
+        }
+      }
+
       // Forzar HTTP long-polling (evita problemas con WebSockets en GitHub Pages)
       this._db.settings({
         experimentalForceLongPolling: true,
@@ -1663,10 +1680,31 @@ const App = {
     if (!this._auth) return this.toast('⚠️ Firebase no conectado');
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
-      await this._auth.signInWithPopup(provider);
-      this.toast('✅ Sesión iniciada con Google');
+      provider.addScope('profile');
+      provider.addScope('email');
+
+      // En móvil y PWAs (standalone) usar redirect — el popup es bloqueado por el SO
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      const isPWA    = window.matchMedia('(display-mode: standalone)').matches ||
+                       window.navigator.standalone === true;
+
+      if (isMobile || isPWA) {
+        this.toast('🔄 Redirigiendo a Google...');
+        await this._auth.signInWithRedirect(provider);
+        // La página se recarga — getRedirectResult se llama en _initFirebase
+      } else {
+        const result = await this._auth.signInWithPopup(provider);
+        if (result.user) this.toast(`✅ Bienvenido, ${result.user.displayName || result.user.email}`);
+      }
     } catch(e) {
-      this.toast('⚠️ Error: ' + (e.message || 'No se pudo iniciar sesión'));
+      console.error('loginGoogle error:', e);
+      const msg = {
+        'auth/popup-blocked':         '⚠️ Popup bloqueado — usá el botón de nuevo',
+        'auth/popup-closed-by-user':  '⚠️ Cerraste la ventana de Google',
+        'auth/cancelled-popup-request': null,  // silenciar
+        'auth/network-request-failed': '⚠️ Sin conexión. Revisá internet',
+      }[e.code];
+      if (msg !== null) this.toast(msg || '⚠️ Error Google: ' + (e.message||e.code));
     }
   },
 
@@ -2011,27 +2049,46 @@ const App = {
     el.className = 'user-loc-wrap';
     el.innerHTML = '<div class="user-loc-pulse"></div><div class="user-loc-dot"></div>';
 
-    this._locMarker  = null;
-    this._locCircle  = null;
+    this._locMarker   = null;
     this._locCentered = true;
-    this._locEl = el;
-    this._lastHeading = null;
+    this._locEl       = el;
+    this._lastMapMove = 0;       // throttle: última vez que movimos el mapa
+    this._lastLat     = null;
+    this._lastLng     = null;
+
+    const MIN_MOVE_METERS = 5;   // ignorar saltos menores a 5m
+    const MAP_THROTTLE_MS = 1500; // mover el mapa máximo 1 vez cada 1.5s
+
+    const distMeters = (a1,o1,a2,o2) => {
+      const R=6371000, dA=(a2-a1)*Math.PI/180, dO=(o2-o1)*Math.PI/180;
+      const s=Math.sin(dA/2), c=Math.cos(a1*Math.PI/180)*Math.cos(a2*Math.PI/180);
+      return R*2*Math.asin(Math.sqrt(s*s+c*Math.sin(dO/2)*Math.sin(dO/2)));
+    };
 
     const onPos = (pos) => {
       const lat = pos.coords.latitude;
       const lng = pos.coords.longitude;
-      const acc = Math.min(pos.coords.accuracy, 200);
-      // Heading del GPS (disponible en móvil con movimiento)
-      const gpsHeading = pos.coords.heading; // puede ser null
+      const acc = Math.min(pos.coords.accuracy, 300);
+      const gpsHeading = pos.coords.heading; // null si está quieto
+
+      // ── Filtro de ruido: ignorar si se movió menos de MIN_MOVE_METERS ──
+      if (this._lastLat !== null) {
+        const d = distMeters(this._lastLat, this._lastLng, lat, lng);
+        if (d < MIN_MOVE_METERS) {
+          // Solo actualizar el marcador visual, nada más
+          if (this._locMarker) this._locMarker.setLngLat([lng, lat]);
+          return;
+        }
+      }
+      this._lastLat = lat; this._lastLng = lng;
 
       if (!this._locMarker) {
+        // Primera fix: crear marcador y círculo
         this._locMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
-          .setLngLat([lng, lat])
-          .addTo(this.mainMap);
+          .setLngLat([lng, lat]).addTo(this.mainMap);
 
         this.mainMap.addSource('user-accuracy', {
-          type: 'geojson',
-          data: this._makeCircleGeoJSON(lat, lng, acc)
+          type: 'geojson', data: this._makeCircleGeoJSON(lat, lng, acc)
         });
         this.mainMap.addLayer({
           id: 'user-accuracy-fill', type: 'fill', source: 'user-accuracy',
@@ -2043,39 +2100,49 @@ const App = {
         });
 
         if (this._locCentered) {
-          this.mainMap.flyTo({ center: [lng, lat], zoom: 16, duration: 800 });
+          this.mainMap.flyTo({ center: [lng, lat], zoom: 16, duration: 900 });
           this._locCentered = false;
         }
         this.toast('📍 Ubicación encontrada');
       } else {
+        // Actualizar marcador
         this._locMarker.setLngLat([lng, lat]);
         if (this.mainMap.getSource('user-accuracy')) {
           this.mainMap.getSource('user-accuracy').setData(this._makeCircleGeoJSON(lat, lng, acc));
         }
-        if (this._followMe) {
-          // Seguir posición con easeTo (suave, sin saltos)
-          const bearing = this._mapRotating ? (this._compassHeading || 0) : (gpsHeading != null ? gpsHeading : this.mainMap.getBearing());
+
+        // ── Mover mapa: solo si _followMe Y throttle ──
+        const now = Date.now();
+        if (this._followMe && now - this._lastMapMove > MAP_THROTTLE_MS) {
+          this._lastMapMove = now;
+
+          // Bearing: brújula del dispositivo si está activa, si no GPS heading (solo si se mueve)
+          let bearing = this.mainMap.getBearing(); // mantener si no hay dato nuevo
+          if (this._mapRotating && this._compassHeading != null) {
+            bearing = -this._compassHeading;
+          } else if (!this._mapRotating && gpsHeading != null && !isNaN(gpsHeading) && acc < 30) {
+            bearing = gpsHeading;
+          }
+
           this.mainMap.easeTo({
             center: [lng, lat],
-            bearing: this._mapRotating ? -bearing : bearing,
-            duration: 800,
-            easing: t => t
+            bearing,
+            zoom: Math.max(this.mainMap.getZoom(), 16),
+            duration: 1200,
+            easing: t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t  // ease in-out suave
           });
+
+          // SVG brújula
+          const svgMain = document.getElementById('main-compass-svg');
+          if (svgMain && bearing != null) svgMain.style.transform = `rotate(${-bearing}deg)`;
         }
       }
 
-      // Rotar mapa con heading GPS si no hay brújula del dispositivo
-      if (this._followMe && !this._mapRotating && gpsHeading != null && !isNaN(gpsHeading)) {
-        this._lastHeading = gpsHeading;
-        if (this.mainMap) this.mainMap.easeTo({ bearing: gpsHeading, duration: 600 });
-        const svgMain = document.getElementById('main-compass-svg');
-        if (svgMain) svgMain.style.transform = `rotate(${gpsHeading}deg)`;
-      }
-
+      // Badge precisión GPS
       const badge = document.getElementById('gps-badge');
       if (badge) {
-        badge.textContent = acc < 20 ? `GPS ±${Math.round(acc)}m` : acc < 50 ? `±${Math.round(acc)}m` : '...';
-        badge.style.color = acc < 20 ? '#16A34A' : acc < 50 ? '#D97706' : '#9CA3AF';
+        badge.textContent = acc < 15 ? `±${Math.round(acc)}m` : acc < 40 ? `~${Math.round(acc)}m` : 'GPS...';
+        badge.style.color = acc < 15 ? '#16A34A' : acc < 40 ? '#D97706' : '#9CA3AF';
       }
     };
 
@@ -2086,8 +2153,8 @@ const App = {
 
     this._gpsWatcher = navigator.geolocation.watchPosition(onPos, onErr, {
       enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 1000   // más frecuente para mejor seguimiento
+      timeout: 15000,
+      maximumAge: 2000
     });
   },
 
@@ -3252,34 +3319,38 @@ const App = {
 
   _startCompass() {
     let lastApplied = 0;
+    this._compassHeading = 0;
+
     this._orientationHandler = (e) => {
-      let heading = e.webkitCompassHeading != null
+      let raw = e.webkitCompassHeading != null
         ? e.webkitCompassHeading
         : (e.alpha != null ? (360 - e.alpha) : null);
-      if (heading == null || isNaN(heading)) return;
+      if (raw == null || isNaN(raw)) return;
 
-      // Suavizar con promedio móvil simple
-      this._compassHeading = this._compassHeading == null
-        ? heading
-        : this._compassHeading * 0.7 + heading * 0.3;
-
+      // Promedio móvil para suavizar
+      this._compassHeading = this._compassHeading * 0.75 + raw * 0.25;
       const h = this._compassHeading;
 
-      // Rotar SVG de la brújula (siempre)
+      // Rotar SVG brújula siempre (visual feedback)
       const svgGrab = document.getElementById('grab-compass-svg');
       const svgMain = document.getElementById('main-compass-svg');
       if (svgGrab) svgGrab.style.transform = `rotate(${h}deg)`;
       if (svgMain) svgMain.style.transform = `rotate(${h}deg)`;
 
-      // Rotar mapa — solo si está en modo rotación Y con throttle de 150ms
+      // Rotar mapa — solo si _mapRotating Y con throttle de 200ms
+      // NO llamar easeTo si GPS tracking ya lo está haciendo (_followMe)
       if (!this._mapRotating) return;
       const now = Date.now();
-      if (now - lastApplied < 150) return;
+      if (now - lastApplied < 200) return;
       lastApplied = now;
 
-      const map = this.mainMap;
-      if (map) map.easeTo({ bearing: -h, duration: 300, easing: t => t });
+      // Si _followMe está activo, el GPS tracking ya llama easeTo con bearing
+      // Solo rotar directamente si NO está siguiendo (para el caso brújula sin seguimiento)
+      if (!this._followMe && this.mainMap) {
+        this.mainMap.easeTo({ bearing: -h, duration: 250 });
+      }
     };
+
     window.addEventListener('deviceorientationabsolute', this._orientationHandler, true);
     window.addEventListener('deviceorientation',         this._orientationHandler, true);
   },
