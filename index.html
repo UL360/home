@@ -1664,24 +1664,32 @@ const App = {
   },
 
   // Detecta si estamos dentro de un in-app browser (Instagram, Facebook, TikTok, etc.)
-  // Estos navegadores bloquean popups Y tienen sessionStorage particionado → ningún método funciona.
   _isInAppBrowser() {
     const ua = navigator.userAgent || '';
-    return /FBAN|FBAV|Instagram|Twitter|Line\/|Musical|TikTok|Snapchat|Pinterest|LinkedIn|WhatsApp/i.test(ua);
+    return /FBAN|FBAV|Instagram|Twitter\/|Line\/|Musical|TikTok|Snapchat|Pinterest\/|LinkedIn\/|WhatsApp/i.test(ua);
+  },
+
+  // Detecta el navegador actual para mensajes de error específicos
+  _getBrowserName() {
+    const ua = navigator.userAgent || '';
+    if (/Edg\//i.test(ua))     return 'edge';
+    if (/Chrome/i.test(ua))    return 'chrome';
+    if (/Firefox/i.test(ua))   return 'firefox';
+    if (/Safari/i.test(ua))    return 'safari';
+    return 'other';
   },
 
   async loginGoogle() {
     if (!this._auth) return this.toast('⚠️ Firebase no conectado');
 
-    // ── Caso 1: In-app browser (Instagram, Facebook, etc.) ──
-    // signInWithPopup Y signInWithRedirect fallan. Mostrar instrucción de abrir en Chrome/Safari.
+    // ── In-app browser: ningún método funciona ──
     if (this._isInAppBrowser()) {
       const url = window.location.href;
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      const msg = isAndroid
-        ? `Para iniciar con Google, abrí esta app en Chrome.\n\nCopiá esta URL:\n${url}`
-        : `Para iniciar con Google, abrí esta app en Safari.\n\nTocarás ··· → "Abrir en Safari"`;
-      if (confirm(msg + '\n\n¿Querés continuar con email en vez de Google?')) {
+      const browser = this._getBrowserName();
+      const msg = /Android/i.test(navigator.userAgent)
+        ? `Para iniciar con Google abrí la app en Edge o Chrome.\n\nURL: ${url}`
+        : `Para iniciar con Google abrí la app en Edge o Safari.\n\nTocá ··· → "Abrir en navegador"`;
+      if (confirm(msg + '\n\n¿Usar email en vez de Google?')) {
         document.getElementById('auth-email')?.focus();
       }
       return;
@@ -1695,12 +1703,8 @@ const App = {
       const provider = new firebase.auth.GoogleAuthProvider();
       provider.addScope('profile');
       provider.addScope('email');
-      // Forzar selección de cuenta (útil cuando ya hay sesión de Google)
       provider.setCustomParameters({ prompt: 'select_account' });
 
-      // ── Siempre usar signInWithPopup ──
-      // signInWithRedirect está DESCARTADO: requiere sessionStorage persistente
-      // entre dominios, que Safari ITP y partitioned storage bloquean.
       const result = await this._auth.signInWithPopup(provider);
       if (result.user) {
         this.toast(`✅ Bienvenido, ${result.user.displayName || result.user.email}`);
@@ -1708,49 +1712,92 @@ const App = {
 
     } catch(e) {
       console.error('[loginGoogle]', e.code, e.message);
+      const browser = this._getBrowserName();
 
       if (e.code === 'auth/popup-blocked') {
-        // El navegador bloqueó el popup — pedir al usuario que lo permita
-        this.toast('⚠️ Popup bloqueado. Habilitá popups para este sitio y volvé a intentar.');
-        // Mostrar banner con instrucción
-        this._showPopupBlockedBanner();
+        this._showPopupBlockedBanner(browser);
 
       } else if (e.code === 'auth/popup-closed-by-user') {
-        // El usuario cerró la ventana — no es un error
         this.toast('Cancelado');
 
       } else if (e.code === 'auth/cancelled-popup-request') {
-        // Clic doble — ignorar silenciosamente
-        null;
+        // Doble clic — ignorar
+        void 0;
 
       } else if (e.code === 'auth/network-request-failed') {
-        this.toast('⚠️ Sin conexión. Revisá internet e intentá de nuevo.');
+        this.toast('⚠️ Sin conexión. Revisá internet.');
 
       } else if (e.code === 'auth/unauthorized-domain') {
-        this.toast('⚠️ Dominio no autorizado. Agregalo en Firebase Console → Authentication → Authorized domains.');
+        this.toast('⚠️ Dominio no autorizado en Firebase Console → Authentication → Authorized domains.');
 
-      } else if (e.code === 'auth/internal-error' || e.message?.includes('sessionStorage')) {
-        // Error de sessionStorage particionado — instruir abrir en browser real
-        this.toast('⚠️ Error de sesión. Abrí la app en Chrome o Safari directamente.');
+      } else if (
+        e.code === 'auth/internal-error' ||
+        e.message?.includes('sessionStorage') ||
+        e.message?.includes('initial state')
+      ) {
+        // Edge con Tracking Prevention Estricto bloquea el popup OAuth
+        this._showTrackingPreventionHelp(browser);
 
       } else {
-        this.toast('⚠️ Error Google: ' + (e.message || e.code));
+        this.toast('⚠️ Error: ' + (e.message || e.code));
       }
     } finally {
       if (btn) { btn.innerHTML = originalHTML || 'Continuar con Google'; btn.disabled = false; }
     }
   },
 
-  _showPopupBlockedBanner() {
-    if (document.getElementById('popup-blocked-banner')) return;
+  _showPopupBlockedBanner(browser) {
+    if (document.getElementById('auth-help-banner')) return;
     const div = document.createElement('div');
-    div.id = 'popup-blocked-banner';
-    div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1E40AF;color:white;font-size:13px;font-weight:500;text-align:center;padding:12px 16px;line-height:1.5;';
-    div.innerHTML = `🔒 El navegador bloqueó el popup de Google. 
-      <b>Habilitá popups</b> para este sitio en la configuración del navegador y volvé a intentar.
-      <span style="margin-left:8px;cursor:pointer;text-decoration:underline;" onclick="document.getElementById('popup-blocked-banner').remove()">✕ Cerrar</span>`;
+    div.id = 'auth-help-banner';
+    div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#1E40AF;color:white;font-size:13px;padding:14px 16px;line-height:1.6;';
+
+    let steps = '';
+    if (browser === 'edge') {
+      steps = `En Edge: hacé clic en el ícono 🔒 en la barra de direcciones → <b>Permisos del sitio</b> → <b>Ventanas emergentes</b> → Permitir`;
+    } else if (browser === 'chrome') {
+      steps = `En Chrome: hacé clic en el ícono 🔒 en la barra de direcciones → <b>Permisos del sitio</b> → <b>Ventanas emergentes</b> → Permitir`;
+    } else if (browser === 'firefox') {
+      steps = `En Firefox: en la barra de direcciones aparece un ícono de bloqueo de popup → hacé clic → <b>Permitir siempre</b>`;
+    } else {
+      steps = `Habilitá los popups para este sitio en la configuración de tu navegador`;
+    }
+
+    div.innerHTML = `🔒 <b>Popup bloqueado.</b> ${steps}. Luego volvé a tocar "Continuar con Google".
+      <div style="margin-top:6px;display:flex;gap:8px;justify-content:flex-end;">
+        <span style="cursor:pointer;text-decoration:underline;font-size:12px;" onclick="document.getElementById('auth-help-banner').remove()">✕ Cerrar</span>
+      </div>`;
     document.body.prepend(div);
-    setTimeout(() => div.remove(), 12000);
+    setTimeout(() => div?.remove(), 20000);
+  },
+
+  _showTrackingPreventionHelp(browser) {
+    if (document.getElementById('auth-help-banner')) return;
+    const div = document.createElement('div');
+    div.id = 'auth-help-banner';
+    div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#B45309;color:white;font-size:13px;padding:14px 16px;line-height:1.6;';
+
+    let steps = '';
+    if (browser === 'edge') {
+      steps = `
+        <b>Edge bloquea el login con Google.</b> Solución rápida:<br>
+        1. Hacé clic en <b>···</b> (menú Edge) → <b>Configuración</b><br>
+        2. Ir a <b>Privacidad, búsqueda y servicios</b><br>
+        3. En "Prevención de seguimiento" → cambiá a <b>Básico</b> o desactivá para este sitio<br>
+        4. Alternativamente: usá <b>registro con Email</b> abajo 👇`;
+    } else if (browser === 'safari') {
+      steps = `
+        <b>Safari bloqueó el login.</b> Ir a <b>Configuración → Safari → Evitar seguimiento entre sitios</b> → desactivar. 
+        O usá <b>registro con Email</b>.`;
+    } else {
+      steps = `Error de sesión. Intentá con <b>registro por Email</b> o usá otro navegador.`;
+    }
+
+    div.innerHTML = `⚠️ ${steps}
+      <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end;">
+        <span style="cursor:pointer;text-decoration:underline;font-size:12px;" onclick="document.getElementById('auth-help-banner').remove()">✕ Cerrar</span>
+      </div>`;
+    document.body.prepend(div);
   },
 
   async loginEmail() {
