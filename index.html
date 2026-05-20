@@ -2153,12 +2153,17 @@ const App = {
         if (this._followMe && now - this._lastMapMove > MAP_THROTTLE_MS) {
           this._lastMapMove = now;
 
-          // Bearing: brújula del dispositivo si está activa, si no GPS heading (solo si se mueve)
-          let bearing = this.mainMap.getBearing(); // mantener si no hay dato nuevo
+          // Bearing del mapa:
+          // - Con brújula: bearing = -compassHeading (el mapa rota para que la dirección
+          //   que mirás quede "arriba")
+          // - Con GPS heading: heading ya viene en grados desde norte, sentido horario.
+          //   MapLibre bearing positivo = rotación horaria del mapa.
+          //   Para que "hacia donde vas" quede arriba: bearing = gpsHeading
+          let bearing = this.mainMap.getBearing();
           if (this._mapRotating && this._compassHeading != null) {
-            bearing = -this._compassHeading;
-          } else if (!this._mapRotating && gpsHeading != null && !isNaN(gpsHeading) && acc < 30) {
-            bearing = gpsHeading;
+            bearing = -this._compassHeading;  // correcto: norte fijo, mapa rota bajo vos
+          } else if (!this._mapRotating && gpsHeading != null && !isNaN(gpsHeading) && acc < 50) {
+            bearing = gpsHeading;  // hacia donde vas queda "arriba"
           }
 
           this.mainMap.easeTo({
@@ -2169,9 +2174,10 @@ const App = {
             easing: t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t  // ease in-out suave
           });
 
-          // SVG brújula
+          // SVG brújula: mostrar hacia dónde está el norte real
+          // Si bearing del mapa = -compassHeading, entonces la aguja apunta a -bearing
           const svgMain = document.getElementById('main-compass-svg');
-          if (svgMain && bearing != null) svgMain.style.transform = `rotate(${-bearing}deg)`;
+          if (svgMain) svgMain.style.transform = `rotate(${-bearing}deg)`;
         }
       }
 
@@ -3356,38 +3362,84 @@ const App = {
 
   _startCompass() {
     let lastApplied = 0;
-    this._compassHeading = 0;
+    // BUG FIX 1: Iniciar en null, no en 0 — 0 es Norte válido, null significa "sin dato aún"
+    this._compassHeading = null;
 
     this._orientationHandler = (e) => {
-      let raw = e.webkitCompassHeading != null
-        ? e.webkitCompassHeading
-        : (e.alpha != null ? (360 - e.alpha) : null);
-      if (raw == null || isNaN(raw)) return;
+      // BUG FIX 2: deviceorientationabsolute Y deviceorientation están ambos escuchando.
+      // Si llega deviceorientationabsolute primero y luego deviceorientation, el segundo
+      // puede sobreescribir con datos menos precisos. Priorizar absolute.
+      if (e.type === 'deviceorientation' && this._gotAbsoluteOrientation) return;
+      if (e.type === 'deviceorientationabsolute') this._gotAbsoluteOrientation = true;
 
-      // Promedio móvil para suavizar
-      this._compassHeading = this._compassHeading * 0.75 + raw * 0.25;
+      let raw = null;
+
+      // BUG FIX 3: webkitCompassHeading existe en iOS/Safari y ya viene en grados
+      // respecto al norte magnético REAL — usarlo directo sin transformar.
+      // e.alpha en Android es la rotación del dispositivo respecto al norte ARBITRARIO
+      // del sistema (depende de cómo inició el sensor). Para Android hay que usar
+      // deviceorientationabsolute que da alpha respecto al norte real.
+      if (e.webkitCompassHeading != null && !isNaN(e.webkitCompassHeading)) {
+        // iOS: ya es grados desde norte, sentido horario. Correcto.
+        raw = e.webkitCompassHeading;
+      } else if (e.alpha != null && !isNaN(e.alpha)) {
+        // Android con deviceorientationabsolute:
+        // alpha = rotación Z del dispositivo respecto al norte geográfico, antihorario.
+        // Para convertir a bearing (horario desde norte): bearing = 360 - alpha
+        // PERO hay que corregir por la orientación de la pantalla (portrait vs landscape)
+        const screenAngle = (window.screen?.orientation?.angle ?? window.orientation ?? 0);
+        // Compensar la rotación de la pantalla
+        raw = (360 - e.alpha + screenAngle + 360) % 360;
+      }
+
+      if (raw == null) return;
+
+      // BUG FIX 4: El promedio móvil simple da resultados INCORRECTOS cerca de 0°/360°
+      // (el norte). Ejemplo: promediar 350° y 10° da 180° (sur!) en vez de 0° (norte).
+      // Solución: usar promedio circular (circular mean).
+      if (this._compassHeading === null) {
+        this._compassHeading = raw;
+      } else {
+        // Promedio circular: convertir a vectores, promediar, reconvertir
+        const toRad = d => d * Math.PI / 180;
+        const toDeg = r => r * 180 / Math.PI;
+        const prevRad = toRad(this._compassHeading);
+        const rawRad  = toRad(raw);
+        // Mezcla 75% anterior + 25% nuevo (promedio circular)
+        const sinAvg = Math.sin(prevRad) * 0.75 + Math.sin(rawRad) * 0.25;
+        const cosAvg = Math.cos(prevRad) * 0.75 + Math.cos(rawRad) * 0.25;
+        this._compassHeading = (toDeg(Math.atan2(sinAvg, cosAvg)) + 360) % 360;
+      }
+
       const h = this._compassHeading;
 
-      // Rotar SVG brújula siempre (visual feedback)
+      // Rotar SVG brújula — la punta roja (Norte) debe apuntar hacia el norte real.
+      // El SVG tiene la punta roja arriba (0°). Si el dispositivo apunta al norte (h=0°),
+      // la flecha no debe rotar. Si apunta al este (h=90°), rotar -90° para que la flecha
+      // siga apuntando al norte geográfico.
+      // BUG FIX 5: antes rotaba rotate(h) — ESO ES AL REVÉS.
+      // Si el dispositivo giró 90° a la derecha (h=90°), el norte queda a la IZQUIERDA,
+      // entonces la aguja debe rotar -90° (antihorario).
       const svgGrab = document.getElementById('grab-compass-svg');
       const svgMain = document.getElementById('main-compass-svg');
-      if (svgGrab) svgGrab.style.transform = `rotate(${h}deg)`;
-      if (svgMain) svgMain.style.transform = `rotate(${h}deg)`;
+      if (svgGrab) svgGrab.style.transform = `rotate(${-h}deg)`;
+      if (svgMain) svgMain.style.transform = `rotate(${-h}deg)`;
 
-      // Rotar mapa — solo si _mapRotating Y con throttle de 200ms
-      // NO llamar easeTo si GPS tracking ya lo está haciendo (_followMe)
+      // Rotar mapa — solo si _mapRotating Y throttle
       if (!this._mapRotating) return;
       const now = Date.now();
       if (now - lastApplied < 200) return;
       lastApplied = now;
 
-      // Si _followMe está activo, el GPS tracking ya llama easeTo con bearing
-      // Solo rotar directamente si NO está siguiendo (para el caso brújula sin seguimiento)
+      // Si _followMe está activo, el GPS tracking ya maneja el easeTo con bearing
       if (!this._followMe && this.mainMap) {
+        // bearing del mapa = -h: si el dispositivo mira al este (h=90), el mapa
+        // rota -90° para que el este quede "arriba" (hacia el usuario)
         this.mainMap.easeTo({ bearing: -h, duration: 250 });
       }
     };
 
+    this._gotAbsoluteOrientation = false;
     window.addEventListener('deviceorientationabsolute', this._orientationHandler, true);
     window.addEventListener('deviceorientation',         this._orientationHandler, true);
   },
@@ -3395,9 +3447,11 @@ const App = {
   _stopCompass() {
     if (this._orientationHandler) {
       window.removeEventListener('deviceorientationabsolute', this._orientationHandler, true);
-      window.removeEventListener('deviceorientation', this._orientationHandler, true);
+      window.removeEventListener('deviceorientation',         this._orientationHandler, true);
       this._orientationHandler = null;
     }
+    this._gotAbsoluteOrientation = false;
+    this._compassHeading = null;
   },
 
   _rotateTilePane(map, deg) {
