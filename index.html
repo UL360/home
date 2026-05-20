@@ -2270,6 +2270,47 @@ const App = {
         badge.textContent = acc < 15 ? `±${Math.round(acc)}m` : acc < 40 ? `~${Math.round(acc)}m` : 'GPS...';
         badge.style.color = acc < 15 ? '#16A34A' : acc < 40 ? '#D97706' : '#9CA3AF';
       }
+
+      // ── Detectar llegada al POI de inicio del loop ──
+      if (this._navLine && this._navLine.length && this._voiceNavRoute && !this._loopStarted) {
+        const r = this._voiceNavRoute;
+        if (r.pts && r.pts.length) {
+          const startPt = r.pts[0];
+          const sLat = Array.isArray(startPt) ? startPt[0] : startPt.lat;
+          const sLng = Array.isArray(startPt) ? startPt[1] : startPt.lng;
+          // Distancia haversine aprox en metros
+          const dlat = (lat - sLat) * Math.PI / 180;
+          const dlng = (lng - sLng) * Math.PI / 180;
+          const a = Math.sin(dlat/2)**2 + Math.cos(sLat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dlng/2)**2;
+          const distToStart = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+          if (distToStart < 40) {
+            // ¡Llegó! Iniciar modo loop
+            this._loopStarted = true;
+            this._removeNavLine();
+            const panel = document.getElementById('nav-panel');
+            if (panel) panel.remove();
+            // Centrar el mapa en el loop
+            const allCoords = r.pts.map(p => Array.isArray(p)?[p[1],p[0]]:[p.lng,p.lat]);
+            const lngs = allCoords.map(c=>c[0]), lts = allCoords.map(c=>c[1]);
+            this.mainMap.fitBounds(
+              [[Math.min(...lngs),Math.min(...lts)],[Math.max(...lngs),Math.max(...lts)]],
+              { padding:80, maxZoom:17, duration:900 }
+            );
+            // Anuncio de inicio del loop con paradas
+            if (this._voiceOn) {
+              let startMsg = `¡Llegaste! Comenzá ${r.name}. `;
+              if (r.pois && r.pois.length) {
+                startMsg += `Primera parada: ${r.pois[0].name}. `;
+                if (r.pois[0].desc) startMsg += r.pois[0].desc;
+              }
+              this._speak(startMsg);
+            }
+            // Mostrar panel del loop con sus paradas
+            this._showLoopStartPanel(r);
+          }
+        }
+      }
     };
 
     const onErr = (err) => {
@@ -2602,6 +2643,7 @@ const App = {
 
   async _calcAndDrawNav(r) {
     if (!r.pts || !r.pts.length) return;
+    this._loopStarted = false;  // reset flag de inicio de loop
     const loopStart = r.pts[0];
     const loopStartCoord = Array.isArray(loopStart) ? [loopStart[1],loopStart[0]] : [loopStart.lng,loopStart.lat];
     const uLL = this._locMarker.getLngLat();
@@ -2709,8 +2751,47 @@ const App = {
     this._removeNavLine();
     const panel = document.getElementById('nav-panel');
     if (panel) panel.remove();
+    const loopPanel = document.getElementById('loop-active-panel');
+    if (loopPanel) loopPanel.remove();
     this._stopVoice();
+    this._loopStarted = false;
     this.toast('Navegación cancelada');
+  },
+
+  // ── Panel activo del loop (una vez que llegaste al inicio) ──
+  _showLoopStartPanel(r) {
+    let panel = document.getElementById('loop-active-panel');
+    if (panel) panel.remove();
+
+    panel = document.createElement('div');
+    panel.id = 'loop-active-panel';
+    panel.style.cssText = 'position:fixed;bottom:120px;left:50%;transform:translateX(-50%);z-index:40;background:var(--wh);border-radius:18px;padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.55);min-width:280px;max-width:calc(100vw - 32px);border:1px solid var(--bd);animation:fadeUp .3s ease;';
+
+    const poisHtml = r.pois && r.pois.length
+      ? r.pois.map((p, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--bd);">
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--orL);border:1.5px solid var(--or);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--or);flex-shrink:0;">${i+1}</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--dk);">${p.em?p.em+' ':''}${p.name}</div>
+            ${p.desc?`<div style="font-size:11px;color:var(--gr);">${p.desc}</div>`:''}
+          </div>
+        </div>`).join('')
+      : '<div style="font-size:12px;color:var(--gr);padding:6px 0;">Sin paradas registradas.</div>';
+
+    panel.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--orL);border:2px solid var(--or);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${r.emoji}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${r.name}</div>
+          <div style="font-size:11px;color:var(--or);font-weight:600;">▶ Loop activo · ${r.dist||'—'}</div>
+        </div>
+        <button onclick="App._stopNav()" style="width:32px;height:32px;border-radius:9px;border:1.5px solid var(--bd);background:var(--lt);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div style="max-height:160px;overflow-y:auto;">${poisHtml}</div>`;
+
+    document.body.appendChild(panel);
   },
 
   // ── VOZ DE NAVEGACIÓN ──
@@ -2721,9 +2802,17 @@ const App = {
     if (!('speechSynthesis' in window)) { this.toast('🔇 Tu dispositivo no soporta voz'); return; }
     mode = mode || this._navModes[this._navMode] || this._navModes.foot;
     this._voiceOn = true;
-    // Mensaje de inicio con el modo de transporte correcto
-    const msg = `Iniciando navegación ${mode.voz} a ${r.name}. Distancia: ${dist}, tiempo estimado: ${durMin} minutos.`;
+    this._voiceNavRoute = r;
+
+    // Mensaje de inicio completo
+    const poiCount = r.pois && r.pois.length ? r.pois.length : 0;
+    const firstPoi = r.pois && r.pois.length ? r.pois[0].name : null;
+    let msg = `Iniciando navegación ${mode.voz} hacia el punto de partida de ${r.name}. `;
+    msg += `Distancia: ${dist}, tiempo estimado: ${durMin} minuto${durMin !== 1 ? 's' : ''}. `;
+    if (poiCount > 0) msg += `Este loop tiene ${poiCount} parada${poiCount !== 1 ? 's' : ''}. `;
+    msg += `Seguí la línea naranja en el mapa.`;
     this._speak(msg);
+
     if (steps && steps.length) {
       this._voiceSteps = steps.filter(s => s.maneuver && s.maneuver.type !== 'arrive' && s.distance > 15);
       this._voiceIdx = 0;
@@ -2746,14 +2835,31 @@ const App = {
   _scheduleNextVoiceStep() {
     if (!this._voiceOn || !this._voiceSteps) return;
     if (this._voiceIdx >= this._voiceSteps.length) {
-      setTimeout(() => this._speak('¡Llegaste al inicio del loop! Que lo disfrutes.'), 500);
+      // Llegaste al inicio del loop — anunciar recorrido completo
+      const r = this._voiceNavRoute;
+      let arrivalMsg = '¡Llegaste al punto de partida del loop! ';
+      if (r) {
+        arrivalMsg += `Estás listo para comenzar ${r.name}. `;
+        if (r.pois && r.pois.length) {
+          const names = r.pois.slice(0, 3).map(p => p.name).join(', ');
+          const extra = r.pois.length > 3 ? ` y ${r.pois.length - 3} paradas más` : '';
+          arrivalMsg += `Las primeras paradas son: ${names}${extra}. `;
+        }
+        if (r.dist) arrivalMsg += `Recorrido total: ${r.dist}. `;
+        arrivalMsg += '¡Que lo disfrutes!';
+      } else {
+        arrivalMsg += '¡Que lo disfrutes!';
+      }
+      setTimeout(() => this._speak(arrivalMsg), 500);
       return;
     }
     const step = this._voiceSteps[this._voiceIdx++];
     const distM = Math.round(step.distance);
-    const distTxt = distM < 100 ? `${distM} metros` : distM < 1000 ? `${distM} metros` : `${(distM/1000).toFixed(1)} kilómetros`;
+    const distTxt = distM < 100 ? `en ${distM} metros` : distM < 1000 ? `en ${distM} metros` : `en ${(distM/1000).toFixed(1)} kilómetros`;
     const dir = this._voiceStepDir(step.maneuver.type, step.maneuver.modifier);
-    const msg = `En ${distTxt}, ${dir}.`;
+    // Incluir nombre de calle si está disponible
+    const street = step.name && step.name.trim() && step.name !== '' ? ` por ${step.name}` : '';
+    const msg = `${distTxt}, ${dir}${street}.`;
     const delay = (this._voiceIdx === 1) ? 3000 : Math.max(4000, distM * 80);
     setTimeout(() => {
       if (this._voiceOn) {
@@ -3471,8 +3577,8 @@ const App = {
         // Para convertir a bearing (horario desde norte): bearing = 360 - alpha
         // PERO hay que corregir por la orientación de la pantalla (portrait vs landscape)
         const screenAngle = (window.screen?.orientation?.angle ?? window.orientation ?? 0);
-        // Compensar la rotación de la pantalla
-        raw = (360 - e.alpha + screenAngle + 360) % 360;
+        // Compensar la rotación de la pantalla (restar screenAngle, no sumar)
+        raw = (360 - e.alpha - screenAngle + 720) % 360;
       }
 
       if (raw == null) return;
