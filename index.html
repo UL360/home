@@ -2249,9 +2249,12 @@ const App = {
             bearing = gpsHeading;  // hacia donde vas queda "arriba"
           }
 
+          // Pitch: 50 en 3D, 45 en followMe normal
+          const followPitch3d = this._is3D ? 50 : (this._followMe ? 45 : this.mainMap.getPitch());
           this.mainMap.easeTo({
             center: [lng, lat],
             bearing,
+            pitch: followPitch3d,
             zoom: Math.max(this.mainMap.getZoom(), 16),
             duration: 1200,
             easing: t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t  // ease in-out suave
@@ -2349,15 +2352,17 @@ const App = {
     if (this._followMe) {
       if (this._locMarker) {
         const ll = this._locMarker.getLngLat();
-        this.mainMap.flyTo({ center: [ll.lng, ll.lat], zoom: 17, pitch: 20, duration: 800 });
+        const followPitch = this._is3D ? 50 : 45;
+        this.mainMap.flyTo({ center: [ll.lng, ll.lat], zoom: 17, pitch: followPitch, duration: 800 });
       }
       // Activar brújula automáticamente al seguir
       if (!this._mapRotating) this._toggleMapRotation();
       this.toast('🧭 Siguiendo — el mapa gira con vos');
     } else {
-      // Desactivar brújula y volver a norte
-      if (this._mapRotating) this._toggleMapRotation();
-      this.mainMap.easeTo({ pitch: 0, bearing: 0, duration: 600 });
+      // Desactivar followMe; si 3D activo preservar brújula y pitch
+      if (!this._is3D && this._mapRotating) this._toggleMapRotation();
+      const freeBearing = (this._mapRotating && this._compassHeading != null) ? -this._compassHeading : 0;
+      this.mainMap.easeTo({ pitch: this._is3D ? 50 : 0, bearing: freeBearing, duration: 600 });
       this.toast('📍 Navegación libre');
     }
   },
@@ -2688,12 +2693,30 @@ const App = {
 
         this._showNavPanel(r, distTxt, durMin, mode);
 
-        const allCoords = [...navCoords, ...r.pts.map(p => Array.isArray(p)?[p[1],p[0]]:[p.lng,p.lat])];
-        const lngs = allCoords.map(c=>c[0]), lats = allCoords.map(c=>c[1]);
-        this.mainMap.fitBounds(
-          [[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],
-          { padding:80, maxZoom:16, duration:900 }
-        );
+        // ── Waze-style: arrancar desde el pin del usuario ──
+        // Calcular bearing inicial: desde tu posición apuntando al inicio del loop
+        const navBearing = Math.atan2(
+          loopStartCoord[0] - uLL.lng,
+          loopStartCoord[1] - uLL.lat
+        ) * 180 / Math.PI;
+
+        // Activar followMe automáticamente si no está activo
+        if (!this._followMe) {
+          this._followMe = true;
+          const locBtn = document.getElementById('locate-btn');
+          if (locBtn) { locBtn.style.background = '#FF5F00'; locBtn.style.color = 'white'; }
+          if (!this._mapRotating) this._toggleMapRotation();
+        }
+
+        // Volar al PIN del usuario (punto de partida real, como Waze)
+        this.mainMap.flyTo({
+          center: [uLL.lng, uLL.lat],
+          zoom: 17,
+          bearing: navBearing,
+          pitch: this._is3D ? 50 : 45,
+          duration: 1000
+        });
+
         this._startVoiceNav(r, route.legs[0]?.steps || [], distTxt, durMin, mode);
       } else {
         throw new Error('No route');
@@ -3542,9 +3565,14 @@ const App = {
       this._stopCompass();
       if (compass) { compass.style.background = 'rgba(0,0,0,.55)'; compass.style.color = '#C0C0C8'; }
       if (compassMain) { compassMain.classList.remove('rotating'); compassMain.style.background = '#1C1C1E'; compassMain.style.border = '0.5px solid #2C2C2E'; }
-      // Volver suavemente al norte
+      // Volver al norte; preservar pitch si 3D activo
       const map = this.mainMap;
-      if (map) map.easeTo({ bearing: 0, pitch: 0, duration: 600 });
+      if (map) map.easeTo({ bearing: 0, pitch: this._is3D ? 50 : 0, duration: 600 });
+      // Resetear aguja visual al norte
+      const svgG = document.getElementById('grab-compass-svg');
+      const svgM = document.getElementById('main-compass-svg');
+      if (svgG) svgG.style.transform = 'rotate(0deg)';
+      if (svgM) svgM.style.transform = 'rotate(0deg)';
       this.toast('🧭 Norte');
     }
   },
@@ -4672,12 +4700,28 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (!this.mainMap) return;
     if (this._is3D) {
       this._add3DBuildings();
-      this.mainMap.easeTo({ pitch: 50, bearing: -15, zoom: 15.5, duration: 1200 });
+      if (this._followMe) {
+        // Ya sigue al usuario — solo subir el pitch a 3D
+        this.mainMap.easeTo({ pitch: 50, duration: 1000 });
+      } else {
+        // Activar seguimiento + brújula automáticamente
+        this._followMe = true;
+        const locBtn = document.getElementById('locate-btn');
+        if (locBtn) { locBtn.style.background = '#FF5F00'; locBtn.style.color = 'white'; }
+        if (!this._mapRotating) this._toggleMapRotation();
+        const center3d = this._locMarker ? this._locMarker.getLngLat() : null;
+        this.mainMap.easeTo({
+          ...(center3d ? { center: [center3d.lng, center3d.lat] } : {}),
+          pitch: 50, zoom: 17, duration: 1200
+        });
+      }
       if (btn) btn.classList.add('active');
-      this.toast('🏙️ Vista 3D activada');
+      this.toast('🏙️ Vista 3D + 🧭 Brújula activada');
     } else {
       this._remove3DBuildings();
-      this.mainMap.easeTo({ pitch: 0, bearing: 0, duration: 800 });
+      // Al salir de 3D: volver a pitch 0, mantener bearing si brújula activa
+      const targetBearing3d = (this._mapRotating && this._compassHeading != null) ? -this._compassHeading : this.mainMap.getBearing();
+      this.mainMap.easeTo({ pitch: 0, bearing: targetBearing3d, duration: 800 });
       if (btn) btn.classList.remove('active');
       this.toast('2D activado');
     }
