@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Urban Loop 360°</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -796,10 +796,10 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   </div>
 
   <!-- ── ROUTE BADGE ── -->
-  <div id="rt-badge" style="display:none;position:absolute;top:72px;left:72px;z-index:10;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:600;align-items:center;gap:7px;">
-    <div id="rt-dot" style="width:9px;height:9px;border-radius:50%;background:var(--or);"></div>
-    <span id="rt-name">—</span>
-    <button onclick="App._clearSelection()" style="background:none;border:none;color:#9CA3AF;cursor:pointer;padding:0 0 0 4px;font-size:14px;line-height:1;display:flex;align-items:center;" title="Cerrar">✕</button>
+  <div id="rt-badge" style="display:none;position:absolute;top:72px;left:72px;z-index:10;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:600;align-items:center;gap:7px;max-width:calc(100vw - 130px);">
+    <div id="rt-dot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--or);"></div>
+    <span id="rt-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">—</span>
+    <button onclick="App._clearSelection()" style="background:none;border:none;color:#9CA3AF;cursor:pointer;padding:0 0 0 4px;font-size:16px;line-height:1;display:flex;align-items:center;flex-shrink:0;min-width:22px;min-height:22px;" title="Cerrar">✕</button>
   </div>
 
   <!-- ── SEARCH BAR movida al menú lateral — se mantienen los ids para el JS ── -->
@@ -2141,11 +2141,11 @@ const App = {
       center: [-59.6450, -30.7490],
       zoom: 14,
       antialias: true,
-      dragRotate: false,        // ← desactiva rotación con Ctrl+drag / dos dedos
-      touchZoomRotate: false,   // ← desactiva rotación táctil (solo permite pinch-zoom)
+      dragRotate: false,        // ← desactiva rotación con Ctrl+drag
+      touchZoomRotate: true,    // ← habilita pinch-zoom táctil
       bearingSnap: 0            // ← no hace snap al norte al soltar
     });
-    // Re-habilitar solo el pinch-zoom sin rotación
+    // Deshabilitar rotación táctil pero mantener pinch-zoom
     this.mainMap.touchZoomRotate.disableRotation();
     this.mainMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
     this._layers = {};      // { routeId: ['src-id','layer-glow','layer-line','layer-dot'] }
@@ -2160,6 +2160,14 @@ const App = {
     this.mainMap.on('moveend',   () => App._showNavDelay());
     this.mainMap.on('zoomstart', () => App._hideNav());
     this.mainMap.on('zoomend',   () => App._showNavDelay());
+    // Al hacer pinch-zoom o drag manual, desactivar follow-me
+    this.mainMap.on('dragstart', () => {
+      if (App._followMe) {
+        App._followMe = false;
+        const locBtn = document.getElementById('locate-btn');
+        if (locBtn) { locBtn.style.background = '#1C1C1E'; locBtn.style.color = '#C0C0C8'; }
+      }
+    });
   },
 
   // ── GPS LIVE TRACKING (MapLibre) ──
@@ -2777,8 +2785,17 @@ const App = {
     if (panel) panel.remove();
     const loopPanel = document.getElementById('loop-active-panel');
     if (loopPanel) loopPanel.remove();
+    const picker = document.getElementById('transport-picker');
+    if (picker) picker.remove();
     this._stopVoice();
     this._loopStarted = false;
+    // Ocultar el badge de ruta y el popup del mapa
+    const b = document.getElementById('rt-badge');
+    if (b) b.style.display = 'none';
+    if (this._loopPopup) { this._loopPopup.remove(); this._loopPopup = null; }
+    this.selId = null;
+    document.querySelectorAll('.rc').forEach(c => c.classList.remove('sel'));
+    if (this._layers) Object.keys(this._layers).forEach(rid => this._setRouteVisible(rid, true));
     this.toast('Navegación cancelada');
   },
 
@@ -4568,6 +4585,14 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const m  = document.getElementById('loop-modal');
     if(m)  m.style.bottom='-800px';
     setTimeout(()=>{ if(ov) ov.style.display='none'; }, 350);
+    // Si no hay nav activa, limpiar el badge y popup que pueda haber quedado
+    if (!this._navLine) {
+      const b = document.getElementById('rt-badge');
+      if (b) b.style.display = 'none';
+      if (this._loopPopup) { this._loopPopup.remove(); this._loopPopup = null; }
+      const picker = document.getElementById('transport-picker');
+      if (picker) picker.remove();
+    }
   },
 
   // ── EDITAR LOOP ──
