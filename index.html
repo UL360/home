@@ -799,6 +799,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   <div id="rt-badge" style="display:none;position:absolute;top:72px;left:72px;z-index:10;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:600;align-items:center;gap:7px;">
     <div id="rt-dot" style="width:9px;height:9px;border-radius:50%;background:var(--or);"></div>
     <span id="rt-name">—</span>
+    <button onclick="App._clearSelection()" style="background:none;border:none;color:#9CA3AF;cursor:pointer;padding:0 0 0 4px;font-size:14px;line-height:1;display:flex;align-items:center;" title="Cerrar">✕</button>
   </div>
 
   <!-- ── SEARCH BAR movida al menú lateral — se mantienen los ids para el JS ── -->
@@ -2128,8 +2129,8 @@ const App = {
   },
 
   // ── MAIN MAP (MapLibre GL JS) ──
-  _ML_STYLE_DARK:  'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=kS5YiQh2kB23jvnE6cpy',
-  _ML_STYLE_LIGHT: 'https://api.maptiler.com/maps/streets-v2/style.json?key=kS5YiQh2kB23jvnE6cpy',
+  _ML_STYLE_DARK:  'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=TU_API_KEY',
+  _ML_STYLE_LIGHT: 'https://api.maptiler.com/maps/streets-v2/style.json?key=TU_API_KEY',
 
   _initMainMap() {
     this._activeFilter = this._activeFilter || 'all';
@@ -4768,6 +4769,22 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const isOpen = wrap.style.maxHeight !== '0px' && wrap.style.maxHeight !== '';
     wrap.style.maxHeight = isOpen ? '0px' : '400px';
     if (arrow) arrow.style.transform = isOpen ? 'rotate(-90deg)' : 'rotate(0deg)';
+  },
+
+  // ── LIMPIAR SELECCIÓN (X del badge) ──
+  _clearSelection() {
+    this.selId = null;
+    const b = document.getElementById('rt-badge');
+    if (b) b.style.display = 'none';
+    if (this._loopPopup) { this._loopPopup.remove(); this._loopPopup = null; }
+    const panel = document.getElementById('nav-panel'); if (panel) panel.remove();
+    const loopPanel = document.getElementById('loop-active-panel'); if (loopPanel) loopPanel.remove();
+    const picker = document.getElementById('transport-picker'); if (picker) picker.remove();
+    this._removeNavLine();
+    this._stopVoice();
+    document.querySelectorAll('.rc').forEach(c => c.classList.remove('sel'));
+    // Mostrar todas las rutas de nuevo
+    if (this._layers) Object.keys(this._layers).forEach(rid => this._setRouteVisible(rid, true));
   },
 
   // ── TOAST ──
