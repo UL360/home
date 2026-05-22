@@ -282,9 +282,172 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
    BOTTOM NAV (oculto — nav está en menú lateral)
 ═══════════════════════ */
 #bnav { display:none !important; height:0 !important; }
-:root { --navH: 0px; }
+:root { --navH: 0px; --sideW: 260px; --sideCollapsed: 60px; }
 .ni { display:none; }
 .ni-label,.ni-pip { display:none; }
+
+/* ═══════════════════════
+   COLLAPSIBLE SIDEBAR
+═══════════════════════ */
+/* ── Variables ── */
+:root {
+  --side-w-open: 260px;
+  --side-w-rail: 60px;
+}
+
+/* ── Sidebar base ── */
+#side-panel {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  height: 100% !important;
+  background: var(--bg1) !important;
+  border-right: 0.5px solid var(--bd) !important;
+  box-shadow: 4px 0 24px rgba(0,0,0,.3) !important;
+  overflow: hidden !important;
+  transition: width .28s cubic-bezier(.4,0,.2,1) !important;
+  z-index: 91 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding-bottom: 0 !important;
+}
+
+/* ── Sidebar open (labels visibles) ── */
+#side-panel.sb-open {
+  width: var(--side-w-open) !important;
+  overflow-y: auto !important;
+}
+
+/* ── Sidebar rail (solo iconos) ── */
+#side-panel.sb-rail {
+  width: var(--side-w-rail) !important;
+  overflow: hidden !important;
+}
+
+/* Ocultar elementos que no aplican en rail */
+#side-panel.sb-rail .sb-label,
+#side-panel.sb-rail .sb-header-full,
+#side-panel.sb-rail .sb-search-wrap,
+#side-panel.sb-rail .sb-city-wrap,
+#side-panel.sb-rail .sb-filters-wrap,
+#side-panel.sb-rail .sb-footer,
+#side-panel.sb-rail .sb-grabar-btn { display: none !important; }
+
+/* En rail: centrar iconos */
+#side-panel.sb-rail .sb-nav-btn {
+  justify-content: center !important;
+  padding: 12px 0 !important;
+  border-radius: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+#side-panel.sb-rail .sb-nav-btn .sb-icon { margin: 0 auto; }
+#side-panel.sb-rail #sb-nav-list { padding: 4px 0 !important; gap: 2px !important; }
+#side-panel.sb-rail .sb-rail-logo { display: flex !important; }
+#side-panel.sb-open  .sb-rail-logo { display: none !important; }
+
+/* ── Botones de nav ── */
+.sb-nav-btn {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--lt); border: 0.5px solid var(--bd);
+  border-radius: 10px; cursor: pointer; width: 100%;
+  text-align: left; transition: all .2s;
+  white-space: nowrap; overflow: hidden;
+}
+.sb-nav-btn:hover { border-color: var(--or); }
+.sb-nav-btn.active { background: var(--orL); border-color: var(--or); }
+.sb-nav-btn .sb-icon { font-size: 18px; flex-shrink: 0; }
+.sb-label { font-family: var(--fB); font-size: 13px; font-weight: 500; color: var(--md); }
+
+/* ── Botón hamburger dentro del rail ── */
+#sb-toggle-btn {
+  width: 100%; padding: 14px 0;
+  background: none; border: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 5px;
+  flex-shrink: 0;
+}
+#sb-toggle-btn span {
+  display: block; width: 18px; height: 2px;
+  background: var(--gr); border-radius: 2px;
+  transition: all .25s;
+}
+
+/* ── DESKTOP: sidebar siempre visible ── */
+@media (min-width: 769px) {
+  /* sidebar fijo en modo rail por defecto */
+  #side-panel { left: 0 !important; }
+  #side-overlay { display: none !important; }
+  /* Empujar el contenido de explore */
+  #explore, .screen:not(#side-panel):not(#splash) {
+    margin-left: 0;
+  }
+  /* Cuando sidebar está en rail, las screens se desplazan */
+  body.sb-rail-mode #explore,
+  body.sb-rail-mode #loops-urbanos,
+  body.sb-rail-mode #explorar-ciudades,
+  body.sb-rail-mode #comunidad,
+  body.sb-rail-mode #ranking,
+  body.sb-rail-mode #grabar,
+  body.sb-rail-mode #saved,
+  body.sb-rail-mode #profile,
+  body.sb-rail-mode #admin,
+  body.sb-rail-mode #detail,
+  body.sb-rail-mode #loops,
+  body.sb-rail-mode #ciudad-remota { margin-left: var(--side-w-rail) !important; }
+
+  body.sb-open-mode #explore,
+  body.sb-open-mode #loops-urbanos,
+  body.sb-open-mode #explorar-ciudades,
+  body.sb-open-mode #comunidad,
+  body.sb-open-mode #ranking,
+  body.sb-open-mode #grabar,
+  body.sb-open-mode #saved,
+  body.sb-open-mode #profile,
+  body.sb-open-mode #admin,
+  body.sb-open-mode #detail,
+  body.sb-open-mode #loops,
+  body.sb-open-mode #ciudad-remota { margin-left: var(--side-w-open) !important; }
+
+  #menu-btn { display: none !important; }
+  .screens-wrapper { transition: margin-left .28s cubic-bezier(.4,0,.2,1); }
+}
+
+/* ── MOBILE: sidebar como drawer ── */
+@media (max-width: 768px) {
+  #side-panel {
+    width: 0 !important;
+    left: 0 !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+  }
+  #side-panel.sb-rail {
+    width: var(--side-w-rail) !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,.35) !important;
+  }
+  #side-panel.sb-open {
+    width: var(--side-w-open) !important;
+    box-shadow: 8px 0 40px rgba(0,0,0,.45) !important;
+    overflow-y: auto !important;
+  }
+  #side-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.55);
+    z-index: 90;
+  }
+  #side-overlay.show { display: block; }
+}
+
+/* ── Botón "Atrás" genérico para headers de secciones ── */
+.scr-back-btn {
+  width: 36px; height: 36px; border-radius: var(--rs);
+  border: 1.5px solid var(--bd); background: var(--wh);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0; transition: border-color .2s;
+}
+.scr-back-btn:hover { border-color: var(--or); }
 
 /* ═══════════════════════
    VUELTAS SCREEN
@@ -702,10 +865,6 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
     padding: 2px 5px !important;
   }
 
-  /* Side panel — full width on small screens, desde la IZQUIERDA */
-  #side-panel { width: 100% !important; max-width: 100% !important; left: -100% !important; }
-  #side-panel[style*="left: 0"] { left: 0 !important; }
-
   /* Bottom nav oculto, navH siempre 0 */
   :root { --navH: 0px !important; }
   #bnav { display:none !important; }
@@ -723,8 +882,78 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 .fl-cat { padding:6px 12px; border-radius:20px; border:1.5px solid var(--bd); background:var(--lt); font-size:12px; font-weight:500; color:var(--md); cursor:pointer; transition:all .2s; white-space:nowrap; }
 .fl-cat.on { background:var(--or); border-color:var(--or); color:white; }
 
-/* ── FOTO STOP overlay flex ── */
+/* ═══ MÓDULO 1 — LOOPS URBANOS ═══ */
+.lu-card {
+  background:var(--wh); border-radius:12px; padding:12px;
+  border:0.5px solid var(--bd); cursor:pointer; transition:all .2s;
+  box-shadow:var(--sh);
+}
+.lu-card:hover { transform:translateY(-1px); box-shadow:var(--shL); }
+.lu-card.principal { border:2px solid #EF9F27; }
+.lu-dot { width:9px;height:9px;border-radius:50%;flex-shrink:0; }
+.lu-badge-principal { background:#FAEEDA;color:#633806;font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px; }
+.lu-meta { display:flex;gap:10px;margin-top:5px; }
+.lu-mi { font-size:11px;color:var(--gr);display:flex;align-items:center;gap:3px; }
+
+/* ═══ MÓDULO 2 — COMUNIDAD ═══ */
+.com-city-chip {
+  flex-shrink:0; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:500;
+  background:var(--lt); border:0.5px solid var(--bd); color:var(--gr);
+  cursor:pointer; white-space:nowrap; transition:all .2s;
+}
+.com-city-chip.on { background:var(--c-verde); border-color:var(--c-verde-b); color:var(--c-verde-t); font-weight:600; }
+.com-post-card {
+  background:var(--wh); border-radius:12px; padding:12px;
+  border:0.5px solid var(--bd); box-shadow:var(--sh);
+}
+.com-avatar { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0; }
+.com-card { background:var(--wh);border-radius:12px;padding:12px;border:0.5px solid var(--bd);box-shadow:var(--sh); }
+.com-card-hdr { display:flex;align-items:center;gap:9px;margin-bottom:9px; }
+.com-user-name { font-size:13px;font-weight:600;color:var(--dk); }
+.com-user-meta { font-size:10px;color:var(--gr); }
+.com-cat-badge { font-size:10px;padding:2px 8px;border-radius:10px;margin-left:auto;flex-shrink:0; }
+.com-body-txt { margin-bottom:8px; }
+.com-loop-name { font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);margin-bottom:2px; }
+.com-loop-desc { font-size:12px;color:var(--gr);line-height:1.45; }
+.com-loop-stats { display:flex;gap:10px;margin-bottom:8px; }
+.com-stat { font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px; }
+.com-actions { display:flex;gap:6px;border-top:0.5px solid var(--bd);padding-top:8px; }
+.com-action-btn { flex:1;padding:7px 4px;border-radius:8px;background:var(--lt);border:0.5px solid var(--bd);font-size:11px;color:var(--md);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .2s; }
+.com-action-btn:hover,.com-action-btn.liked { background:var(--orL);border-color:var(--or);color:var(--or); }
+.com-city-tag { font-size:10px;padding:2px 8px;border-radius:8px;background:var(--lt);color:var(--gr);border:0.5px solid var(--bd); }
+
+/* ═══ MÓDULO 3 — RANKING ═══ */
+.rank-loop-item { background:var(--wh);border-radius:10px;padding:11px 12px;border:0.5px solid var(--bd);display:flex;align-items:center;gap:10px; }
+.rank-loop-item.pos1 { border:1.5px solid #EF9F27; }
+.rank-loop-pos { width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;background:var(--lt);color:var(--gr); }
+.rank-loop-pos.gold { background:#FAEEDA;color:#BA7517; }
+.rank-loop-info { flex:1; }
+.rank-loop-name { font-size:13px;font-weight:600;color:var(--dk); }
+.rank-loop-meta { font-size:11px;color:var(--gr);margin-top:2px; }
+.rank-loop-bar-wrap { height:4px;background:var(--lt);border-radius:2px;margin-top:4px; }
+.rank-loop-bar { height:4px;border-radius:2px;transition:width .5s; }
+.rank-loop-score { font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);flex-shrink:0; }
+.earn-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px; }
+.earn-item { display:flex;align-items:center;gap:8px;background:var(--lt);border-radius:8px;padding:8px 10px; }
+.earn-em { font-size:18px;flex-shrink:0; }
+.earn-action { font-size:12px;color:var(--md); }
+.earn-pts { font-size:12px;font-weight:700;color:var(--or); }
+
+/* ═══ EXPLORAR CIUDADES ═══ */
+.explorar-city-card {
+  background:var(--wh); border-radius:12px; padding:12px;
+  display:flex;align-items:center;gap:12px;
+  border:0.5px solid var(--bd); cursor:pointer; transition:all .2s;
+  box-shadow:var(--sh);
+}
+.explorar-city-card:hover { transform:translateY(-1px);box-shadow:var(--shL); }
+.explorar-city-ico { width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.explorar-city-name { font-size:13px;font-weight:600;color:var(--dk); }
+.explorar-city-sub { font-size:11px;color:var(--gr);margin-top:2px; }
+.explorar-prov-chip { padding:5px 13px;border-radius:20px;font-size:12px;color:var(--md);background:var(--wh);border:0.5px solid var(--bd);cursor:pointer;transition:all .2s; }
+.explorar-prov-chip:hover { border-color:var(--or);color:var(--or); }
 </style>
+
 </head>
 <body>
 
@@ -747,13 +976,13 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 </div>
 
 <!-- ════════════ EXPLORE ════════════ -->
-<div id="explore" class="screen" style="position:relative;">
+<div id="explore" class="screen" style="position:relative;background:transparent;">
 
   <!-- Full-screen map canvas -->
   <div id="main-map" style="position:absolute;inset:0;width:100%;height:100%;"></div>
 
   <!-- ── TOP LEFT: Hamburger ── -->
-  <button id="menu-btn" onclick="App.openSidePanel()" style="position:absolute;top:14px;left:14px;z-index:10;width:46px;height:46px;background:#FF5F00;border:none;border-radius:14px;box-shadow:0 4px 16px rgba(255,95,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;">
+  <button id="menu-btn" onclick="App.toggleSidebar()" style="position:absolute;top:14px;left:14px;z-index:10;width:46px;height:46px;background:#FF5F00;border:none;border-radius:14px;box-shadow:0 4px 16px rgba(255,95,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;">
     <span style="width:18px;height:2px;background:white;border-radius:2px;display:block;"></span>
     <span style="width:18px;height:2px;background:white;border-radius:2px;display:block;"></span>
     <span style="width:18px;height:2px;background:white;border-radius:2px;display:block;"></span>
@@ -796,10 +1025,10 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   </div>
 
   <!-- ── ROUTE BADGE ── -->
-  <div id="rt-badge" style="display:none;position:absolute;top:72px;left:72px;z-index:10;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:600;align-items:center;gap:7px;max-width:calc(100vw - 130px);">
-    <div id="rt-dot" style="width:9px;height:9px;border-radius:50%;flex-shrink:0;background:var(--or);"></div>
-    <span id="rt-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;">—</span>
-    <button onclick="App._clearSelection()" style="background:none;border:none;color:#9CA3AF;cursor:pointer;padding:0 0 0 4px;font-size:16px;line-height:1;display:flex;align-items:center;flex-shrink:0;min-width:22px;min-height:22px;" title="Cerrar">✕</button>
+  <div id="rt-badge" style="display:none;position:absolute;top:72px;left:72px;z-index:10;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:600;align-items:center;gap:7px;">
+    <div id="rt-dot" style="width:9px;height:9px;border-radius:50%;background:var(--or);"></div>
+    <span id="rt-name">—</span>
+    <button onclick="App._clearSelection()" style="background:none;border:none;color:#9CA3AF;cursor:pointer;padding:0 0 0 4px;font-size:14px;line-height:1;display:flex;align-items:center;" title="Cerrar">✕</button>
   </div>
 
   <!-- ── SEARCH BAR movida al menú lateral — se mantienen los ids para el JS ── -->
@@ -811,104 +1040,79 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 
 </div>
 
-<!-- ════════════ SIDE DRAWER (IZQUIERDA) ════════════ -->
-<div id="side-overlay" onclick="App.closeSidePanel()"
-  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:90;"></div>
+<!-- ════════════ SIDE OVERLAY (mobile) ════════════ -->
+<div id="side-overlay" onclick="App.closeSidePanel()"></div>
 
-<div id="side-panel"
-  style="position:fixed;top:0;left:-310px;width:290px;height:100%;
-         background:var(--bg1);z-index:91;
-         border-right:0.5px solid var(--bd);
-         box-shadow:8px 0 40px rgba(0,0,0,.35);
-         transition:left .3s cubic-bezier(.4,0,.2,1);
-         overflow-y:auto;padding-bottom:40px;">
+<!-- ════════════ SIDEBAR COLAPSABLE ════════════ -->
+<div id="side-panel" class="sb-rail">
 
-  <!-- Header -->
-  <div style="padding:18px 16px 14px;border-bottom:0.5px solid var(--bd);display:flex;align-items:center;justify-content:space-between;">
-    <div>
-      <div style="font-family:var(--fH);font-size:18px;font-weight:700;color:var(--dk);">
-        Urban <span style="color:var(--or);">Loop</span>
-      </div>
-      <div style="font-size:11px;color:var(--gr);margin-top:2px;" id="side-city-name">📍 La Paz, Entre Ríos</div>
+  <!-- Botón toggle (siempre visible) -->
+  <button id="sb-toggle-btn" onclick="App.toggleSidebar()" title="Menú">
+    <span></span><span></span><span></span>
+  </button>
+
+  <!-- Logo mini (solo rail) -->
+  <div class="sb-rail-logo" style="display:none;padding:4px 0 10px;text-align:center;font-size:11px;font-weight:700;font-family:var(--fH);color:var(--or);">UL</div>
+
+  <!-- Header full (solo abierto) -->
+  <div class="sb-header-full" style="padding:0 16px 14px;border-bottom:0.5px solid var(--bd);">
+    <div style="font-family:var(--fH);font-size:18px;font-weight:700;color:var(--dk);">
+      Urban <span style="color:var(--or);">Loop</span> <span style="font-size:12px;color:var(--gr);font-weight:400;font-family:var(--fB);">360°</span>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <button onclick="App.toggleTheme()" id="theme-toggle-btn"
-        title="Modo día / noche"
-        style="width:34px;height:34px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s;">
-        ☀️
-      </button>
-      <button onclick="App.closeSidePanel()"
-        style="width:34px;height:34px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--md);font-size:18px;font-weight:300;">×</button>
-    </div>
+    <div style="font-size:11px;color:var(--gr);margin-top:2px;" id="side-city-name">📍 La Paz, Entre Ríos</div>
+    <button onclick="App.toggleTheme()" id="theme-toggle-btn" title="Modo día / noche"
+      style="margin-top:10px;width:34px;height:34px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s;">☀️</button>
   </div>
 
-  <!-- Búsqueda -->
-  <div style="padding:12px 16px 0;">
-    <div style="font-size:10px;font-weight:600;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px;">Buscar</div>
-    <div style="background:var(--lt);border:1.5px solid var(--bd);border-radius:var(--rs);height:42px;display:flex;align-items:center;gap:8px;padding:0 12px;">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" id="srch" placeholder="Buscar loops, lugares..."
+  <!-- Búsqueda (solo abierto) -->
+  <div class="sb-search-wrap" style="padding:12px 16px 0;">
+    <div style="background:var(--lt);border:1.5px solid var(--bd);border-radius:var(--rs);height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="text" id="srch" placeholder="Buscar loops..."
         style="border:none;outline:none;font-family:var(--fB);font-size:13px;color:var(--dk);flex:1;background:transparent;"
         oninput="App._renderCards(this.value, App._activeFilter||'all')">
     </div>
   </div>
 
-  <!-- City symbols -->
-  <div style="padding:14px 16px 0;">
-    <div style="font-size:10px;font-weight:600;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;">Esta ciudad</div>
-    <div id="side-city-icons" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px;"></div>
-  </div>
-
-  <!-- Category filters — COLAPSABLE -->
-  <div style="padding:12px 16px 0;">
-    <button onclick="App.toggleFilterSection()"
-      style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:0;margin-bottom:8px;">
-      <span style="font-size:10px;font-weight:600;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;">Filtrar tipo</span>
-      <span id="filter-arrow" style="font-size:14px;color:var(--gr);transition:transform .25s;display:inline-block;">▼</span>
+  <!-- Nav list -->
+  <div id="sb-nav-list" style="padding:10px 8px 0;display:flex;flex-direction:column;gap:4px;flex:1;">
+    <button class="sb-nav-btn" id="sb-btn-explore" onclick="App.sideNav('explore')">
+      <span class="sb-icon">🗺️</span><span class="sb-label">Mapa</span>
     </button>
-    <div id="side-filters-wrap" style="overflow:hidden;max-height:400px;transition:max-height .35s ease;">
-      <div id="side-filters" style="display:flex;flex-direction:column;gap:5px;"></div>
-    </div>
+    <button class="sb-nav-btn" id="sb-btn-loops-urbanos" onclick="App.sideNav('loops-urbanos')" style="background:var(--c-verde);border-color:var(--c-verde-b);">
+      <span class="sb-icon">🔄</span><span class="sb-label" style="color:var(--c-verde-t);font-weight:600;">Loops Urbanos</span>
+    </button>
+    <button class="sb-nav-btn" id="sb-btn-explorar-ciudades" onclick="App.sideNav('explorar-ciudades')" style="background:var(--c-azul);border-color:var(--c-azul-b);">
+      <span class="sb-icon">🔍</span><span class="sb-label" style="color:var(--c-azul-t);font-weight:600;">Explorar ciudades</span>
+    </button>
+    <button class="sb-nav-btn" id="sb-btn-ranking" onclick="App.sideNav('ranking')" style="background:var(--c-naranja);border-color:var(--c-naranja-b);">
+      <span class="sb-icon">🏆</span><span class="sb-label" style="color:var(--c-naranja-t);font-weight:600;">Ranking</span>
+    </button>
+    <button class="sb-nav-btn" id="sb-btn-comunidad" onclick="App.sideNav('comunidad')" style="background:var(--c-viola);border-color:var(--c-viola-b);">
+      <span class="sb-icon">👥</span><span class="sb-label" style="color:var(--c-viola-t);font-weight:600;">Comunidad</span>
+    </button>
+    <button class="sb-nav-btn" id="sb-btn-saved" onclick="App.sideNav('saved')">
+      <span class="sb-icon">🔖</span><span class="sb-label">Guardados</span>
+    </button>
+    <button class="sb-nav-btn" id="sb-btn-profile" onclick="App.sideNav('profile')">
+      <span class="sb-icon">👤</span><span class="sb-label">Perfil</span>
+    </button>
   </div>
 
-  <!-- Navigation (reemplaza el bottom nav) -->
-  <div style="padding:14px 16px 0;border-top:0.5px solid #1C1C1E;margin-top:14px;">
-    <div style="font-size:10px;font-weight:600;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;margin-bottom:10px;">Navegar</div>
-    <div style="display:flex;flex-direction:column;gap:4px;">
-      <button onclick="App.closeSidePanel();App.go('explore');" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;width:100%;text-align:left;transition:all .2s;">
-        <span style="font-size:18px;">🗺️</span><span style="font-family:var(--fB);font-size:13px;font-weight:500;color:var(--md);">Explorar</span>
-      </button>
-      <button onclick="App.closeSidePanel();App.go('comunidad');" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;width:100%;text-align:left;transition:all .2s;">
-        <span style="font-size:18px;">👥</span><span style="font-family:var(--fB);font-size:13px;font-weight:500;color:var(--md);">Comunidad</span>
-      </button>
-      <button onclick="App.closeSidePanel();App.go('ranking');" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;width:100%;text-align:left;transition:all .2s;">
-        <span style="font-size:18px;">🏆</span><span style="font-family:var(--fB);font-size:13px;font-weight:500;color:var(--md);">Ranking</span>
-      </button>
-      <button onclick="App.closeSidePanel();App.go('saved');" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;width:100%;text-align:left;transition:all .2s;">
-        <span style="font-size:18px;">🔖</span><span style="font-family:var(--fB);font-size:13px;font-weight:500;color:var(--md);">Guardados</span>
-      </button>
-      <button onclick="App.closeSidePanel();App.go('profile');" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;width:100%;text-align:left;transition:all .2s;">
-        <span style="font-size:18px;">👤</span><span style="font-family:var(--fB);font-size:13px;font-weight:500;color:var(--md);">Perfil</span>
-      </button>
-      <button onclick="App.closeSidePanel();App.go('admin');" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;width:100%;text-align:left;transition:all .2s;">
-        <span style="font-size:18px;">✏️</span><span style="font-family:var(--fB);font-size:13px;font-weight:500;color:var(--md);">Crear Loop Manual</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Grabar CTA -->
-  <div style="padding:14px 16px 0;">
-    <button onclick="App.closeSidePanel();App.go('grabar');"
-      style="width:100%;height:50px;background:var(--or);color:white;border:none;border-radius:12px;
-             font-family:var(--fH);font-size:15px;font-weight:700;cursor:pointer;
+  <!-- Grabar CTA (solo abierto) -->
+  <div class="sb-grabar-btn" style="padding:12px 8px 14px;">
+    <button onclick="App.sideNav('grabar');"
+      style="width:100%;height:46px;background:var(--or);color:white;border:none;border-radius:12px;
+             font-family:var(--fH);font-size:14px;font-weight:700;cursor:pointer;
              display:flex;align-items:center;justify-content:center;gap:8px;
              box-shadow:0 4px 20px rgba(255,95,0,.4);">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="white" stroke="none"/></svg>
       Grabar Loop
     </button>
   </div>
 
-  <div style="text-align:center;margin-top:24px;font-size:11px;color:#2C2C2E;">Urban Loop 360° · v2.0</div>
+  <!-- Footer (solo abierto) -->
+  <div class="sb-footer" style="text-align:center;padding:2px 0 10px;font-size:10px;color:var(--bd);">Urban Loop 360° · v2.0</div>
 </div>
 
 <!-- ════════════ DETAIL ════════════ -->
@@ -1231,61 +1435,297 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   </div>
 </div>
 
-<!-- ════════════ COMUNIDAD ════════════ -->
+<!-- ════════════ COMUNIDAD — Módulo 2 ════════════ -->
 <div id="comunidad" class="screen" style="background:var(--bg0);">
-  <div class="com-hdr">
-    <h1>Comunidad</h1>
-    <p>Loops compartidos por loopers de todo el país</p>
+
+  <!-- Header -->
+  <div style="padding:14px 16px 10px;background:var(--wh);border-bottom:1px solid var(--bd);flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <button class="scr-back-btn" onclick="App.go('explore')" title="Volver al mapa">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
+      </button>
+      <div style="flex:1;">
+        <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);">Comunidad</h1>
+        <p style="font-size:11px;color:var(--gr);margin-top:1px;" id="com-prov-label">Entre Ríos · feed provincial</p>
+      </div>
+      <button onclick="App.openNuevoPost()" style="background:var(--or);border:none;border-radius:10px;padding:8px 12px;color:white;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Publicar
+      </button>
+    </div>
+    <!-- City filter chips -->
+    <div id="com-city-chips" style="display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;scrollbar-width:none;">
+      <div class="com-city-chip on" data-city="all" onclick="App.comSetCity(this,'all')">Todas</div>
+      <div class="com-city-chip" data-city="La Paz" onclick="App.comSetCity(this,'La Paz')">La Paz</div>
+      <div class="com-city-chip" data-city="Paraná" onclick="App.comSetCity(this,'Paraná')">Paraná</div>
+      <div class="com-city-chip" data-city="Concordia" onclick="App.comSetCity(this,'Concordia')">Concordia</div>
+      <div class="com-city-chip" data-city="Gualeguaychú" onclick="App.comSetCity(this,'Gualeguaychú')">Gualeguaychú</div>
+      <div class="com-city-chip" data-city="Colón" onclick="App.comSetCity(this,'Colón')">Colón</div>
+    </div>
   </div>
-  <div class="com-tabs">
-    <div class="com-tab on" data-ct="feed" onclick="App.comTab(this,'feed')">📍 Feed</div>
-    <div class="com-tab" data-ct="cercanos" onclick="App.comTab(this,'cercanos')">🗺️ Cercanos</div>
-    <div class="com-tab" data-ct="top" onclick="App.comTab(this,'top')">🏆 Top</div>
-  </div>
-  <div class="com-body" id="com-body"></div>
+
+  <!-- Feed body -->
+  <div class="com-body" id="com-body" style="flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;"></div>
 </div>
 
-<!-- ════════════ RANKING ════════════ -->
+<!-- ════════════ RANKING — Módulo 3 Municipal ════════════ -->
 <div id="ranking" class="screen" style="background:var(--bg0);">
-  <div class="rank-hdr">
-    <h1>Mis Puntos</h1>
-    <p>Compartí loops y sumá puntos en la comunidad</p>
-  </div>
-  <div class="rank-body">
 
-    <!-- User card -->
-    <div class="pts-card" id="pts-card">
-      <div class="pts-card-top">
-        <div class="pts-avatar" id="pts-avatar">VL</div>
-        <div>
-          <div class="pts-name">Viajero Local</div>
-          <div class="pts-level" id="pts-level-lbl">⭐ Explorador</div>
+  <!-- Header -->
+  <div style="padding:14px 16px 12px;background:var(--wh);border-bottom:1px solid var(--bd);flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <button class="scr-back-btn" onclick="App.go('explore')" title="Volver al mapa">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
+      </button>
+      <div style="flex:1;">
+        <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);">Ranking</h1>
+        <p style="font-size:11px;color:var(--gr);margin-top:1px;">Loop Principal · estadísticas municipales</p>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="App.rankSetPeriod('semanal',this)" style="background:var(--lt);border:0.5px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--md);cursor:pointer;">Semanal</button>
+        <button onclick="App.rankSetPeriod('mensual',this)" id="rank-period-mensual" style="background:var(--or);border:none;border-radius:8px;padding:5px 10px;font-size:11px;color:white;font-weight:600;cursor:pointer;">Mensual</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="rank-body" id="rank-body" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;">
+
+    <!-- Loop Principal card -->
+    <div id="rank-principal-card" style="background:var(--wh);border-radius:14px;border:2px solid #EF9F27;padding:14px;box-shadow:0 4px 20px rgba(239,159,39,.18);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:20px;">★</span>
+          <div>
+            <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);" id="rank-principal-name">Loop Costanera</div>
+            <div style="font-size:11px;color:var(--gr);">Loop Principal del mes</div>
+          </div>
+        </div>
+        <span style="background:#FAEEDA;color:#633806;font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;">★ PRINCIPAL</span>
+      </div>
+      <div style="background:var(--lt);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span style="font-size:11px;color:var(--gr);">Score total</span>
+          <span style="font-size:13px;font-weight:700;color:var(--dk);" id="rank-principal-score">0 pts</span>
+        </div>
+        <div style="height:6px;background:var(--bd);border-radius:3px;margin-bottom:8px;">
+          <div id="rank-principal-bar" style="height:6px;width:90%;background:#BA7517;border-radius:3px;transition:width .5s;"></div>
+        </div>
+        <div style="display:flex;gap:14px;">
+          <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--or)" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span id="rank-principal-likes">0</span> likes
+          </span>
+          <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>
+            <span id="rank-principal-paseos">0</span> paseos
+          </span>
         </div>
       </div>
-      <div class="pts-big" id="pts-big">0</div>
-      <div class="pts-lbl">puntos acumulados</div>
-      <div class="pts-bar-wrap"><div class="pts-bar" id="pts-bar" style="width:0%"></div></div>
-      <div class="pts-bar-info">
-        <span id="pts-cur-lbl">0 pts</span>
-        <span id="pts-next-lbl">Próximo nivel: 500 pts</span>
+      <div style="font-size:11px;color:var(--gr);text-align:center;padding:4px 0;">
+        Fórmula: <code style="background:var(--lt);padding:1px 6px;border-radius:4px;color:var(--dk);font-size:11px;">score = (likes × 2) + paseos</code>
       </div>
     </div>
 
-    <!-- How to earn -->
-    <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">CÓMO GANAR PUNTOS</div>
-    <div class="earn-grid">
-      <div class="earn-item"><div class="earn-em">📍</div><div class="earn-info"><div class="earn-action">Publicar loop</div><div class="earn-pts">+50 pts</div></div></div>
-      <div class="earn-item"><div class="earn-em">🗺️</div><div class="earn-info"><div class="earn-action">Agregar POI</div><div class="earn-pts">+15 pts</div></div></div>
-      <div class="earn-item"><div class="earn-em">❤️</div><div class="earn-info"><div class="earn-action">Recibir like</div><div class="earn-pts">+5 pts</div></div></div>
-      <div class="earn-item"><div class="earn-em">🎣</div><div class="earn-info"><div class="earn-action">Loop de pesca</div><div class="earn-pts">+30 pts</div></div></div>
-      <div class="earn-item"><div class="earn-em">🏃</div><div class="earn-info"><div class="earn-action">Grabar ruta</div><div class="earn-pts">+25 pts</div></div></div>
-      <div class="earn-item"><div class="earn-em">🥇</div><div class="earn-info"><div class="earn-action">Primero en ciudad</div><div class="earn-pts">+200 pts</div></div></div>
+    <!-- Ranking list -->
+    <div>
+      <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">TODOS LOS LOOPS</div>
+      <div id="rank-loops-list" style="display:flex;flex-direction:column;gap:7px;"></div>
     </div>
 
-    <!-- Ranking -->
-    <div class="rank-list-title">🏆 Ranking General</div>
-    <div id="rank-list"></div>
+    <!-- Tu posición personal -->
+    <div style="background:var(--wh);border-radius:12px;padding:14px;border:2px solid var(--or);">
+      <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);margin-bottom:10px;letter-spacing:.5px;">TU POSICIÓN</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="pts-avatar" id="pts-avatar" style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:white;background:var(--or);flex-shrink:0;">VL</div>
+        <div style="flex:1;">
+          <div style="font-size:14px;font-weight:600;color:var(--dk);">Viajero Local</div>
+          <div style="font-size:11px;color:var(--gr);" id="pts-level-lbl">⭐ Explorador</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--or);" id="pts-big">0</div>
+          <div style="font-size:10px;color:var(--gr);">puntos</div>
+        </div>
+      </div>
+      <div style="margin-top:10px;">
+        <div class="pts-bar-wrap" style="background:var(--lt);border-radius:4px;height:6px;margin-bottom:5px;"><div class="pts-bar" id="pts-bar" style="height:6px;background:var(--or);border-radius:4px;width:0%;transition:width .5s;"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gr);"><span id="pts-cur-lbl">0 pts</span><span id="pts-next-lbl">Próximo nivel: 500 pts</span></div>
+      </div>
+    </div>
 
+    <!-- Cómo ganar puntos -->
+    <div style="background:var(--wh);border-radius:12px;padding:14px;">
+      <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);margin-bottom:10px;letter-spacing:.5px;">CÓMO GANAR PUNTOS</div>
+      <div class="earn-grid">
+        <div class="earn-item"><div class="earn-em">📍</div><div class="earn-info"><div class="earn-action">Publicar loop</div><div class="earn-pts">+50 pts</div></div></div>
+        <div class="earn-item"><div class="earn-em">🗺️</div><div class="earn-info"><div class="earn-action">Agregar POI</div><div class="earn-pts">+15 pts</div></div></div>
+        <div class="earn-item"><div class="earn-em">❤️</div><div class="earn-info"><div class="earn-action">Recibir like</div><div class="earn-pts">+5 pts</div></div></div>
+        <div class="earn-item"><div class="earn-em">🏃</div><div class="earn-info"><div class="earn-action">Grabar ruta</div><div class="earn-pts">+25 pts</div></div></div>
+        <div class="earn-item"><div class="earn-em">❤️</div><div class="earn-info"><div class="earn-action">Dar like</div><div class="earn-pts">+2 pts</div></div></div>
+        <div class="earn-item"><div class="earn-em">🥇</div><div class="earn-info"><div class="earn-action">Loop Principal</div><div class="earn-pts">+200 pts</div></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════ LOOPS URBANOS — Módulo 1 ════════════ -->
+<div id="loops-urbanos" class="screen" style="background:var(--bg0);">
+  <div style="padding:14px 16px 10px;background:var(--wh);border-bottom:1px solid var(--bd);flex-shrink:0;">
+    <!-- Fila: ATRÁS + Título + Filtros -->
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+      <button class="scr-back-btn" onclick="App.go('explore')" title="Volver al mapa">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
+      </button>
+      <div style="flex:1;">
+        <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);">Loops</h1>
+        <p style="font-size:11px;color:var(--gr);margin-top:1px;display:flex;align-items:center;gap:4px;">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          <span id="lu-city-label">La Paz, Entre Ríos</span>
+        </p>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="App.luSetFilter('cercanos',this)" style="background:var(--c-verde);color:var(--c-verde-t);border:0.5px solid var(--c-verde-b);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">Cercanos</button>
+        <button onclick="App.luSetFilter('populares',this)" style="background:var(--lt);border:0.5px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--md);cursor:pointer;">Populares</button>
+      </div>
+    </div>
+    <!-- Esta ciudad (íconos) -->
+    <div style="margin-bottom:8px;">
+      <div style="font-size:9px;font-weight:600;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px;">Esta ciudad</div>
+      <div id="side-city-icons" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+    </div>
+    <!-- Filtrar tipo — colapsable -->
+    <div>
+      <button onclick="App.toggleFilterSection()"
+        style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:0;margin-bottom:6px;">
+        <span style="font-size:9px;font-weight:600;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;">Filtrar tipo</span>
+        <span id="filter-arrow" style="font-size:13px;color:var(--gr);transition:transform .25s;display:inline-block;">▼</span>
+      </button>
+      <div id="side-filters-wrap" style="overflow:hidden;max-height:0px;transition:max-height .35s ease;">
+        <div id="side-filters" style="display:flex;flex-direction:column;gap:4px;padding-bottom:4px;"></div>
+      </div>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px;" id="lu-list"></div>
+  <!-- Botón crear loop -->
+  <div style="padding:10px 14px 24px;flex-shrink:0;background:var(--wh);border-top:1px solid var(--bd);">
+    <button onclick="App.go('admin')" id="lu-create-btn" style="width:100%;padding:13px;border-radius:12px;background:var(--c-verde);border:0.5px solid var(--c-verde-b);color:var(--c-verde-t);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Crear loop en <span id="lu-btn-city">La Paz</span>
+    </button>
+  </div>
+</div>
+
+<!-- ════════════ EXPLORAR CIUDADES ════════════ -->
+<div id="explorar-ciudades" class="screen" style="background:var(--bg0);">
+  <div style="padding:14px 16px 12px;background:var(--wh);border-bottom:1px solid var(--bd);flex-shrink:0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <button class="scr-back-btn" onclick="App.go('explore')" title="Volver al mapa">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
+      </button>
+      <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);flex:1;">Explorar</h1>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;background:var(--lt);border-radius:10px;padding:9px 12px;border:1.5px solid var(--bd);">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="explorar-search" type="text" placeholder="Buscá una ciudad…"
+        style="border:none;outline:none;font-family:var(--fB);font-size:14px;color:var(--dk);background:transparent;flex:1;"
+        oninput="App._filterExplorar(this.value)">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2" style="cursor:pointer;" onclick="document.getElementById('explorar-search').value='';App._filterExplorar('')"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </div>
+  </div>
+  <div style="flex:1;overflow-y:auto;padding:12px 14px;">
+
+    <!-- Destinos populares -->
+    <div id="explorar-popular-section">
+      <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">DESTINOS POPULARES</p>
+      <div id="explorar-popular-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px;"></div>
+    </div>
+
+    <!-- Guardados -->
+    <div id="explorar-saved-section" style="display:none;">
+      <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">DESTINOS GUARDADOS</p>
+      <div id="explorar-saved-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px;"></div>
+    </div>
+
+    <!-- Resultados de búsqueda -->
+    <div id="explorar-results-section" style="display:none;">
+      <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">RESULTADOS</p>
+      <div id="explorar-results-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px;"></div>
+    </div>
+
+    <!-- Provincias -->
+    <div id="explorar-prov-section">
+      <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">OTRAS PROVINCIAS</p>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;" id="explorar-prov-chips"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════ CIUDAD REMOTA (detalle desde Explorar) ════════════ -->
+<div id="ciudad-remota" class="screen" style="background:var(--bg0);">
+  <div style="flex-shrink:0;">
+    <!-- mini mapa decorativo -->
+    <div style="height:180px;background:var(--bg1);position:relative;overflow:hidden;">
+      <div id="cr-map-bg" style="width:100%;height:100%;background:linear-gradient(135deg,var(--bg2),var(--bg3));display:flex;align-items:center;justify-content:center;">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--bd)" stroke-width="1"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <!-- back -->
+      <button onclick="App.go('explorar-ciudades')" style="position:absolute;top:14px;left:14px;background:rgba(0,0,0,.55);border:none;border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
+      </button>
+      <!-- nombre ciudad -->
+      <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.65);border-radius:20px;padding:5px 14px;display:flex;align-items:center;gap:6px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span style="font-size:14px;font-weight:600;color:white;" id="cr-city-name">—</span>
+        <span style="font-size:11px;color:rgba(255,255,255,.6);" id="cr-loop-ct">0 loops</span>
+      </div>
+      <!-- distancia -->
+      <div style="position:absolute;top:14px;right:14px;background:rgba(0,0,0,.55);border-radius:10px;padding:5px 10px;display:flex;align-items:center;gap:5px;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        <span style="font-size:11px;color:white;" id="cr-dist-label">—</span>
+      </div>
+    </div>
+
+    <!-- Stats rápidas -->
+    <div style="display:flex;gap:8px;padding:10px 14px 0;">
+      <div style="flex:1;background:var(--wh);border-radius:10px;padding:9px;text-align:center;border:0.5px solid var(--bd);">
+        <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);" id="cr-stat-loops">—</div>
+        <div style="font-size:10px;color:var(--gr);">loops</div>
+      </div>
+      <div style="flex:1;background:var(--wh);border-radius:10px;padding:9px;text-align:center;border:0.5px solid var(--bd);">
+        <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);" id="cr-stat-miembros">—</div>
+        <div style="font-size:10px;color:var(--gr);">miembros</div>
+      </div>
+      <div style="flex:1;background:var(--wh);border-radius:10px;padding:9px;text-align:center;border:0.5px solid var(--bd);">
+        <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--or);" id="cr-stat-rating">★ —</div>
+        <div style="font-size:10px;color:var(--gr);">valoración</div>
+      </div>
+    </div>
+
+    <!-- Botones Loops / Comunidad -->
+    <div style="display:flex;gap:8px;padding:8px 14px 10px;">
+      <button onclick="App.crGoLoops()" style="flex:1;padding:10px;border-radius:10px;background:var(--c-verde);border:0.5px solid var(--c-verde-b);color:var(--c-verde-t);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>
+        Ver loops
+      </button>
+      <button onclick="App.crGoComunidad()" style="flex:1;padding:10px;border-radius:10px;background:var(--c-viola);border:0.5px solid var(--c-viola-b);color:var(--c-viola-t);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+        Comunidad
+      </button>
+    </div>
+  </div>
+
+  <!-- Loops de la ciudad remota -->
+  <div style="flex:1;overflow-y:auto;padding:0 14px 12px;">
+    <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin:8px 0 8px;">LOOPS DISPONIBLES</p>
+    <div id="cr-loops-list" style="display:flex;flex-direction:column;gap:7px;"></div>
+  </div>
+
+  <!-- Guardar destino -->
+  <div style="padding:10px 14px 24px;flex-shrink:0;background:var(--wh);border-top:1px solid var(--bd);">
+    <button onclick="App.crSaveDest()" id="cr-save-btn" style="width:100%;padding:12px;border-radius:12px;background:#FAEEDA;border:none;color:#633806;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      Guardar destino
+    </button>
   </div>
 </div>
 
@@ -1564,29 +2004,14 @@ const App = {
     this._checkAdBlock();
 
     this.go('explore');
+    // Inicializar sidebar según dispositivo
+    const isMobile = window.innerWidth <= 768;
+    this._sbApply(isMobile ? 0 : 1); // mobile: cerrado; desktop: rail
   },
 
   async _checkAdBlock() {
-    if (!this._db) return;
-    try {
-      // Intento de fetch a Firestore para detectar bloqueo
-      const resp = await fetch('https://firestore.googleapis.com/v1/projects/urbanloop360/databases/(default)/documents/_ping', {
-        method: 'GET', signal: AbortSignal.timeout(3000)
-      });
-      // Si llega acá sin error de red, no hay AdBlock bloqueando
-    } catch(e) {
-      if (e.message === 'Failed to fetch' || e.name === 'TypeError') {
-        // Probablemente AdBlock
-        let banner = document.getElementById('adblock-warn');
-        if (!banner) {
-          banner = document.createElement('div');
-          banner.id = 'adblock-warn';
-          banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#DC2626;color:white;font-size:12px;font-weight:600;text-align:center;padding:8px 12px;line-height:1.4;';
-          banner.innerHTML = '⚠️ Tu bloqueador de anuncios está bloqueando Firebase. Los loops NO se van a guardar. <span style="text-decoration:underline;cursor:pointer;" onclick="this.parentElement.remove()">Desactivá AdBlock para este sitio → cerrar</span>';
-          document.body.prepend(banner);
-        }
-      }
-    }
+    // No hacemos ping a Firestore — genera 403 en file:// y ruido en consola.
+    // La detección real ocurre en _saveData cuando el write falla con timeout.
   },
 
   // ── FIREBASE ──
@@ -1625,8 +2050,8 @@ const App = {
       this._db   = firebase.firestore();
       this._auth = firebase.auth();
 
-      // Forzar HTTP long-polling (evita problemas con WebSockets en GitHub Pages)
-      this._db.settings({ experimentalForceLongPolling: true, merge: true });
+      // Long-polling: usar autoDetect (no mezclar con ForceLongPolling)
+      this._db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
 
       // Habilitar persistencia offline
       try {
@@ -2097,21 +2522,21 @@ const App = {
 
   // ── NAVIGATION ──
   go(sid, pushHistory=true) {
-    // Historia del navegador — permite botón "Atrás"
-    if (pushHistory) history.pushState({ screen: sid }, '', '#' + sid);
+    // history.pushState falla en file:// (Edge/Chrome lo bloquea por seguridad)
+    if (pushHistory && location.protocol !== 'file:') {
+      try { history.pushState({ screen: sid }, '', '#' + sid); } catch(e) {}
+    }
 
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-    document.getElementById(sid).classList.add('active');
+    const target = document.getElementById(sid);
+    if (target) target.classList.add('active');
 
-    const navScreens = ['explore','loops','saved','profile','comunidad','ranking','grabar','detail','admin'];
-    // FAB visibility
+    const navScreens = ['explore','loops','loops-urbanos','saved','profile','comunidad','ranking','grabar','detail','admin','explorar-ciudades','ciudad-remota'];
     const fab = document.getElementById('fab-loop');
-    const showFab = ['explore','loops','comunidad','ranking','profile'].includes(sid);
-    if(fab) fab.style.display = showFab ? 'flex' : 'none';
+    const showFab = ['explore','loops','loops-urbanos','comunidad','ranking','profile'].includes(sid);
+    if (fab) fab.style.display = showFab ? 'flex' : 'none';
     const bnav = document.getElementById('bnav');
-    if(bnav) bnav.style.display = navScreens.includes(sid) ? 'flex' : 'none';
-
-    document.querySelectorAll('.ni').forEach(n=>n.classList.toggle('on', n.dataset.s===sid));
+    if (bnav) bnav.style.display = 'none'; // siempre oculto, usamos menú
 
     if (sid==='explore') {
       if (!this.mainMap) setTimeout(()=>this._initMainMap(),180);
@@ -2121,11 +2546,13 @@ const App = {
       if(!this.admMap) setTimeout(()=>this._initAdminMap(),120);
       else setTimeout(()=>this.admMap && this.admMap.resize(),120);
     }
-    if (sid==='loops') this._renderLoops();
-    if (sid==='comunidad') { this._renderComunidad(); }
-    if (sid==='ranking') { this._renderRanking(); }
-    if (sid==='grabar') { setTimeout(()=>this._initGrabMap(),100); }
-    if (sid==='profile') { this._updateProfileUI(); }
+    if (sid==='loops')           this._renderLoops();
+    if (sid==='loops-urbanos')   { this._renderLoopsUrbanos(); }
+    if (sid==='comunidad')       { this._renderComunidad(); }
+    if (sid==='ranking')         { this._renderRanking(); }
+    if (sid==='explorar-ciudades') { this._renderExplorar(); }
+    if (sid==='grabar')          { setTimeout(()=>this._initGrabMap(),100); }
+    if (sid==='profile')         { this._updateProfileUI(); }
   },
 
   // ── MAIN MAP (MapLibre GL JS) ──
@@ -2141,16 +2568,21 @@ const App = {
       center: [-59.6450, -30.7490],
       zoom: 14,
       antialias: true,
-      dragRotate: false,        // ← desactiva rotación con Ctrl+drag
-      touchZoomRotate: true,    // ← habilita pinch-zoom táctil
-      bearingSnap: 0            // ← no hace snap al norte al soltar
+      dragRotate: false,
+      touchZoomRotate: true,
+      bearingSnap: 0
     });
-    // Deshabilitar rotación táctil pero mantener pinch-zoom
     this.mainMap.touchZoomRotate.disableRotation();
     this.mainMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
     this._layers = {};      // { routeId: ['src-id','layer-glow','layer-line','layer-dot'] }
     this._layerSrc = {};    // { routeId: true } para rastrear fuentes
     this.mainMap.on('load', () => {
+      // Suprimir errores de imágenes faltantes en el sprite del mapa
+      this.mainMap.on('styleimagemissing', (e) => {
+        // Crear un pixel transparente para que no siga intentando
+        const empty = { width: 1, height: 1, data: new Uint8Array(4) };
+        if (!this.mainMap.hasImage(e.id)) this.mainMap.addImage(e.id, empty);
+      });
       this.routes.forEach(r => this._drawRoute(r));
       this._renderCards('', this._activeFilter);
       this._initCityNotif();
@@ -2160,14 +2592,6 @@ const App = {
     this.mainMap.on('moveend',   () => App._showNavDelay());
     this.mainMap.on('zoomstart', () => App._hideNav());
     this.mainMap.on('zoomend',   () => App._showNavDelay());
-    // Al hacer pinch-zoom o drag manual, desactivar follow-me
-    this.mainMap.on('dragstart', () => {
-      if (App._followMe) {
-        App._followMe = false;
-        const locBtn = document.getElementById('locate-btn');
-        if (locBtn) { locBtn.style.background = '#1C1C1E'; locBtn.style.color = '#C0C0C8'; }
-      }
-    });
   },
 
   // ── GPS LIVE TRACKING (MapLibre) ──
@@ -2785,17 +3209,8 @@ const App = {
     if (panel) panel.remove();
     const loopPanel = document.getElementById('loop-active-panel');
     if (loopPanel) loopPanel.remove();
-    const picker = document.getElementById('transport-picker');
-    if (picker) picker.remove();
     this._stopVoice();
     this._loopStarted = false;
-    // Ocultar el badge de ruta y el popup del mapa
-    const b = document.getElementById('rt-badge');
-    if (b) b.style.display = 'none';
-    if (this._loopPopup) { this._loopPopup.remove(); this._loopPopup = null; }
-    this.selId = null;
-    document.querySelectorAll('.rc').forEach(c => c.classList.remove('sel'));
-    if (this._layers) Object.keys(this._layers).forEach(rid => this._setRouteVisible(rid, true));
     this.toast('Navegación cancelada');
   },
 
@@ -4037,102 +4452,458 @@ const App = {
 
 
   // ══════════════════════════════════════════
-  // COMUNIDAD
+  // MÓDULO 1 — LOOPS URBANOS
   // ══════════════════════════════════════════
-  _renderComunidad(tab='feed') {
-    const AVATARS = ['#FF5F00','#2563EB','#16A34A','#7C3AED','#DB2777','#0891B2','#D97706'];
-    const USERS = ['Martín G.','Lucía R.','Pablo S.','Ana K.','Diego M.','Sofía V.','Juan C.'];
-    const body = document.getElementById('com-body');
-    const all = [...this.routes].sort(()=>Math.random()-.5);
-    body.innerHTML = all.map((r,i) => {
-      const uName = USERS[i%USERS.length];
-      const uCol  = AVATARS[i%AVATARS.length];
-      const uInit = uName.split(' ').map(x=>x[0]).join('');
+  _luCity: 'La Paz',
+  _luFilter: 'cercanos',
+
+  _renderLoopsUrbanos() {
+    const city = this._luCity || 'La Paz';
+    const lbl  = document.getElementById('lu-city-label');
+    const btn  = document.getElementById('lu-btn-city');
+    if (lbl) lbl.textContent = city + ', Entre Ríos';
+    if (btn) btn.textContent = city;
+
+    // filtrar por ciudad (campo cityId o ciudad); si no hay, mostrar todos
+    let loops = [...this.routes];
+    const cityLoops = loops.filter(r => (r.cityId||r.ciudad||'La Paz') === city);
+    if (cityLoops.length) loops = cityLoops;
+
+    if (this._luFilter === 'populares') {
+      loops = loops.sort((a,b) => ((b.likes||0)*2+(b.paseos||0)) - ((a.likes||0)*2+(a.paseos||0)));
+    }
+
+    // calcular loop principal (score = likes×2 + paseos)
+    const scored = loops.map(r => ({
+      ...r,
+      _score: (r.likes||0)*2 + (r.paseos||0)
+    })).sort((a,b) => b._score - a._score);
+
+    const list = document.getElementById('lu-list');
+    if (!list) return;
+
+    if (!scored.length) {
+      list.innerHTML = `<div style="text-align:center;padding:40px 20px;">
+        <div style="font-size:40px;margin-bottom:12px;">🌀</div>
+        <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);margin-bottom:6px;">Sin loops en ${city}</div>
+        <p style="font-size:13px;color:var(--gr);line-height:1.6;">Sé el primero en crear un loop en tu ciudad.</p>
+      </div>`;
+      return;
+    }
+
+    const TYPE_COLORS = { running:'#EF4444', mtb:'#16A34A', ciclismo:'#2563EB', caminata:'#D97706', perro:'#DB2777', paseo:'#0891B2', pesca:'#0E7490', atardecer:'#7C3AED', gastro:'#B45309', trad:'#92400E', relax:'#6B7280', salidas:'#DC2626', trabajo:'#374151', vacaciones:'#D97706' };
+
+    list.innerHTML = scored.map((r, i) => {
+      const isPrincipal = i === 0 && r._score > 0;
+      const color = TYPE_COLORS[r.type] || '#FF5F00';
       const liked = (this.likes||[]).includes(r.id);
-      const lkCt = r.likes||0;
+      return `
+      <div class="lu-card ${isPrincipal ? 'principal' : ''}" onclick="App.showDetail('${r.id}')">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div class="lu-dot" style="background:${color};"></div>
+            <span style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${r.name}</span>
+            ${isPrincipal ? '<span class="lu-badge-principal">★ Principal</span>' : (i === 1 ? '<span style="background:var(--lt);color:var(--gr);font-size:9px;padding:2px 6px;border-radius:6px;">2°</span>' : '')}
+          </div>
+          <span style="font-size:11px;color:var(--gr);">${r.dist||'—'}</span>
+        </div>
+        <div class="lu-meta">
+          <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="${liked?color:'none'}" stroke="${liked?color:'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${r.likes||0}</span>
+          <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>${r.paseos||0} paseos</span>
+          <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${r.dur||'—'}</span>
+          ${isPrincipal ? `<span style="font-size:10px;color:#BA7517;font-weight:600;">score: ${r._score}</span>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  luSetFilter(filter, btn) {
+    this._luFilter = filter;
+    document.querySelectorAll('#loops-urbanos button[onclick^="App.luSetFilter"]').forEach(b => {
+      b.style.background = 'var(--lt)'; b.style.color = 'var(--md)';
+      b.style.border = '0.5px solid var(--bd)'; b.style.fontWeight = '500';
+    });
+    if (btn) { btn.style.background='var(--c-verde)'; btn.style.color='var(--c-verde-t)'; btn.style.border='0.5px solid var(--c-verde-b)'; btn.style.fontWeight='600'; }
+    this._renderLoopsUrbanos();
+  },
+
+  // ══════════════════════════════════════════
+  // MÓDULO 2 — COMUNIDAD PROVINCIAL
+  // ══════════════════════════════════════════
+  _comCity: 'all',
+
+  _renderComunidad() {
+    const cityFilter = this._comCity || 'all';
+    const AVATARS = ['#FF5F00','#2563EB','#16A34A','#7C3AED','#DB2777','#0891B2','#D97706'];
+    const USERS   = ['Martín G.','Lucía R.','Pablo S.','Ana K.','Diego M.','Sofía V.','Juan C.'];
+    const CITIES  = ['La Paz','Paraná','Concordia','Gualeguaychú','Colón','La Paz','Paraná'];
+    const TIMES   = ['hace 2 h','ayer','hace 3 h','hace 1 día','hace 5 h','hace 2 días','hace 4 h'];
+    const COMMENTS= [
+      'Tarde perfecta en la costanera 🌅 El loop está increíble.',
+      '¿Alguien hace este loop los sábados? Organizando salida grupal.',
+      'Nuevo registro personal hoy 🏃 El loop del parque es el mejor.',
+      'Recomendadísimo para la tarde, muy bien señalizado.',
+      'Primera vez en este loop, increíble el paisaje al atardecer 🌇',
+      'El loop nuevo está buenísimo, pasé por el mercado también.',
+      'Hoy con el grupo de running, 8 personas en el loop 💪'
+    ];
+
+    const body = document.getElementById('com-body');
+    if (!body) return;
+
+    let all = [...this.routes].sort(() => Math.random() - .5);
+    // Si no hay loops reales, mostrar demo
+    if (!all.length) {
+      all = [
+        { id:'demo1', name:'Loop Costanera', type:'paseo', emoji:'🌳', badge:'badge-verde', dist:'4.2 km', dur:'45 min', likes:248, pois:[], cityId:'La Paz' },
+        { id:'demo2', name:'Loop Arroyo',    type:'running', emoji:'🏃', badge:'badge-rojo',  dist:'2.8 km', dur:'30 min', likes:141, pois:[], cityId:'Paraná' },
+        { id:'demo3', name:'Loop Centro',    type:'caminata',emoji:'🥾',badge:'badge-naranja',dist:'1.5 km',dur:'18 min',likes:89,  pois:[], cityId:'Concordia' },
+      ];
+    }
+
+    if (cityFilter !== 'all') {
+      all = all.filter(r => (r.cityId||r.ciudad||'La Paz') === cityFilter);
+    }
+
+    if (!all.length) {
+      body.innerHTML = `<div style="text-align:center;padding:40px 20px;">
+        <div style="font-size:36px;margin-bottom:10px;">👥</div>
+        <div style="font-family:var(--fH);font-size:15px;font-weight:700;color:var(--dk);">Sin posts en ${cityFilter}</div>
+        <p style="font-size:12px;color:var(--gr);margin-top:6px;">Sé el primero en publicar en esta ciudad.</p>
+      </div>`;
+      return;
+    }
+
+    body.innerHTML = all.map((r, i) => {
+      const uName  = USERS[i % USERS.length];
+      const uCol   = AVATARS[i % AVATARS.length];
+      const uInit  = uName.split(' ').map(x => x[0]).join('');
+      const city   = r.cityId || r.ciudad || CITIES[i % CITIES.length];
+      const time   = TIMES[i % TIMES.length];
+      const comment= COMMENTS[i % COMMENTS.length];
+      const liked  = (this.likes||[]).includes(r.id);
+      const lkCt   = r.likes || 0;
       return `
       <div class="com-card">
         <div class="com-card-hdr">
-          <div class="com-avatar" style="background:${uCol}">${uInit}</div>
-          <div class="com-user-info">
+          <div class="com-avatar" style="background:${uCol};">${uInit}</div>
+          <div class="com-user-info" style="flex:1;">
             <div class="com-user-name">${uName}</div>
-            <div class="com-user-meta">${r.dist||'—'} · ${r.dur||'—'} · ${this._typeLabel(r.type)}</div>
+            <div class="com-user-meta" style="display:flex;align-items:center;gap:5px;">
+              <span>${city}</span><span style="font-size:8px;">·</span><span>${time}</span>
+            </div>
           </div>
-          <span class="com-cat-badge ${r.badge}">${r.emoji} ${this._typeLabel(r.type)}</span>
+          <span class="com-city-tag">${r.emoji||'🔄'} ${r.name.length>12?r.name.slice(0,12)+'…':r.name}</span>
         </div>
         <div class="com-body-txt">
           <div class="com-loop-name">${r.name}</div>
-          <div class="com-loop-desc">${r.desc}</div>
+          <div class="com-loop-desc">${comment}</div>
         </div>
         <div class="com-loop-stats">
-          <div class="com-stat"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>${r.pois?r.pois.length:0} paradas</div>
-          <div class="com-stat"><svg width="12" height="12" viewBox="0 0 24 24" fill="${liked?'#FF5F00':'none'}" stroke="${liked?'#FF5F00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${lkCt} likes</div>
+          <div class="com-stat">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
+            ${(r.pois||[]).length} paradas
+          </div>
+          <div class="com-stat">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            ${lkCt} likes
+          </div>
+          <div class="com-stat">${r.dist||'—'} · ${r.dur||'—'}</div>
         </div>
         <div class="com-actions">
           <button class="com-action-btn ${liked?'liked':''}" onclick="App.likeLoop('${r.id}');App._renderComunidad()">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="${liked?'#FF5F00':'none'}" stroke="${liked?'#FF5F00':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            ${liked?'Me gustó':'Me gusta'}
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            ${liked ? 'Me gustó' : 'Me gusta'}
           </button>
           <button class="com-action-btn" onclick="App.showDetail('${r.id}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             Ver loop
           </button>
           <button class="com-action-btn" onclick="App.showQR('${r.id}')">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/><rect x="16" y="16" width="5" height="5"/></svg>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/></svg>
             QR
           </button>
         </div>
       </div>`;
     }).join('');
   },
-  comTab(el, tab) {
-    document.querySelectorAll('.com-tab').forEach(t=>t.classList.remove('on'));
-    el.classList.add('on');
-    this._renderComunidad(tab);
+
+  comSetCity(el, city) {
+    this._comCity = city;
+    document.querySelectorAll('.com-city-chip').forEach(c => c.classList.remove('on'));
+    if (el) el.classList.add('on');
+    this._renderComunidad();
   },
+
+  comTab(el, tab) {
+    this._renderComunidad();
+  },
+
+  openNuevoPost() {
+    this.toast('📝 Próximamente: publicar en la comunidad');
+  },
+
   likeLoop(id) {
-    this.likes = this.likes||[];
-    const r = this.routes.find(x=>x.id===id);
-    if(!r) return;
+    this.likes = this.likes || [];
+    const r = this.routes.find(x => x.id === id);
+    if (!r) return;
     const i = this.likes.indexOf(id);
-    if(i>-1) {
-      this.likes.splice(i,1);
-      r.likes = Math.max(0,(r.likes||1)-1);
+    if (i > -1) {
+      this.likes.splice(i, 1);
+      r.likes = Math.max(0, (r.likes||1) - 1);
       this.toast('❤️ Like quitado');
     } else {
       this.likes.push(id);
-      r.likes = (r.likes||0)+1;
-      this._addPts(5,'Like recibido');
+      r.likes = (r.likes||0) + 1;
+      this._addPts(2, 'Like dado');
     }
     this._savePts();
     this._saveData();
   },
 
   // ══════════════════════════════════════════
-  // RANKING
+  // MÓDULO 3 — RANKING MUNICIPAL
   // ══════════════════════════════════════════
+  _rankPeriod: 'mensual',
+
   _renderRanking() {
     this._updatePtsDisplay();
-    const USERS = [
-      {name:'Lucía R.', pts:1240, loops:18, col:'#DB2777'},
-      {name:'Diego M.', pts:980,  loops:14, col:'#7C3AED'},
-      {name:'Sofía V.', pts:760,  loops:11, col:'#16A34A'},
-      {name:'Pablo S.', pts:620,  loops:9,  col:'#2563EB'},
-      {name:'Ana K.',   pts:490,  loops:7,  col:'#D97706'},
-      {name:'Juan C.',  pts:310,  loops:5,  col:'#0891B2'},
-      {name:'Vos', pts:this.pts||0, loops:this.routes.filter(r=>r.authorId===this._uid).length, col:'#FF5F00'},
-    ].sort((a,b)=>b.pts-a.pts);
-    const posClasses = ['gold','silver','bronze','other','other','other','other'];
-    document.getElementById('rank-list').innerHTML = USERS.map((u,i)=>`
-      <div class="rank-item" style="${u.name==='Vos'?'border:2px solid var(--or);':''}">
-        <div class="rank-pos ${posClasses[i]||'other'}">${i+1}</div>
-        <div class="rank-av" style="background:${u.col}">${u.name.split(' ').map(x=>x[0]).join('')}</div>
-        <div class="rank-info">
-          <div class="rank-user">${u.name==='Vos'?'Vos (tú)':u.name}</div>
-          <div class="rank-detail">${u.loops} loops publicados</div>
+
+    let loops = [...this.routes];
+    if (!loops.length) {
+      // demos para que la pantalla no esté vacía
+      loops = [
+        { id:'demo1', name:'Loop Costanera', likes:248, paseos:1200, dist:'4.2 km', cityId:'La Paz' },
+        { id:'demo2', name:'Loop Arroyo',    likes:141, paseos:830,  dist:'2.8 km', cityId:'La Paz' },
+        { id:'demo3', name:'Loop Centro',    likes:89,  paseos:510,  dist:'1.5 km', cityId:'La Paz' },
+      ];
+    }
+
+    const scored = loops.map(r => ({
+      ...r,
+      _score: (r.likes||0) * 2 + (r.paseos||0)
+    })).sort((a, b) => b._score - a._score);
+
+    const top = scored[0];
+    const maxScore = top ? top._score || 1 : 1;
+
+    // Card Loop Principal
+    const pName  = document.getElementById('rank-principal-name');
+    const pScore = document.getElementById('rank-principal-score');
+    const pLikes = document.getElementById('rank-principal-likes');
+    const pPaseos= document.getElementById('rank-principal-paseos');
+    const pBar   = document.getElementById('rank-principal-bar');
+    if (top && pName) {
+      pName.textContent  = top.name;
+      pScore.textContent = `${top._score.toLocaleString()} pts`;
+      pLikes.textContent = top.likes || 0;
+      pPaseos.textContent= top.paseos || 0;
+      if (pBar) pBar.style.width = '92%';
+    }
+
+    // Lista ranking
+    const list = document.getElementById('rank-loops-list');
+    if (!list) return;
+    list.innerHTML = scored.map((r, i) => {
+      const pct = Math.round((r._score / maxScore) * 100);
+      const colors = ['#BA7517','#534AB7','#1D9E75','var(--gr)','var(--gr)'];
+      const color = colors[i] || 'var(--gr)';
+      return `
+      <div class="rank-loop-item ${i===0?'pos1':''}">
+        <div class="rank-loop-pos ${i===0?'gold':''}">${i+1}</div>
+        <div class="rank-loop-info">
+          <div class="rank-loop-name">${r.name} ${i===0?'<span style="font-size:10px;color:#BA7517;">★</span>':''}</div>
+          <div class="rank-loop-meta">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            ${r.likes||0} likes · ${r.paseos||0} paseos
+          </div>
+          <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:${pct}%;background:${color};"></div></div>
         </div>
-        <div class="rank-pts-val">${u.pts.toLocaleString()} pts</div>
-      </div>`).join('');
+        <div class="rank-loop-score">${r._score}</div>
+      </div>`;
+    }).join('');
+  },
+
+  rankSetPeriod(period, btn) {
+    this._rankPeriod = period;
+    document.querySelectorAll('#ranking button[onclick^="App.rankSetPeriod"]').forEach(b => {
+      b.style.background = 'var(--lt)'; b.style.color = 'var(--md)'; b.style.border = '0.5px solid var(--bd)';
+    });
+    if (btn) { btn.style.background = 'var(--or)'; btn.style.color = 'white'; btn.style.border = 'none'; }
+    this._renderRanking();
+    this.toast(`📊 Mostrando ranking ${period}`);
+  },
+
+  // ══════════════════════════════════════════
+  // EXPLORAR CIUDADES
+  // ══════════════════════════════════════════
+  _CIUDADES: [
+    { name:'La Paz',        prov:'Entre Ríos', loops:3,  miembros:412,  rating:4.7, color:'#E1F5EE', iconColor:'#0F6E56', dist:0    },
+    { name:'Gualeguaychú',  prov:'Entre Ríos', loops:5,  miembros:842,  rating:4.8, color:'#EEEDFE', iconColor:'#534AB7', dist:180  },
+    { name:'Paraná',        prov:'Entre Ríos', loops:8,  miembros:2300, rating:4.9, color:'#E1F5EE', iconColor:'#0F6E56', dist:210  },
+    { name:'Colón',         prov:'Entre Ríos', loops:6,  miembros:1100, rating:4.8, color:'#FFF4E2', iconColor:'#BA7517', dist:280  },
+    { name:'Concordia',     prov:'Entre Ríos', loops:4,  miembros:730,  rating:4.6, color:'#EEEDFE', iconColor:'#534AB7', dist:320  },
+    { name:'Rosario',       prov:'Santa Fe',   loops:12, miembros:4800, rating:4.9, color:'#E1F5EE', iconColor:'#0F6E56', dist:390  },
+    { name:'Corrientes',    prov:'Corrientes', loops:7,  miembros:1600, rating:4.7, color:'#FFF4E2', iconColor:'#BA7517', dist:530  },
+    { name:'Buenos Aires',  prov:'CABA',       loops:24, miembros:18000,rating:4.8, color:'#EEEDFE', iconColor:'#534AB7', dist:720  },
+    { name:'Mar del Plata', prov:'Bs. Aires',  loops:9,  miembros:3200, rating:4.7, color:'#E1F5EE', iconColor:'#0F6E56', dist:960  },
+    { name:'Mendoza',       prov:'Mendoza',    loops:11, miembros:4100, rating:4.8, color:'#FFF4E2', iconColor:'#BA7517', dist:1100 },
+    { name:'Córdoba',       prov:'Córdoba',    loops:15, miembros:7200, rating:4.9, color:'#EEEDFE', iconColor:'#534AB7', dist:660  },
+    { name:'Misiones',      prov:'Misiones',   loops:6,  miembros:920,  rating:4.9, color:'#E1F5EE', iconColor:'#0F6E56', dist:780  },
+  ],
+  _savedDests: [],
+
+  _renderExplorar() {
+    // Populares: los 5 más cercanos / con más loops
+    const popular = [...this._CIUDADES].filter(c => c.name !== (this._luCity||'La Paz')).slice(0, 5);
+    const popList = document.getElementById('explorar-popular-list');
+    if (popList) popList.innerHTML = popular.map(c => this._explorarCityCard(c)).join('');
+
+    // Provincias
+    const provs = [...new Set(this._CIUDADES.map(c => c.prov))];
+    const provChips = document.getElementById('explorar-prov-chips');
+    if (provChips) provChips.innerHTML = provs.map(p => `<div class="explorar-prov-chip" onclick="App._filterExplorar('${p}')">${p}</div>`).join('');
+
+    // Guardados
+    const savedSec = document.getElementById('explorar-saved-section');
+    const savedList = document.getElementById('explorar-saved-list');
+    if (this._savedDests.length && savedList) {
+      savedSec.style.display = 'block';
+      savedList.innerHTML = this._savedDests.map(name => {
+        const c = this._CIUDADES.find(x => x.name === name);
+        return c ? this._explorarCityCard(c) : '';
+      }).join('');
+    } else if (savedSec) {
+      savedSec.style.display = 'none';
+    }
+  },
+
+  _explorarCityCard(c) {
+    return `
+    <div class="explorar-city-card" onclick="App.openCiudadRemota('${c.name}')">
+      <div class="explorar-city-ico" style="background:${c.color};">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${c.iconColor}" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
+      <div style="flex:1;">
+        <div class="explorar-city-name">${c.name}</div>
+        <div class="explorar-city-sub">${c.prov} · ${c.loops} loops · ${c.miembros>=1000?(c.miembros/1000).toFixed(1)+'k':c.miembros} miembros</div>
+      </div>
+      ${c.dist > 0 ? `<div style="font-size:11px;color:var(--gr);text-align:right;flex-shrink:0;">${c.dist} km</div>` : ''}
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;
+  },
+
+  _filterExplorar(q) {
+    const resSec  = document.getElementById('explorar-results-section');
+    const resList = document.getElementById('explorar-results-list');
+    const popSec  = document.getElementById('explorar-popular-section');
+    const provSec = document.getElementById('explorar-prov-section');
+    if (!q) {
+      if (resSec)  resSec.style.display  = 'none';
+      if (popSec)  popSec.style.display  = 'block';
+      if (provSec) provSec.style.display = 'block';
+      return;
+    }
+    const ql = q.toLowerCase();
+    const found = this._CIUDADES.filter(c =>
+      c.name.toLowerCase().includes(ql) || c.prov.toLowerCase().includes(ql)
+    );
+    if (popSec)  popSec.style.display  = 'none';
+    if (provSec) provSec.style.display = 'none';
+    if (resSec)  resSec.style.display  = 'block';
+    if (resList) resList.innerHTML = found.length
+      ? found.map(c => this._explorarCityCard(c)).join('')
+      : `<div style="text-align:center;padding:24px;color:var(--gr);font-size:13px;">Sin resultados para "<strong>${q}</strong>"</div>`;
+  },
+
+  // Abrir ciudad remota
+  openCiudadRemota(cityName) {
+    const c = this._CIUDADES.find(x => x.name === cityName);
+    if (!c) return;
+    this._crCity = c;
+
+    const cn = document.getElementById('cr-city-name');
+    const cl = document.getElementById('cr-loop-ct');
+    const cd = document.getElementById('cr-dist-label');
+    const cs = document.getElementById('cr-stat-loops');
+    const cm = document.getElementById('cr-stat-miembros');
+    const cr = document.getElementById('cr-stat-rating');
+    if (cn) cn.textContent = c.name;
+    if (cl) cl.textContent = `${c.loops} loops`;
+    if (cd) cd.textContent = c.dist > 0 ? `${c.dist} km` : 'Tu ciudad';
+    if (cs) cs.textContent = c.loops;
+    if (cm) cm.textContent = c.miembros >= 1000 ? (c.miembros/1000).toFixed(1)+'k' : c.miembros;
+    if (cr) cr.textContent = `★ ${c.rating}`;
+
+    // mapa de fondo con color de la ciudad
+    const bg = document.getElementById('cr-map-bg');
+    if (bg) bg.style.background = `linear-gradient(135deg, ${c.color}, var(--bg3))`;
+
+    // botón guardar
+    const saveBtn = document.getElementById('cr-save-btn');
+    const isSaved = this._savedDests.includes(c.name);
+    if (saveBtn) {
+      saveBtn.innerHTML = isSaved
+        ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="#633806" stroke="none"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Destino guardado ✓`
+        : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Guardar destino`;
+    }
+
+    // loops demo de la ciudad remota
+    const ll = document.getElementById('cr-loops-list');
+    if (ll) {
+      const fakeLoops = [
+        { name:`Loop ${c.name} Principal`, likes: Math.round(c.miembros*0.12), paseos: Math.round(c.miembros*0.8), dist:'4.5 km', dur:'~50 min', principal:true },
+        { name:`Loop Río`,                 likes: Math.round(c.miembros*0.08), paseos: Math.round(c.miembros*0.5), dist:'3.1 km', dur:'~35 min', principal:false },
+        { name:`Loop Centro`,              likes: Math.round(c.miembros*0.05), paseos: Math.round(c.miembros*0.3), dist:'1.8 km', dur:'~20 min', principal:false },
+      ];
+      ll.innerHTML = fakeLoops.map(l => `
+        <div style="background:var(--wh);border-radius:10px;padding:11px 12px;border:${l.principal?'2px solid #EF9F27':'0.5px solid var(--bd)'};cursor:default;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+            <div style="display:flex;align-items:center;gap:7px;">
+              ${l.principal?'<span style="font-size:13px;color:#BA7517;">★</span>':'<span style="font-size:12px;color:var(--gr);">·</span>'}
+              <span style="font-size:13px;font-weight:600;color:var(--dk);">${l.name}</span>
+              ${l.principal?'<span style="background:#FAEEDA;color:#633806;font-size:9px;padding:2px 6px;border-radius:6px;">Principal</span>':''}
+            </div>
+            <span style="font-size:11px;color:var(--gr);">${l.dist}</span>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <span style="font-size:11px;color:var(--gr);">❤️ ${l.likes}</span>
+            <span style="font-size:11px;color:var(--gr);">🏃 ${l.paseos} paseos</span>
+            <span style="font-size:11px;color:var(--gr);">⏱ ${l.dur}</span>
+          </div>
+        </div>`).join('');
+    }
+
+    this.go('ciudad-remota');
+  },
+
+  crSaveDest() {
+    if (!this._crCity) return;
+    const name = this._crCity.name;
+    if (this._savedDests.includes(name)) {
+      this._savedDests = this._savedDests.filter(x => x !== name);
+      this.toast(`🔖 ${name} quitado de guardados`);
+    } else {
+      this._savedDests.push(name);
+      this._addPts(5, `Destino ${name} guardado`);
+      this.toast(`🔖 ${name} guardado como destino`);
+    }
+    // reabrir para actualizar botón
+    this.openCiudadRemota(name);
+  },
+
+  crGoLoops() {
+    if (!this._crCity) return;
+    this.toast(`🔄 Loops de ${this._crCity.name} — próximamente`);
+  },
+
+  crGoComunidad() {
+    if (!this._crCity) return;
+    this.comSetCity(null, this._crCity.name);
+    document.querySelectorAll('.com-city-chip').forEach(c => {
+      c.classList.toggle('on', c.dataset.city === this._crCity.name);
+    });
+    this.go('comunidad');
   },
 
   // ══════════════════════════════════════════
@@ -4387,7 +5158,65 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   // ══════════════════════════════════════════
   // SIDE PANEL
   // ══════════════════════════════════════════
+  // ── SIDEBAR: estado (mobile: 0=cerrado, 1=rail, 2=open; desktop: 1=rail, 2=open) ──
+  _sbState: 1, // 1 = rail, 2 = open
+
   openSidePanel() {
+    // En mobile, abrir al estado "open"
+    this._sbApply(2);
+  },
+  closeSidePanel() {
+    const isMobile = window.innerWidth <= 768;
+    // Mobile: cerrar completamente (quitar ambas clases)
+    if (isMobile) {
+      this._sbApply(0);
+    } else {
+      // Desktop: colapsar a rail
+      this._sbApply(1);
+    }
+  },
+  toggleSidebar() {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      // Mobile: 0→1(rail), 1→2(open), 2→0(closed) — pero si ya estaba abierto completo volvemos al cerrado
+      if (this._sbState === 0) this._sbApply(1);
+      else if (this._sbState === 1) this._sbApply(2);
+      else this._sbApply(0);
+    } else {
+      // Desktop: alterna rail ↔ open
+      this._sbApply(this._sbState === 1 ? 2 : 1);
+    }
+  },
+  _sbApply(state) {
+    this._sbState = state;
+    const sp  = document.getElementById('side-panel');
+    const so  = document.getElementById('side-overlay');
+    const isMobile = window.innerWidth <= 768;
+
+    if (!sp) return;
+    sp.classList.remove('sb-rail','sb-open');
+
+    if (state === 0) {
+      // Mobile closed
+      if (so) so.classList.remove('show');
+      document.body.classList.remove('sb-rail-mode','sb-open-mode');
+    } else if (state === 1) {
+      sp.classList.add('sb-rail');
+      if (so) so.classList.remove('show');
+      document.body.classList.add('sb-rail-mode');
+      document.body.classList.remove('sb-open-mode');
+    } else {
+      sp.classList.add('sb-open');
+      if (isMobile && so) so.classList.add('show');
+      document.body.classList.add('sb-open-mode');
+      document.body.classList.remove('sb-rail-mode');
+      // Rellenar íconos de ciudad y filtros al abrir
+      this._fillSidebarData();
+    }
+    // Ajustar el mapa si está activo
+    if (this.mainMap) setTimeout(()=>this.mainMap.resize(), 300);
+  },
+  _fillSidebarData() {
     const CITY_SYMS = [
       {em:'🌅',lbl:'Atardecer'},{em:'🎣',lbl:'Pesca'},{em:'🌳',lbl:'Parques'},
       {em:'🍽️',lbl:'Restoranes'},{em:'⚓',lbl:'Puerto'},{em:'🏃',lbl:'Running'},
@@ -4410,38 +5239,33 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       {f:'vacaciones',em:'🏖️',lbl:'Vacaciones'},
       {f:'salidas',em:'🎉',lbl:'Salidas / Social'},
     ];
-
-    // City icons — cada ícono filtra el mapa
     const SYM_FILTER = {
       'Atardecer':'atardecer','Pesca':'pesca','Parques':'paseo',
       'Restoranes':'gastro','Puerto':'trad','Running':'running',
-      '☕':'trad','Cafés':'trad','Historia':'trad',
+      'Cafés':'trad','Historia':'trad',
       'Ciclismo':'ciclismo','Relax':'relax','Salidas':'salidas','Vacaciones':'vacaciones'
     };
     const iconsEl = document.getElementById('side-city-icons');
     if(iconsEl) iconsEl.innerHTML = CITY_SYMS.map(s=>`
-      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:54px;cursor:pointer;"
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;width:50px;cursor:pointer;"
         onclick="App._applyFilter('${SYM_FILTER[s.lbl]||'all'}');App.closeSidePanel();">
-        <div style="width:44px;height:44px;border-radius:50%;background:var(--lt);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:20px;">${s.em}</div>
+        <div style="width:40px;height:40px;border-radius:50%;background:var(--lt);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:18px;">${s.em}</div>
         <span style="font-size:9px;color:var(--gr);text-align:center;line-height:1.2;">${s.lbl}</span>
       </div>`).join('');
-
-    // Category filters
     const filtersEl = document.getElementById('side-filters');
     if(filtersEl) filtersEl.innerHTML = CATS.map(c=>`
       <button onclick="App._applyFilter('${c.f}');App.closeSidePanel();"
-        style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--lt);border:1.5px solid ${this._activeFilter===c.f?'var(--or)':'var(--bd)'};border-radius:var(--rs);cursor:pointer;text-align:left;width:100%;transition:all .2s;${this._activeFilter===c.f?'background:var(--orL);':''}" >
-        <span style="font-size:18px;">${c.em}</span>
-        <span style="font-family:var(--fB);font-size:13px;font-weight:500;color:${this._activeFilter===c.f?'#FF8040':'#C0C0C8'};">${c.lbl}</span>
-        <span style="margin-left:auto;font-size:12px;color:var(--gr);">${this.routes.filter(r=>c.f==='all'||r.type===c.f).length}</span>
+        style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--lt);border:1.5px solid ${this._activeFilter===c.f?'var(--or)':'var(--bd)'};border-radius:var(--rs);cursor:pointer;text-align:left;width:100%;transition:all .2s;${this._activeFilter===c.f?'background:var(--orL);':''}" >
+        <span style="font-size:16px;">${c.em}</span>
+        <span style="font-family:var(--fB);font-size:13px;font-weight:500;color:${this._activeFilter===c.f?'#FF8040':'var(--md)'};">${c.lbl}</span>
+        <span style="margin-left:auto;font-size:11px;color:var(--gr);">${this.routes.filter(r=>c.f==='all'||r.type===c.f).length}</span>
       </button>`).join('');
-
-    const sp=document.getElementById('side-panel'); if(sp) sp.style.left='0';
-    const so=document.getElementById('side-overlay'); if(so) so.style.display='block';
   },
-  closeSidePanel() {
-    const sp=document.getElementById('side-panel'); if(sp) sp.style.left='-310px';
-    const so2=document.getElementById('side-overlay'); if(so2) so2.style.display='none';
+  // Navegar desde sidebar y cerrar en mobile
+  sideNav(screen) {
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) this._sbApply(0);
+    this.go(screen);
   },
   _applyFilter(f) {
     this._activeFilter = f;
@@ -4585,14 +5409,6 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const m  = document.getElementById('loop-modal');
     if(m)  m.style.bottom='-800px';
     setTimeout(()=>{ if(ov) ov.style.display='none'; }, 350);
-    // Si no hay nav activa, limpiar el badge y popup que pueda haber quedado
-    if (!this._navLine) {
-      const b = document.getElementById('rt-badge');
-      if (b) b.style.display = 'none';
-      if (this._loopPopup) { this._loopPopup.remove(); this._loopPopup = null; }
-      const picker = document.getElementById('transport-picker');
-      if (picker) picker.remove();
-    }
   },
 
   // ── EDITAR LOOP ──
@@ -4791,9 +5607,11 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const wrap = document.getElementById('side-filters-wrap');
     const arrow = document.getElementById('filter-arrow');
     if (!wrap) return;
-    const isOpen = wrap.style.maxHeight !== '0px' && wrap.style.maxHeight !== '';
-    wrap.style.maxHeight = isOpen ? '0px' : '400px';
-    if (arrow) arrow.style.transform = isOpen ? 'rotate(-90deg)' : 'rotate(0deg)';
+    const isOpen = wrap.style.maxHeight && wrap.style.maxHeight !== '0px';
+    wrap.style.maxHeight = isOpen ? '0px' : '500px';
+    if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+    // Si se abre, rellenar los filtros
+    if (!isOpen) this._fillSidebarData();
   },
 
   // ── LIMPIAR SELECCIÓN (X del badge) ──
