@@ -426,6 +426,10 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
     width: var(--side-w-rail) !important;
     box-shadow: 4px 0 24px rgba(0,0,0,.35) !important;
   }
+  /* En mobile con rail visible, las screens se desplazan igual */
+  body.sb-rail-mode .screen {
+    margin-left: var(--side-w-rail) !important;
+  }
   #side-panel.sb-open {
     width: var(--side-w-open) !important;
     box-shadow: 8px 0 40px rgba(0,0,0,.45) !important;
@@ -638,31 +642,49 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 /* ═══════════════════════
    COMUNIDAD
 ═══════════════════════ */
-#comunidad{background:var(--lt);}
-.com-hdr{padding:16px 16px 10px;background:var(--wh);border-bottom:1px solid var(--bd);flex-shrink:0;}
-.com-hdr h1{font-family:var(--fH);font-size:22px;font-weight:800;}
-.com-hdr p{font-size:13px;color:var(--gr);margin-top:2px;}
-.com-tabs{display:flex;background:var(--wh);border-bottom:1px solid var(--bd);flex-shrink:0;}
-.com-tab{flex:1;padding:10px;font-size:13px;font-weight:500;text-align:center;cursor:pointer;color:var(--gr);border-bottom:2px solid transparent;transition:all .2s;border:none;background:none;}
-.com-tab.on{color:var(--or);border-bottom:2px solid var(--or);}
-.com-body{flex:1;overflow-y:auto;padding:12px 12px calc(var(--navH)+16px);}
-.com-card{background:var(--wh);border-radius:var(--r);margin-bottom:12px;box-shadow:var(--sh);overflow:hidden;cursor:pointer;transition:all .2s;}
-.com-card:hover{transform:translateY(-1px);box-shadow:var(--shL);}
-.com-card-hdr{padding:12px 14px 8px;display:flex;align-items:center;gap:10px;}
-.com-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--fH);font-size:14px;font-weight:700;color:white;flex-shrink:0;}
-.com-user-info{flex:1;}
-.com-user-name{font-size:14px;font-weight:600;color:#F5F5F5;}
-.com-user-meta{font-size:11px;color:#5A5A68;}
-.com-cat-badge{font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0;}
-.com-body-txt{padding:0 14px 10px;}
-.com-loop-name{font-family:var(--fH);font-size:15px;font-weight:700;color:#F5F5F5;margin-bottom:3px;}
-.com-loop-desc{font-size:13px;color:#5A5A68;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.com-loop-stats{display:flex;gap:14px;padding:8px 14px;border-top:0.5px solid #2C2C2E;}
-.com-stat{display:flex;align-items:center;gap:5px;font-size:12px;color:#5A5A68;}
-.com-actions{display:flex;border-top:0.5px solid #2C2C2E;}
-.com-action-btn{flex:1;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:13px;font-weight:500;color:#5A5A68;cursor:pointer;border:none;background:none;transition:all .2s;font-family:var(--fB);}
-.com-action-btn:hover{background:var(--bg3);color:var(--or);}
-.com-action-btn.liked{color:var(--or);}
+/* ═══════════════════════
+   COMUNIDAD
+═══════════════════════ */
+#comunidad { background:var(--bg0); }
+.com-body {
+  flex: 1;
+  min-height: 0;           /* permite scroll en flex child */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 14px 14px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.com-card {
+  background: var(--wh);
+  border-radius: 14px;
+  border: 0.5px solid var(--bd);
+  box-shadow: var(--sh);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all .2s;
+  flex-shrink: 0;
+  width: 100%;
+}
+.com-card:hover { transform:translateY(-1px); box-shadow:var(--shL); }
+.com-card-hdr { padding:12px 14px 8px; display:flex; align-items:center; gap:10px; }
+.com-avatar { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:white; flex-shrink:0; }
+.com-user-info { flex:1; min-width:0; }
+.com-user-name { font-size:13px; font-weight:600; color:var(--dk); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.com-user-meta { font-size:11px; color:var(--gr); display:flex; align-items:center; gap:4px; margin-top:1px; }
+.com-city-tag { font-size:11px; font-weight:600; color:var(--or); background:var(--orL); border-radius:8px; padding:3px 8px; white-space:nowrap; flex-shrink:0; }
+.com-body-txt { padding:0 14px 10px; }
+.com-loop-name { font-family:var(--fH); font-size:14px; font-weight:700; color:var(--dk); margin-bottom:3px; }
+.com-loop-desc { font-size:12px; color:var(--gr); line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.com-loop-stats { display:flex; gap:12px; padding:8px 14px; border-top:0.5px solid var(--bd); }
+.com-stat { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--gr); }
+.com-actions { display:flex; border-top:0.5px solid var(--bd); }
+.com-action-btn { flex:1; padding:10px 4px; display:flex; align-items:center; justify-content:center; gap:5px; font-size:12px; font-weight:500; color:var(--gr); cursor:pointer; border:none; background:none; transition:all .2s; font-family:var(--fB); }
+.com-action-btn:hover, .com-action-btn.liked { color:var(--or); background:var(--orL); }
+.com-city-chip { padding:5px 13px; border-radius:20px; border:1px solid var(--bd); background:var(--lt); font-size:12px; font-weight:500; color:var(--md); cursor:pointer; white-space:nowrap; transition:all .2s; flex-shrink:0; }
+.com-city-chip.on { background:var(--or); border-color:var(--or); color:white; font-weight:700; }
+.com-city-chip:hover:not(.on) { border-color:var(--or); color:var(--or); }
 
 /* ═══════════════════════
    RANKING
@@ -906,21 +928,6 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   background:var(--wh); border-radius:12px; padding:12px;
   border:0.5px solid var(--bd); box-shadow:var(--sh);
 }
-.com-avatar { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0; }
-.com-card { background:var(--wh);border-radius:12px;padding:12px;border:0.5px solid var(--bd);box-shadow:var(--sh); }
-.com-card-hdr { display:flex;align-items:center;gap:9px;margin-bottom:9px; }
-.com-user-name { font-size:13px;font-weight:600;color:var(--dk); }
-.com-user-meta { font-size:10px;color:var(--gr); }
-.com-cat-badge { font-size:10px;padding:2px 8px;border-radius:10px;margin-left:auto;flex-shrink:0; }
-.com-body-txt { margin-bottom:8px; }
-.com-loop-name { font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);margin-bottom:2px; }
-.com-loop-desc { font-size:12px;color:var(--gr);line-height:1.45; }
-.com-loop-stats { display:flex;gap:10px;margin-bottom:8px; }
-.com-stat { font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px; }
-.com-actions { display:flex;gap:6px;border-top:0.5px solid var(--bd);padding-top:8px; }
-.com-action-btn { flex:1;padding:7px 4px;border-radius:8px;background:var(--lt);border:0.5px solid var(--bd);font-size:11px;color:var(--md);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;transition:all .2s; }
-.com-action-btn:hover,.com-action-btn.liked { background:var(--orL);border-color:var(--or);color:var(--or); }
-.com-city-tag { font-size:10px;padding:2px 8px;border-radius:8px;background:var(--lt);color:var(--gr);border:0.5px solid var(--bd); }
 
 /* ═══ MÓDULO 3 — RANKING ═══ */
 .rank-loop-item { background:var(--wh);border-radius:10px;padding:11px 12px;border:0.5px solid var(--bd);display:flex;align-items:center;gap:10px; }
@@ -1468,7 +1475,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   </div>
 
   <!-- Feed body -->
-  <div class="com-body" id="com-body" style="flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px;"></div>
+  <div class="com-body" id="com-body"></div>
 </div>
 
 <!-- ════════════ RANKING — Módulo 3 Municipal ════════════ -->
