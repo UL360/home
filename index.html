@@ -1455,12 +1455,15 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
     </div>
     <!-- City filter chips -->
     <div id="com-city-chips" style="display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;scrollbar-width:none;">
-      <div class="com-city-chip on" data-city="all" onclick="App.comSetCity(this,'all')">Todas</div>
-      <div class="com-city-chip" data-city="La Paz" onclick="App.comSetCity(this,'La Paz')">La Paz</div>
+      <div class="com-city-chip" data-city="all" onclick="App.comSetCity(this,'all')">Todas</div>
+      <div class="com-city-chip on" data-city="La Paz" onclick="App.comSetCity(this,'La Paz')">📍 La Paz</div>
       <div class="com-city-chip" data-city="Paraná" onclick="App.comSetCity(this,'Paraná')">Paraná</div>
       <div class="com-city-chip" data-city="Concordia" onclick="App.comSetCity(this,'Concordia')">Concordia</div>
       <div class="com-city-chip" data-city="Gualeguaychú" onclick="App.comSetCity(this,'Gualeguaychú')">Gualeguaychú</div>
       <div class="com-city-chip" data-city="Colón" onclick="App.comSetCity(this,'Colón')">Colón</div>
+      <div class="com-city-chip" data-city="Rosario" onclick="App.comSetCity(this,'Rosario')">Rosario</div>
+      <div class="com-city-chip" data-city="Buenos Aires" onclick="App.comSetCity(this,'Buenos Aires')">Buenos Aires</div>
+      <div class="com-city-chip" data-city="Córdoba" onclick="App.comSetCity(this,'Córdoba')">Córdoba</div>
     </div>
   </div>
 
@@ -2357,6 +2360,17 @@ const App = {
 
         this.routes = [...DEFAULTS, ...allLoops.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
 
+        // Normalizar cityId en loops que no lo tengan
+        this.routes = this.routes.map(r => {
+          if (!r.cityId && !r.ciudad && r.pts && r.pts.length > 0) {
+            const fp = r.pts[0];
+            const lat = Array.isArray(fp) ? fp[0] : fp?.lat;
+            const lng = Array.isArray(fp) ? fp[1] : fp?.lng;
+            if (lat && lng) return { ...r, cityId: this._cityFromCoordsSync(lat, lng) };
+          }
+          return r;
+        });
+
         // Puntos del usuario logueado
         if (this._user) {
           try {
@@ -2381,7 +2395,17 @@ const App = {
     try {
       const raw = localStorage.getItem('ul360_routes');
       const custom = raw ? JSON.parse(raw) : [];
-      this.routes = [...DEFAULTS, ...custom.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
+      const merged = [...DEFAULTS, ...custom.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
+      // Normalizar cityId
+      this.routes = merged.map(r => {
+        if (!r.cityId && !r.ciudad && r.pts && r.pts.length > 0) {
+          const fp = r.pts[0];
+          const lat = Array.isArray(fp) ? fp[0] : fp?.lat;
+          const lng = Array.isArray(fp) ? fp[1] : fp?.lng;
+          if (lat && lng) return { ...r, cityId: this._cityFromCoordsSync(lat, lng) };
+        }
+        return r;
+      });
     } catch(e) { this.routes = [...DEFAULTS]; }
     try { this.pts   = parseInt(localStorage.getItem('ul360_pts')   || '0'); } catch(e) {}
     try { this.likes = JSON.parse(localStorage.getItem('ul360_likes') || '[]'); } catch(e) {}
@@ -3874,6 +3898,10 @@ const App = {
 
     if (!lat || !lng) return this.toast('⚠️ Marcá la ubicación en el mapa');
 
+    // ── Detectar ciudad por coordenadas ──
+    this.toast('📍 Detectando ciudad...');
+    const cityId = await this._detectCityFromCoords(lat, lng);
+
     const catEmojis = {
       lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', playa:'🏖️', parque:'🌳',
       plaza:'🏛️', museo:'🖼️', pesca:'🎣', aventura:'🧗', campo:'🌾', deporte:'⚽',
@@ -3898,6 +3926,7 @@ const App = {
       img: this._fotoLoopImg ? '[[base64]]' : '',
       emoji, color, badge: 'ba',
       lat, lng,
+      cityId,                   // ← ciudad detectada por GPS
       authorId: this._uid,
       authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Anónimo',
       createdAt: Date.now(),
@@ -3926,8 +3955,9 @@ const App = {
           emoji, color, badge: 'ba',
           dist: '0 km', dur: '—',
           img: this._fotoLoopImg ? '[[base64]]' : '',
-          pts: [{ lat, lng }],   // ← objeto, no array anidado
+          pts: [{ lat, lng }],
           pois: [{ name, lat, lng }],
+          cityId,               // ← ciudad detectada por GPS
           authorId: this._uid,
           authorName: this._user?.displayName || 'Anónimo',
           createdAt: Date.now()
@@ -3947,7 +3977,7 @@ const App = {
         markerEl.style.cssText = `width:36px;height:36px;border-radius:50%;background:${color};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;`;
         markerEl.textContent = emoji;
         const popup = new maplibregl.Popup({ offset: 20 })
-          .setHTML(`<b>${emoji} ${name}</b><br><small>${desc||''}</small>`);
+          .setHTML(`<b>${emoji} ${name}</b><br><small>${desc||''}</small><br><small style="color:#999;">📍 ${cityId}</small>`);
         new maplibregl.Marker({ element: markerEl, anchor: 'center' })
           .setLngLat([lng, lat])
           .setPopup(popup)
@@ -3959,7 +3989,7 @@ const App = {
       if (!this._fotoPosts) this._fotoPosts = [];
       this._fotoPosts.unshift({ ...stopData, img: this._fotoLoopImg || '' });
       this._addPts(30, 'Parada publicada');
-      this._showSaveSuccess(name, '🌐 Parada publicada');
+      this._showSaveSuccess(name, `🌐 Publicado en ${cityId}`);
     } catch(e) {
       console.error('publishFotoLoop error:', e);
       alert('❌ Error al publicar:\n\n' + e.message);
@@ -4379,17 +4409,26 @@ const App = {
           this.go('profile');
           return;
         }
+        // Detectar ciudad por el primer punto del loop
+        let cityId = this._luCity || 'La Paz';
+        if (this.aPts.length > 0) {
+          const fp = this.aPts[0];
+          const lat = Array.isArray(fp) ? fp[0] : fp.lat;
+          const lng = Array.isArray(fp) ? fp[1] : fp.lng;
+          cityId = this._cityFromCoordsSync(lat, lng);
+        }
         const r = {
-          id:`custom-${Date.now()}`, name, type, desc:desc||`Loop ${name}, La Paz.`,
+          id:`custom-${Date.now()}`, name, type, desc:desc||`Loop ${name}, ${cityId}.`,
           emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
           dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
           img: this._imgBase64 || '', pts:[...this.aPts],
           pois:this.aPois.filter(p=>p.name).map(p=>({...p})),
-          authorId: this._uid,   // ← debe estar ANTES de _saveData
+          cityId,                   // ← ciudad detectada por GPS
+          authorId: this._uid,
           authorName: this._user ? (this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo') : 'Anónimo',
           createdAt: Date.now()
         };
-        console.log(`[saveRoute] Creando loop "${name}" authorId=${r.authorId}`);
+        console.log(`[saveRoute] Creando loop "${name}" cityId=${cityId} authorId=${r.authorId}`);
         this.routes.push(r);
         await this._saveData();
         if (this.mainMap) this._drawRoute(r);
@@ -4530,56 +4569,118 @@ const App = {
   // ══════════════════════════════════════════
   // MÓDULO 2 — COMUNIDAD PROVINCIAL
   // ══════════════════════════════════════════
-  _comCity: 'all',
+  _comCity: 'La Paz',
+
+  // ── Detectar ciudad por coordenadas GPS ──
+  async _detectCityFromCoords(lat, lng) {
+    // Tabla de ciudades con [lat, lng, radio_km, cityId]
+    const KNOWN = [
+      [-30.749, -59.645,  20, 'La Paz'],
+      [-31.730, -60.530,  35, 'Paraná'],
+      [-31.390, -57.950,  25, 'Concordia'],
+      [-33.011, -58.522,  25, 'Gualeguaychú'],
+      [-32.227, -58.140,  20, 'Colón'],
+      [-32.946, -60.639,  40, 'Rosario'],
+      [-27.468, -58.834,  35, 'Corrientes'],
+      [-34.603, -58.381,  60, 'Buenos Aires'],
+      [-38.000, -57.558,  35, 'Mar del Plata'],
+      [-32.890, -68.845,  40, 'Mendoza'],
+      [-31.417, -64.183,  40, 'Córdoba'],
+      [-27.480, -55.765,  40, 'Misiones'],
+    ];
+    const dist = (a,b,c,d) => {
+      const R=6371, dL=(c-a)*Math.PI/180, dG=(d-b)*Math.PI/180;
+      const x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;
+      return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+    };
+    let nearest=null, nearDist=Infinity;
+    for (const [clat,clng,radio,cityId] of KNOWN) {
+      const d = dist(lat,lng,clat,clng);
+      if (d < radio && d < nearDist) { nearDist=d; nearest=cityId; }
+    }
+    if (nearest) return nearest;
+    // Fallback Nominatim (sin API key)
+    try {
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
+        { headers:{'Accept-Language':'es'} }
+      );
+      const data = await r.json();
+      return data.address?.city || data.address?.town || data.address?.village || this._luCity || 'La Paz';
+    } catch(e) { return this._luCity || 'La Paz'; }
+  },
 
   _renderComunidad() {
-    const cityFilter = this._comCity || 'all';
+    const cityFilter = this._comCity || 'La Paz';
     const AVATARS = ['#FF5F00','#2563EB','#16A34A','#7C3AED','#DB2777','#0891B2','#D97706'];
     const USERS   = ['Martín G.','Lucía R.','Pablo S.','Ana K.','Diego M.','Sofía V.','Juan C.'];
-    const CITIES  = ['La Paz','Paraná','Concordia','Gualeguaychú','Colón','La Paz','Paraná'];
     const TIMES   = ['hace 2 h','ayer','hace 3 h','hace 1 día','hace 5 h','hace 2 días','hace 4 h'];
     const COMMENTS= [
       'Tarde perfecta en la costanera 🌅 El loop está increíble.',
       '¿Alguien hace este loop los sábados? Organizando salida grupal.',
-      'Nuevo registro personal hoy 🏃 El loop del parque es el mejor.',
+      'Nuevo récord personal hoy 🏃 El loop del parque es el mejor.',
       'Recomendadísimo para la tarde, muy bien señalizado.',
       'Primera vez en este loop, increíble el paisaje al atardecer 🌇',
       'El loop nuevo está buenísimo, pasé por el mercado también.',
       'Hoy con el grupo de running, 8 personas en el loop 💪'
     ];
 
+    // Actualizar chip activo visualmente
+    document.querySelectorAll('.com-city-chip').forEach(c => {
+      c.classList.toggle('on', c.dataset.city === cityFilter);
+    });
+
     const body = document.getElementById('com-body');
     if (!body) return;
 
-    let all = [...this.routes].sort(() => Math.random() - .5);
-    // Si no hay loops reales, mostrar demo
-    if (!all.length) {
-      all = [
-        { id:'demo1', name:'Loop Costanera', type:'paseo', emoji:'🌳', badge:'badge-verde', dist:'4.2 km', dur:'45 min', likes:248, pois:[], cityId:'La Paz' },
-        { id:'demo2', name:'Loop Arroyo',    type:'running', emoji:'🏃', badge:'badge-rojo',  dist:'2.8 km', dur:'30 min', likes:141, pois:[], cityId:'Paraná' },
-        { id:'demo3', name:'Loop Centro',    type:'caminata',emoji:'🥾',badge:'badge-naranja',dist:'1.5 km',dur:'18 min',likes:89,  pois:[], cityId:'Concordia' },
-      ];
-    }
+    // ── Loops reales filtrados por ciudad ──
+    let all = [...this.routes].sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
+
+    // Normalizar cityId en loops que no lo tengan pero sí coords
+    all = all.map(r => {
+      if (!r.cityId && !r.ciudad && r.pts && r.pts[0]) {
+        const pt = r.pts[0];
+        const lat = Array.isArray(pt) ? pt[0] : pt.lat;
+        const lng = Array.isArray(pt) ? pt[1] : pt.lng;
+        // asignación síncrona con tabla local
+        r = { ...r, cityId: this._cityFromCoordsSync(lat, lng) };
+      }
+      return r;
+    });
 
     if (cityFilter !== 'all') {
-      all = all.filter(r => (r.cityId||r.ciudad||'La Paz') === cityFilter);
+      all = all.filter(r => (r.cityId || r.ciudad || 'La Paz') === cityFilter);
+    }
+
+    // Demo si no hay loops reales para esta ciudad
+    if (!all.length) {
+      const DEMOS = {
+        'La Paz':       [
+          { id:'d-lp1', name:'Loop Costanera',  type:'paseo',    emoji:'🌳', dist:'4.2 km', dur:'45 min', likes:248, pois:[], cityId:'La Paz' },
+          { id:'d-lp2', name:'Loop Puerto',     type:'atardecer',emoji:'🌅', dist:'2.1 km', dur:'25 min', likes:134, pois:[], cityId:'La Paz' },
+          { id:'d-lp3', name:'Loop Centro',     type:'caminata', emoji:'🥾', dist:'1.8 km', dur:'20 min', likes:89,  pois:[], cityId:'La Paz' },
+        ],
+        'Paraná':       [{ id:'d-par1',name:'Loop Costanera Paraná',type:'paseo',emoji:'🌳',dist:'5.5 km',dur:'55 min',likes:312,pois:[],cityId:'Paraná'}],
+        'Buenos Aires': [{ id:'d-ba1', name:'Loop Palermo',type:'running',emoji:'🏃',dist:'6.0 km',dur:'40 min',likes:880,pois:[],cityId:'Buenos Aires'}],
+      };
+      all = DEMOS[cityFilter] || [];
     }
 
     if (!all.length) {
       body.innerHTML = `<div style="text-align:center;padding:40px 20px;">
         <div style="font-size:36px;margin-bottom:10px;">👥</div>
-        <div style="font-family:var(--fH);font-size:15px;font-weight:700;color:var(--dk);">Sin posts en ${cityFilter}</div>
-        <p style="font-size:12px;color:var(--gr);margin-top:6px;">Sé el primero en publicar en esta ciudad.</p>
+        <div style="font-family:var(--fH);font-size:15px;font-weight:700;color:var(--dk);">Sin loops publicados en ${cityFilter}</div>
+        <p style="font-size:12px;color:var(--gr);margin-top:6px;">Grabá un loop en esta ciudad y aparecerá acá.</p>
       </div>`;
       return;
     }
 
     body.innerHTML = all.map((r, i) => {
-      const uName  = USERS[i % USERS.length];
+      const uName  = r.authorName || USERS[i % USERS.length];
       const uCol   = AVATARS[i % AVATARS.length];
-      const uInit  = uName.split(' ').map(x => x[0]).join('');
-      const city   = r.cityId || r.ciudad || CITIES[i % CITIES.length];
-      const time   = TIMES[i % TIMES.length];
+      const uInit  = uName.split(' ').map(x => x[0]).join('').toUpperCase().slice(0,2);
+      const city   = r.cityId || r.ciudad || 'La Paz';
+      const time   = r.createdAt ? this._timeAgo(r.createdAt) : TIMES[i % TIMES.length];
       const comment= COMMENTS[i % COMMENTS.length];
       const liked  = (this.likes||[]).includes(r.id);
       const lkCt   = r.likes || 0;
@@ -4590,7 +4691,9 @@ const App = {
           <div class="com-user-info" style="flex:1;">
             <div class="com-user-name">${uName}</div>
             <div class="com-user-meta" style="display:flex;align-items:center;gap:5px;">
-              <span>${city}</span><span style="font-size:8px;">·</span><span>${time}</span>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2"/></svg>
+              <span style="color:var(--or);font-weight:600;">${city}</span>
+              <span style="font-size:8px;">·</span><span>${time}</span>
             </div>
           </div>
           <span class="com-city-tag">${r.emoji||'🔄'} ${r.name.length>12?r.name.slice(0,12)+'…':r.name}</span>
@@ -4626,6 +4729,34 @@ const App = {
         </div>
       </div>`;
     }).join('');
+  },
+
+  // Versión síncrona de detección de ciudad (solo tabla local, sin fetch)
+  _cityFromCoordsSync(lat, lng) {
+    if (!lat || !lng) return this._luCity || 'La Paz';
+    const KNOWN = [
+      [-30.749,-59.645,20,'La Paz'],[-31.730,-60.530,35,'Paraná'],
+      [-31.390,-57.950,25,'Concordia'],[-33.011,-58.522,25,'Gualeguaychú'],
+      [-32.227,-58.140,20,'Colón'],[-32.946,-60.639,40,'Rosario'],
+      [-27.468,-58.834,35,'Corrientes'],[-34.603,-58.381,60,'Buenos Aires'],
+      [-38.000,-57.558,35,'Mar del Plata'],[-32.890,-68.845,40,'Mendoza'],
+      [-31.417,-64.183,40,'Córdoba'],[-27.480,-55.765,40,'Misiones'],
+    ];
+    const d=(a,b,c,e)=>{const R=6371,dL=(c-a)*Math.PI/180,dG=(e-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));};
+    let best=null,min=Infinity;
+    for(const[clat,clng,radio,cid] of KNOWN){const dd=d(lat,lng,clat,clng);if(dd<radio&&dd<min){min=dd;best=cid;}}
+    return best || this._luCity || 'La Paz';
+  },
+
+  // Tiempo relativo legible
+  _timeAgo(ts) {
+    const diff = Date.now() - ts;
+    const m = Math.floor(diff/60000), h = Math.floor(m/60), days = Math.floor(h/24);
+    if (days>1)  return `hace ${days} días`;
+    if (days===1) return 'ayer';
+    if (h>=1)    return `hace ${h} h`;
+    if (m>=1)    return `hace ${m} min`;
+    return 'ahora';
   },
 
   comSetCity(el, city) {
