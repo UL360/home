@@ -842,6 +842,8 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 .fl-cat.on { background: var(--orL); border-color: var(--or); color: var(--or); font-weight: 600; }
 .maplibregl-popup-content { background: var(--wh) !important; color: var(--dk) !important; border-radius: var(--rs) !important; box-shadow: var(--shL) !important; font-family: var(--fB) !important; font-size: 13px !important; padding: 10px 14px !important; }
 .maplibregl-popup-tip { display: none; }
+/* Popup bajo los controles custom (z-index 10) */
+.maplibregl-popup { z-index: 8 !important; }
 .maplibregl-ctrl-compass .maplibregl-ctrl-icon { filter: invert(0.6); }
 
 
@@ -1076,10 +1078,10 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   </div>
 
   <!-- ── ROUTE BADGE ── -->
-  <div id="rt-badge" style="display:none;position:absolute;top:72px;left:72px;z-index:10;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:600;align-items:center;gap:7px;">
-    <div id="rt-dot" style="width:9px;height:9px;border-radius:50%;background:var(--or);"></div>
-    <span id="rt-name">—</span>
-    <button onclick="App._clearSelection()" style="background:none;border:none;color:#9CA3AF;cursor:pointer;padding:0 0 0 4px;font-size:14px;line-height:1;display:flex;align-items:center;" title="Cerrar">✕</button>
+  <div id="rt-badge" style="display:none;position:absolute;top:70px;left:14px;z-index:10;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:600;align-items:center;gap:7px;max-width:calc(100% - 80px);">
+    <div id="rt-dot" style="width:9px;height:9px;border-radius:50%;background:var(--or);flex-shrink:0;"></div>
+    <span id="rt-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</span>
+    <button onclick="App._clearSelection()" style="background:none;border:none;color:#9CA3AF;cursor:pointer;padding:0 0 0 4px;font-size:18px;line-height:1;display:flex;align-items:center;flex-shrink:0;" title="Cerrar">✕</button>
   </div>
 
   <!-- ── SEARCH BAR movida al menú lateral — se mantienen los ids para el JS ── -->
@@ -3516,6 +3518,20 @@ const App = {
       .setLngLat(lngLat)
       .setHTML(html)
       .addTo(this.mainMap);
+    // Cuando el usuario cierra el popup con la X nativa → limpiar todo
+    this._loopPopup.on('close', () => {
+      this._loopPopup = null;
+      this.selId = null;
+      const b = document.getElementById('rt-badge');
+      if (b) b.style.display = 'none';
+      const panel = document.getElementById('nav-panel'); if (panel) panel.remove();
+      const loopPanel = document.getElementById('loop-active-panel'); if (loopPanel) loopPanel.remove();
+      const picker = document.getElementById('transport-picker'); if (picker) picker.remove();
+      this._removeNavLine();
+      this._stopVoice();
+      document.querySelectorAll('.rc').forEach(c => c.classList.remove('sel'));
+      if (this._layers) Object.keys(this._layers).forEach(rid => this._setRouteVisible(rid, true));
+    });
   },
 
   // ── SHOW DETAIL ──
