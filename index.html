@@ -167,6 +167,7 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
   transition:all .2s; flex-shrink:0;
 }
 .admin-btn:hover { background:var(--or2); transform:translateY(-1px); }
+#menu-btn { transition: opacity .25s ease, z-index 0s; }
 
 .chips-row {
   display:flex; gap:8px; overflow-x:auto; padding:10px 0 4px;
@@ -5536,29 +5537,45 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     this._sbState = state;
     const sp  = document.getElementById('side-panel');
     const so  = document.getElementById('side-overlay');
+    const menuBtn = document.getElementById('menu-btn');
     const isMobile = window.innerWidth <= 768;
 
     if (!sp) return;
     sp.classList.remove('sb-rail','sb-open');
 
     if (state === 0) {
-      // Mobile closed
       if (so) so.classList.remove('show');
       document.body.classList.remove('sb-rail-mode','sb-open-mode');
+      // Mobile: restaurar menu-btn naranja
+      if (isMobile && menuBtn) {
+        menuBtn.style.opacity = '1';
+        menuBtn.style.pointerEvents = '';
+        menuBtn.style.zIndex = '10';
+      }
     } else if (state === 1) {
       sp.classList.add('sb-rail');
       if (so) so.classList.remove('show');
       document.body.classList.add('sb-rail-mode');
       document.body.classList.remove('sb-open-mode');
+      // Mobile: ocultar menu-btn (el sb-toggle-btn dentro del rail lo reemplaza)
+      if (isMobile && menuBtn) {
+        menuBtn.style.opacity = '0';
+        menuBtn.style.pointerEvents = 'none';
+        menuBtn.style.zIndex = '0';
+      }
     } else {
       sp.classList.add('sb-open');
       if (isMobile && so) so.classList.add('show');
       document.body.classList.add('sb-open-mode');
       document.body.classList.remove('sb-rail-mode');
-      // Rellenar íconos de ciudad y filtros al abrir
+      // Mobile: ocultar menu-btn (el sidebar lo cubre)
+      if (isMobile && menuBtn) {
+        menuBtn.style.opacity = '0';
+        menuBtn.style.pointerEvents = 'none';
+        menuBtn.style.zIndex = '0';
+      }
       this._fillSidebarData();
     }
-    // Ajustar el mapa si está activo
     if (this.mainMap) setTimeout(()=>this.mainMap.resize(), 300);
   },
   _fillSidebarData() {
