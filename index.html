@@ -2043,7 +2043,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   <div class="cn-symbols" id="cn-symbols"></div>
   <div class="cn-footer">
     <div class="cn-loops-ct" id="cn-loops-ct">0 loops disponibles</div>
-    <button class="cn-ver-btn" onclick="App.closeCityNotif();App.go('comunidad')">Ver loops →</button>
+    <button class="cn-ver-btn" onclick="App.closeCityNotif();App.go('loops-urbanos')">Ver loops →</button>
   </div>
 </div>
 
@@ -5101,193 +5101,6 @@ const App = {
     } catch(e) { return this._luCity || 'La Paz'; }
   },
 
-  _renderComunidad() {
-    const cityFilter = this._comCity || 'La Paz';
-    const AVATARS = ['#FF5F00','#2563EB','#16A34A','#7C3AED','#DB2777','#0891B2','#D97706'];
-    const USERS   = ['Martín G.','Lucía R.','Pablo S.','Ana K.','Diego M.','Sofía V.','Juan C.'];
-    const TIMES   = ['hace 2 h','ayer','hace 3 h','hace 1 día','hace 5 h','hace 2 días','hace 4 h'];
-    const COMMENTS= [
-      'Tarde perfecta en la costanera 🌅 El loop está increíble.',
-      '¿Alguien hace este loop los sábados? Organizando salida grupal.',
-      'Nuevo récord personal hoy 🏃 El loop del parque es el mejor.',
-      'Recomendadísimo para la tarde, muy bien señalizado.',
-      'Primera vez en este loop, increíble el paisaje al atardecer 🌇',
-      'El loop nuevo está buenísimo, pasé por el mercado también.',
-      'Hoy con el grupo de running, 8 personas en el loop 💪'
-    ];
-
-    // Actualizar chip activo visualmente
-    document.querySelectorAll('.com-city-chip').forEach(c => {
-      c.classList.toggle('on', c.dataset.city === cityFilter);
-    });
-
-    const body = document.getElementById('com-body');
-    if (!body) return;
-
-    // ── Loops reales filtrados por ciudad ──
-    let all = [...this.routes].sort((a,b) => (b.createdAt||0)-(a.createdAt||0));
-
-    // Normalizar cityId en loops que no lo tengan pero sí coords
-    all = all.map(r => {
-      if (!r.cityId && !r.ciudad && r.pts && r.pts[0]) {
-        const pt = r.pts[0];
-        const lat = Array.isArray(pt) ? pt[0] : pt.lat;
-        const lng = Array.isArray(pt) ? pt[1] : pt.lng;
-        // asignación síncrona con tabla local
-        r = { ...r, cityId: this._cityFromCoordsSync(lat, lng) };
-      }
-      return r;
-    });
-
-    if (cityFilter !== 'all') {
-      all = all.filter(r => (r.cityId || r.ciudad || 'La Paz') === cityFilter);
-    }
-
-    // Demo si no hay loops reales para esta ciudad
-    if (!all.length) {
-      const DEMOS = {
-        'La Paz':       [
-          { id:'d-lp1', name:'Loop Costanera',  type:'paseo',    emoji:'🌳', dist:'4.2 km', dur:'45 min', likes:248, pois:[], cityId:'La Paz' },
-          { id:'d-lp2', name:'Loop Puerto',     type:'atardecer',emoji:'🌅', dist:'2.1 km', dur:'25 min', likes:134, pois:[], cityId:'La Paz' },
-          { id:'d-lp3', name:'Loop Centro',     type:'caminata', emoji:'🥾', dist:'1.8 km', dur:'20 min', likes:89,  pois:[], cityId:'La Paz' },
-        ],
-        'Paraná':       [{ id:'d-par1',name:'Loop Costanera Paraná',type:'paseo',emoji:'🌳',dist:'5.5 km',dur:'55 min',likes:312,pois:[],cityId:'Paraná'}],
-        'Buenos Aires': [{ id:'d-ba1', name:'Loop Palermo',type:'running',emoji:'🏃',dist:'6.0 km',dur:'40 min',likes:880,pois:[],cityId:'Buenos Aires'}],
-      };
-      all = DEMOS[cityFilter] || [];
-    }
-
-    if (!all.length) {
-      body.innerHTML = `<div style="text-align:center;padding:40px 20px;">
-        <div style="font-size:36px;margin-bottom:10px;">👥</div>
-        <div style="font-family:var(--fH);font-size:15px;font-weight:700;color:var(--dk);">Sin loops publicados en ${cityFilter}</div>
-        <p style="font-size:12px;color:var(--gr);margin-top:6px;">Grabá un loop en esta ciudad y aparecerá acá.</p>
-      </div>`;
-      return;
-    }
-
-    body.innerHTML = all.map((r, i) => {
-      const uName  = r.authorName || USERS[i % USERS.length];
-      const uCol   = AVATARS[i % AVATARS.length];
-      const uInit  = uName.split(' ').map(x => x[0]).join('').toUpperCase().slice(0,2);
-      const city   = r.cityId || r.ciudad || 'La Paz';
-      const time   = r.createdAt ? this._timeAgo(r.createdAt) : TIMES[i % TIMES.length];
-      const comment= COMMENTS[i % COMMENTS.length];
-      const liked  = (this.likes||[]).includes(r.id);
-      const lkCt   = r.likes || 0;
-      const hasImg = r.img && r.img.startsWith('data:');
-      return `
-      <div class="com-card">
-        ${hasImg
-          ? `<div style="width:100%;height:160px;overflow:hidden;border-radius:14px 14px 0 0;cursor:pointer;" onclick="App._openImgViewer('${r.id}')">
-               <img src="${r.img}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''" onerror="this.parentElement.style.display='none'">
-             </div>`
-          : `<div style="width:100%;height:80px;background:linear-gradient(135deg,${r.color||'var(--or)'}22,${r.color||'var(--or)'}44);display:flex;align-items:center;justify-content:center;font-size:36px;border-radius:14px 14px 0 0;">${r.emoji||'🔄'}</div>`
-        }
-        <div class="com-card-hdr">
-          <div class="com-avatar" style="background:${uCol};">${uInit}</div>
-          <div class="com-user-info" style="flex:1;">
-            <div class="com-user-name">${uName}</div>
-            <div class="com-user-meta" style="display:flex;align-items:center;gap:5px;">
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2"/></svg>
-              <span style="color:var(--or);font-weight:600;">${city}</span>
-              <span style="font-size:8px;">·</span><span>${time}</span>
-            </div>
-          </div>
-          <span class="com-city-tag">${r.emoji||'🔄'} ${r.name.length>12?r.name.slice(0,12)+'…':r.name}</span>
-        </div>
-        <div class="com-body-txt">
-          <div class="com-loop-name">${r.name}</div>
-          <div class="com-loop-desc">${comment}</div>
-        </div>
-        <div class="com-loop-stats">
-          <div class="com-stat">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
-            ${(r.pois||[]).length} paradas
-          </div>
-          <div class="com-stat">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            ${lkCt} likes
-          </div>
-          <div class="com-stat">${r.dist||'—'} · ${r.dur||'—'}</div>
-        </div>
-        <div class="com-actions">
-          <button class="com-action-btn ${liked?'liked':''}" onclick="App.likeLoop('${r.id}');App._renderComunidad()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            ${liked ? 'Me gustó' : 'Me gusta'}
-          </button>
-          <button class="com-action-btn" onclick="App.showDetail('${r.id}')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            Ver loop
-          </button>
-          <button class="com-action-btn" onclick="App.showQR('${r.id}')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="5"/><rect x="16" y="3" width="5" height="5"/><rect x="3" y="16" width="5" height="5"/></svg>
-            QR
-          </button>
-        </div>
-      </div>`;
-    }).join('');
-
-    // ── Sección FotoLoops debajo del feed ──
-    this._renderFotoLoopsCom();
-  },
-
-  _renderFotoLoopsCom() {
-    const body = document.getElementById('com-body');
-    if (!body) return;
-    const FL_CATS = {
-      lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',
-      plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',
-      ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'
-    };
-    const posts = this._fotoPosts || [];
-
-    // También incluir fotostops de this.routes
-    const fotoRoutes = this.routes.filter(r => r.type === 'fotostop');
-    const allFoto = [...posts, ...fotoRoutes.filter(r => !posts.find(p => p.id === r.id))];
-
-    const section = document.createElement('div');
-    section.style.cssText = 'margin-top:8px;';
-
-    // Header de sección
-    section.innerHTML = `
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 2px;">
-        <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);letter-spacing:.7px;text-transform:uppercase;">📸 Foto Loops</div>
-        <button onclick="App.openFotoLoop()" style="background:var(--orL);border:none;color:var(--or);font-size:11px;font-weight:700;padding:5px 12px;border-radius:10px;cursor:pointer;font-family:var(--fH);">+ Subir foto</button>
-      </div>
-      ${allFoto.length === 0
-        ? `<div style="text-align:center;padding:24px 0;background:var(--lt);border-radius:14px;border:0.5px solid var(--bd);">
-             <div style="font-size:30px;margin-bottom:8px;">📸</div>
-             <div style="font-size:13px;color:var(--gr);">Aún no hay Foto Loops.<br>¡Sé el primero!</div>
-           </div>`
-        : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-             ${allFoto.map(p => `
-             <div onclick="App._openImgViewer('${p.id}','foto')"
-               style="border-radius:14px;overflow:hidden;background:var(--lt);border:0.5px solid var(--bd);cursor:pointer;transition:transform .15s;box-shadow:var(--sh);"
-               onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''"
-               ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
-               ${p.img && p.img.startsWith('data:')
-                 ? `<div style="aspect-ratio:4/3;overflow:hidden;">
-                      <img src="${p.img}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" onerror="this.parentElement.style.background='var(--bg2)';this.style.display='none'">
-                    </div>`
-                 : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:38px;">${FL_CATS[p.cat]||'📍'}</div>`
-               }
-               <div style="padding:9px 10px 11px;">
-                 <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
-                 <div style="font-size:11px;color:var(--or);font-weight:600;margin-top:2px;">${FL_CATS[p.cat]||'📍'} ${p.cat||'lugar'}</div>
-                 ${p.desc ? `<div style="font-size:11px;color:var(--gr);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${p.desc}</div>` : ''}
-                 <div style="font-size:10px;color:var(--gr);margin-top:5px;display:flex;align-items:center;gap:3px;">
-                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
-                   <span>${p.cityId||p.ciudad||'La Paz'}</span>
-                   ${p.authorName ? `<span style="margin-left:4px;color:var(--bd);">·</span><span>${p.authorName.split(' ')[0]}</span>` : ''}
-                 </div>
-               </div>
-             </div>`).join('')}
-           </div>`
-      }`;
-    body.appendChild(section);
-  },
-
   // Versión síncrona de detección de ciudad (solo tabla local, sin fetch)
   _cityFromCoordsSync(lat, lng) {
     if (!lat || !lng) return this._luCity || 'La Paz';
@@ -5426,11 +5239,18 @@ const App = {
       return;
     }
     body.innerHTML = list.map(r => {
-      const liked = (this.likes||[]).includes(r.id);
-      const lkCt = (r.likes||0) + (liked?1:0);
-      return `<div class="post-card" style="padding:0;">
+      const liked  = (this.likes||[]).includes(r.id);
+      const lkCt   = (r.likes||0) + (liked?1:0);
+      const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
+      const color  = r.color || 'var(--or)';
+      return `<div class="post-card" style="padding:0;overflow:hidden;">
+        ${hasImg
+          ? `<div style="width:100%;height:150px;overflow:hidden;cursor:pointer;" onclick="App._openImgViewer('${r.id}')">
+               <img src="${r.img}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''" onerror="this.parentElement.style.display='none'">
+             </div>`
+          : `<div style="width:100%;height:70px;background:linear-gradient(135deg,${color}22,${color}44);display:flex;align-items:center;justify-content:center;font-size:34px;">${r.emoji||'🔄'}</div>`
+        }
         <div style="padding:12px 14px;display:flex;gap:12px;align-items:center;">
-          <div style="width:48px;height:48px;border-radius:12px;background:${r.color||'var(--or)'}22;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${r.emoji||'🔄'}</div>
           <div style="flex:1;">
             <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${r.name||'Loop'}</div>
             <div style="font-size:12px;color:var(--gr);margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'} · ❤️ ${lkCt}</div>
@@ -5473,7 +5293,7 @@ const App = {
         style="border-radius:14px;overflow:hidden;background:var(--lt);border:0.5px solid var(--bd);cursor:pointer;transition:transform .12s;box-shadow:var(--sh);"
         onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''"
         ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
-        ${p.img && p.img.startsWith('data:')
+        ${p.img && (p.img.startsWith('data:') || p.img.startsWith('http'))
           ? `<div style="aspect-ratio:4/3;overflow:hidden;"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\'aspect-ratio:4/3;background:var(--orL);display:flex;align-items:center;justify-content:center;font-size:36px;\'>${FL_CATS[p.cat]||'📍'}</div>'"></div>`
           : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;">${FL_CATS[p.cat]||'📍'}</div>`
         }
@@ -5673,7 +5493,7 @@ const App = {
   },
 
   openCrearEvento() {
-    if (!this._uid) { this.toast('Iniciá sesión para crear eventos'); return; }
+    if (!this._user) { this.toast('Iniciá sesión para crear eventos'); return; }
     const m = document.getElementById('crear-evento-modal');
     if (!m) return;
     m.style.display = 'flex';
@@ -5707,7 +5527,7 @@ const App = {
     const EV_COLOR = { salida:'#FF5F00',desafio:'#F59E0B',foto:'#7B2F9E',perro:'#10B981',encuentro:'#3B82F6',estreno:'#EC4899' };
 
     const btn = document.querySelector('#crear-evento-modal button:last-child');
-    if (btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
+    if (btn) { btn.textContent = '☁️ Guardando en nube...'; btn.disabled = true; }
 
     const ev = {
       id: 'ev_' + Date.now(),
@@ -5721,7 +5541,20 @@ const App = {
       ts: Date.now(), attendees: [this._uid], likes: 0
     };
 
-    if (this._db) await this._db.collection('eventos').doc(ev.id).set(ev).catch(e=>console.warn(e));
+    // ── Guardar en Firestore con feedback real ──
+    let savedToCloud = false;
+    if (this._db && this._user) {
+      try {
+        await this._db.collection('eventos').doc(ev.id).set(ev);
+        savedToCloud = true;
+      } catch(e) {
+        console.warn('[saveEvento] Error Firestore:', e);
+        if (btn) { btn.textContent = 'Publicar Evento 📅'; btn.disabled = false; }
+        this.toast('⚠️ Error al guardar en nube: ' + (e.message || e.code || ''));
+        return;
+      }
+    }
+
     this._eventos = this._eventos || [];
     this._eventos.unshift(ev);
 
@@ -5729,12 +5562,12 @@ const App = {
     const feedPost = { id:'post_ev_'+ev.id, type:'evento', text:`📅 Nuevo evento: "${ev.name}" — ${ev.fecha} ${ev.hora}${ev.desc?' — '+ev.desc:''}`, loopId, authorId:ev.authorId, authorName:ev.authorName, city:ev.city, ts:ev.ts, likes:0, replies:[], evId:ev.id };
     this._feedPosts = this._feedPosts||[];
     this._feedPosts.unshift(feedPost);
-    if (this._db) await this._db.collection('feed_posts').doc(feedPost.id).set(feedPost).catch(()=>{});
+    if (this._db && this._user) await this._db.collection('feed_posts').doc(feedPost.id).set(feedPost).catch(()=>{});
 
     if (btn) { btn.textContent = 'Publicar Evento 📅'; btn.disabled = false; }
     this.closeCrearEvento();
     this._renderEventos();
-    this.toast('🎉 Evento creado y publicado en el feed');
+    this.toast(savedToCloud ? '☁️ Evento guardado en la nube 🎉' : '✅ Evento creado (modo offline)');
     this._addPts(10, 'Evento creado'); this._savePts();
   },
 
