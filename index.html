@@ -1846,47 +1846,50 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 
 <!-- ════════════ LOOPS URBANOS — Módulo 1 ════════════ -->
 <div id="loops-urbanos" class="screen" style="background:var(--bg0);">
-  <div style="padding:14px 16px 10px;background:var(--wh);border-bottom:1px solid var(--bd);flex-shrink:0;">
-    <!-- Fila: ATRÁS + Título + Filtros -->
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-      <button class="scr-back-btn" onclick="App.go('explore')" title="Volver al mapa">
+
+  <!-- Header fijo -->
+  <div style="flex-shrink:0;background:var(--wh);border-bottom:0.5px solid var(--bd);">
+    <div style="padding:12px 14px 10px;display:flex;align-items:center;gap:10px;">
+      <button class="scr-back-btn" onclick="App.go('explore')">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
       </button>
       <div style="flex:1;">
-        <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);">Loops</h1>
+        <h1 style="font-family:var(--fH);font-size:19px;font-weight:800;color:var(--dk);">Loops Urbanos</h1>
         <p style="font-size:11px;color:var(--gr);margin-top:1px;display:flex;align-items:center;gap:4px;">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <span id="lu-city-label">La Paz, Entre Ríos</span>
         </p>
       </div>
-      <div style="display:flex;gap:6px;">
-        <button onclick="App.luSetFilter('cercanos',this)" style="background:var(--c-verde);color:var(--c-verde-t);border:0.5px solid var(--c-verde-b);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">Cercanos</button>
-        <button onclick="App.luSetFilter('populares',this)" style="background:var(--lt);border:0.5px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--md);cursor:pointer;">Populares</button>
+      <!-- Ordenar -->
+      <div style="display:flex;gap:5px;">
+        <button id="lu-btn-cercanos" onclick="App.luSetFilter('cercanos',this)"
+          style="background:var(--orL);color:var(--or);border:0.5px solid var(--or)33;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">Cercanos</button>
+        <button id="lu-btn-populares" onclick="App.luSetFilter('populares',this)"
+          style="background:var(--bg2);border:0.5px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--md);cursor:pointer;">Populares</button>
       </div>
     </div>
-    <!-- Esta ciudad (íconos) -->
-    <div style="margin-bottom:8px;">
-      <div style="font-size:9px;font-weight:600;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px;">Esta ciudad</div>
-      <div id="side-city-icons" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
-    </div>
-    <!-- Filtrar tipo — colapsable -->
-    <div>
-      <button onclick="App.toggleFilterSection()"
-        style="display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:0;margin-bottom:6px;">
-        <span style="font-size:9px;font-weight:600;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;">Filtrar tipo</span>
-        <span id="filter-arrow" style="font-size:13px;color:var(--gr);transition:transform .25s;display:inline-block;">▼</span>
-      </button>
-      <div id="side-filters-wrap" style="overflow:hidden;max-height:0px;transition:max-height .35s ease;">
-        <div id="side-filters" style="display:flex;flex-direction:column;gap:4px;padding-bottom:4px;"></div>
-      </div>
+
+    <!-- Tabs: Loops / Foto Loops -->
+    <div style="display:flex;border-top:0.5px solid var(--bd);">
+      <button id="lu-tab-loops" onclick="App.luSetTab('loops',this)" class="com-tab on">🔄 Loops</button>
+      <button id="lu-tab-foto"  onclick="App.luSetTab('foto',this)"  class="com-tab">📸 Foto Loops</button>
     </div>
   </div>
-  <div style="flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px;" id="lu-list"></div>
-  <!-- Botón crear loop -->
-  <div style="padding:10px 14px 24px;flex-shrink:0;background:var(--wh);border-top:1px solid var(--bd);">
-    <button onclick="App.go('admin')" id="lu-create-btn" style="width:100%;padding:13px;border-radius:12px;background:var(--c-verde);border:0.5px solid var(--c-verde-b);color:var(--c-verde-t);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Crear loop en <span id="lu-btn-city">La Paz</span>
+
+  <!-- Cuerpo dinámico -->
+  <div style="flex:1;overflow-y:auto;" id="lu-body">
+    <div style="display:flex;flex-direction:column;gap:10px;padding:14px;" id="lu-list"></div>
+  </div>
+
+  <!-- Footer: Crear loop -->
+  <div style="padding:10px 14px 20px;flex-shrink:0;background:var(--wh);border-top:0.5px solid var(--bd);display:flex;gap:8px;">
+    <button onclick="App.go('admin')" style="flex:1;padding:12px;border-radius:11px;background:var(--orL);border:0.5px solid var(--or)33;color:var(--or);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Crear Loop
+    </button>
+    <button onclick="App.openFotoLoop()" style="flex:1;padding:12px;border-radius:11px;background:var(--bg2);border:0.5px solid var(--bd);color:var(--md);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      + Foto Loop
     </button>
   </div>
 </div>
@@ -4882,87 +4885,175 @@ const App = {
   _renderLoopsUrbanos() {
     const city = this._luCity || 'La Paz';
     const lbl  = document.getElementById('lu-city-label');
-    const btn  = document.getElementById('lu-btn-city');
     if (lbl) lbl.textContent = city + ', Entre Ríos';
-    if (btn) btn.textContent = city;
+    const tab = this._luTab || 'loops';
+    if (tab === 'foto') return this._renderLuFoto();
+    this._renderLuLoops();
+  },
 
-    // filtrar por ciudad (campo cityId o ciudad); si no hay, mostrar todos
-    let loops = [...this.routes];
-    const cityLoops = loops.filter(r => (r.cityId||r.ciudad||'La Paz') === city);
-    if (cityLoops.length) loops = cityLoops;
-
-    if (this._luFilter === 'populares') {
-      loops = loops.sort((a,b) => ((b.likes||0)*2+(b.paseos||0)) - ((a.likes||0)*2+(a.paseos||0)));
-    }
-
-    // calcular loop principal (score = likes×2 + paseos)
-    const scored = loops.map(r => ({
-      ...r,
-      _score: (r.likes||0)*2 + (r.paseos||0)
-    })).sort((a,b) => b._score - a._score);
-
+  _renderLuLoops() {
+    const city = this._luCity || 'La Paz';
     const list = document.getElementById('lu-list');
     if (!list) return;
 
+    let loops = this.routes.filter(r => r.type !== 'fotostop');
+    const cityLoops = loops.filter(r => (r.cityId||r.ciudad||'La Paz') === city);
+    if (cityLoops.length) loops = cityLoops;
+
+    const scored = loops.map(r => ({
+      ...r, _score: (r.likes||0)*2 + (r.paseos||0)
+    }));
+    if (this._luFilter === 'populares') scored.sort((a,b) => b._score - a._score);
+
+    const body = document.getElementById('lu-body');
+    if (body) body.style.padding = '0';
+
     if (!scored.length) {
-      list.innerHTML = `<div style="text-align:center;padding:40px 20px;">
+      list.innerHTML = `<div style="text-align:center;padding:48px 20px;">
         <div style="font-size:40px;margin-bottom:12px;">🌀</div>
         <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);margin-bottom:6px;">Sin loops en ${city}</div>
-        <p style="font-size:13px;color:var(--gr);line-height:1.6;">Sé el primero en crear un loop en tu ciudad.</p>
+        <p style="font-size:13px;color:var(--gr);line-height:1.6;">Sé el primero en crear un loop.</p>
       </div>`;
       return;
     }
 
-    const TYPE_COLORS = { running:'#EF4444', mtb:'#16A34A', ciclismo:'#2563EB', caminata:'#D97706', perro:'#DB2777', paseo:'#0891B2', pesca:'#0E7490', atardecer:'#7C3AED', gastro:'#B45309', trad:'#92400E', relax:'#6B7280', salidas:'#DC2626', trabajo:'#374151', vacaciones:'#D97706' };
+    const TC = { running:'#EF4444',mtb:'#16A34A',ciclismo:'#2563EB',caminata:'#D97706',perro:'#DB2777',paseo:'#0891B2',pesca:'#0E7490',atardecer:'#7C3AED',gastro:'#B45309',trad:'#92400E',relax:'#6B7280' };
 
+    // Card principal destacada (hero) + cards menores
     list.innerHTML = scored.map((r, i) => {
-      const isPrincipal = i === 0 && r._score > 0;
-      const color = TYPE_COLORS[r.type] || '#FF5F00';
-      const liked = (this.likes||[]).includes(r.id);
-      const hasImg = r.img && r.img.startsWith('data:');
-      return `
-      <div class="lu-card ${isPrincipal ? 'principal' : ''}" style="overflow:hidden;padding:0;">
-        ${hasImg
-          ? `<div style="width:100%;height:110px;overflow:hidden;position:relative;cursor:pointer;" onclick="App._openImgViewer('${r.id}')">
-               <img src="${r.img}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'">
-               <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.55));"></div>
-               <div style="position:absolute;bottom:8px;left:10px;display:flex;align-items:center;gap:6px;">
-                 <div style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;"></div>
-                 <span style="font-family:var(--fH);font-size:13px;font-weight:700;color:white;text-shadow:0 1px 3px rgba(0,0,0,.5);">${r.name}</span>
-                 ${isPrincipal ? '<span style="background:#FFA500;color:white;font-size:9px;padding:2px 6px;border-radius:6px;font-weight:700;">★ Principal</span>' : ''}
-               </div>
-             </div>`
-          : `<div style="width:100%;height:52px;background:linear-gradient(135deg,${color}18,${color}33);display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;" onclick="App.showDetail('${r.id}')">${r.emoji||'🔄'}</div>`
-        }
-        <div style="padding:10px 12px 11px;cursor:pointer;" onclick="App.showDetail('${r.id}')">
-          ${!hasImg ? `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div class="lu-dot" style="background:${color};"></div>
-              <span style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${r.name}</span>
-              ${isPrincipal ? '<span class="lu-badge-principal">★ Principal</span>' : (i === 1 ? '<span style="background:var(--lt);color:var(--gr);font-size:9px;padding:2px 6px;border-radius:6px;">2°</span>' : '')}
+      const isPrincipal = i === 0 && r._score >= 0;
+      const color  = TC[r.type] || r.color || '#FF5F00';
+      const liked  = (this.likes||[]).includes(r.id);
+      const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
+
+      if (isPrincipal) {
+        // ── HERO CARD ──
+        return `<div class="lu-card" style="padding:0;overflow:hidden;border-radius:16px;border:0.5px solid var(--bd);box-shadow:0 4px 20px rgba(0,0,0,.12);">
+          ${hasImg
+            ? `<div style="width:100%;height:160px;overflow:hidden;position:relative;cursor:pointer;" onclick="App._openImgViewer('${r.id}')">
+                 <img src="${r.img}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                 <div style="display:none;width:100%;height:160px;background:linear-gradient(135deg,${color}22,${color}44);align-items:center;justify-content:center;font-size:52px;">${r.emoji||'🔄'}</div>
+                 <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.7));pointer-events:none;"></div>
+                 <div style="position:absolute;top:10px;left:10px;background:rgba(255,165,0,.92);border-radius:8px;padding:3px 9px;font-size:10px;font-weight:700;color:white;">★ Principal</div>
+                 <div style="position:absolute;bottom:10px;left:12px;right:12px;">
+                   <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:white;text-shadow:0 1px 4px rgba(0,0,0,.6);">${r.name||'Loop'}</div>
+                   <div style="font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'} · ❤️ ${r.likes||0}</div>
+                 </div>
+               </div>`
+            : `<div style="width:100%;height:100px;background:linear-gradient(135deg,${color}18,${color}44);display:flex;align-items:center;justify-content:center;font-size:52px;cursor:pointer;position:relative;" onclick="App.showDetail('${r.id}')">
+                 ${r.emoji||'🔄'}
+                 <div style="position:absolute;top:10px;left:10px;background:rgba(255,165,0,.92);border-radius:8px;padding:3px 9px;font-size:10px;font-weight:700;color:white;">★ Principal</div>
+               </div>`
+          }
+          <div style="padding:11px 13px 13px;cursor:pointer;" onclick="App.showDetail('${r.id}')">
+            ${!hasImg ? `<div style="font-family:var(--fH);font-size:16px;font-weight:800;color:var(--dk);margin-bottom:4px;">${r.name||'Loop'}</div>` : ''}
+            ${r.desc ? `<div style="font-size:12px;color:var(--md);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>` : ''}
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:3px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${r.dur||'—'}</span>
+              <span style="font-size:11px;color:var(--gr);">📍 ${r.dist||'—'}</span>
+              <span style="font-size:11px;color:var(--gr);">👟 ${r.paseos||0} paseos</span>
+              ${r.pois?.length ? `<span style="font-size:11px;color:var(--gr);">📌 ${r.pois.length} paradas</span>` : ''}
             </div>
-            <span style="font-size:11px;color:var(--gr);">${r.dist||'—'}</span>
-          </div>` : `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-            <span style="font-size:11px;color:var(--gr);">${r.dist||'—'} · ${r.dur||'—'}</span>
-          </div>`}
-          <div class="lu-meta">
-            <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="${liked?color:'none'}" stroke="${liked?color:'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${r.likes||0}</span>
-            <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>${r.paseos||0} paseos</span>
-            <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${r.dur||'—'}</span>
-            ${isPrincipal ? `<span style="font-size:10px;color:#BA7517;font-weight:600;">score: ${r._score}</span>` : ''}
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <button onclick="event.stopPropagation();App.likeLoop('${r.id}');App._renderLoopsUrbanos()" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid ${liked?color:'var(--bd)'};background:${liked?color+'18':'var(--bg2)'};color:${liked?color:'var(--md)'};font-size:12px;font-weight:600;cursor:pointer;">
+                ${liked?'❤️ Gustó':'🤍 Me gusta'}
+              </button>
+              <button onclick="event.stopPropagation();App.selectRoute('${r.id}');App.go('explore')" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--bd);background:var(--bg2);color:var(--md);font-size:12px;font-weight:600;cursor:pointer;">
+                🗺️ Ver en mapa
+              </button>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      // ── CARD NORMAL ──
+      return `<div class="lu-card" style="padding:0;overflow:hidden;border-radius:13px;border:0.5px solid var(--bd);display:flex;min-height:80px;">
+        <div style="width:80px;flex-shrink:0;position:relative;cursor:pointer;" onclick="${hasImg?`App._openImgViewer('${r.id}')`:`App.showDetail('${r.id}')`}">
+          ${hasImg
+            ? `<img src="${r.img}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,${color}18,${color}44)';this.parentElement.innerHTML+='<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;\">${r.emoji||'🔄'}</div>'">`
+            : `<div style="width:100%;height:100%;background:linear-gradient(135deg,${color}18,${color}44);display:flex;align-items:center;justify-content:center;font-size:28px;">${r.emoji||'🔄'}</div>`
+          }
+          <div style="position:absolute;top:4px;left:4px;width:7px;height:7px;border-radius:50%;background:${color};box-shadow:0 0 0 2px white;"></div>
+        </div>
+        <div style="flex:1;padding:10px 11px;cursor:pointer;" onclick="App.showDetail('${r.id}')">
+          <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);">${r.name||'Loop'}</div>
+          ${r.desc ? `<div style="font-size:11px;color:var(--gr);margin-top:1px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>` : ''}
+          <div style="display:flex;gap:7px;margin-top:5px;flex-wrap:wrap;">
+            <span style="font-size:10px;color:var(--gr);">${r.dist||'—'}</span>
+            <span style="font-size:10px;color:var(--gr);">${r.dur||'—'}</span>
+            <span style="font-size:10px;color:${liked?color:'var(--gr)'};">❤️ ${r.likes||0}</span>
           </div>
         </div>
+        <button onclick="App.selectRoute('${r.id}');App.go('explore')"
+          style="flex-shrink:0;align-self:center;margin-right:10px;width:32px;height:32px;border-radius:50%;background:var(--bg2);border:0.5px solid var(--bd);cursor:pointer;display:flex;align-items:center;justify-content:center;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
+        </button>
       </div>`;
     }).join('');
   },
 
-  luSetFilter(filter, btn) {
+  _renderLuFoto() {
+    const city  = this._luCity || 'La Paz';
+    const list  = document.getElementById('lu-list');
+    const body  = document.getElementById('lu-body');
+    if (!list) return;
+    if (body) body.style.padding = '0';
+
+    const FL_CATS = {lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
+
+    const posts = (this._fotoPosts||[]).filter(p =>
+      (p.cityId||p.ciudad||'La Paz') === city
+    );
+
+    if (posts.length === 0) {
+      list.innerHTML = `<div style="text-align:center;padding:48px 20px;">
+        <div style="font-size:40px;margin-bottom:12px;">📸</div>
+        <div style="font-family:var(--fH);font-size:15px;font-weight:700;color:var(--dk);margin-bottom:6px;">Sin Foto Loops en ${city}</div>
+        <p style="font-size:12px;color:var(--gr);margin-bottom:16px;">¡Subí el primero de tu ciudad!</p>
+        <button onclick="App.openFotoLoop()" style="background:var(--or);border:none;border-radius:10px;padding:11px 24px;color:white;font-size:13px;font-weight:700;cursor:pointer;">📸 Agregar Foto Loop</button>
+      </div>`;
+      return;
+    }
+
+    list.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;">
+      ${posts.map(p => `
+      <div onclick="App._openImgViewer('${p.id}','foto')"
+        style="border-radius:13px;overflow:hidden;background:var(--wh);border:0.5px solid var(--bd);cursor:pointer;transition:transform .12s;box-shadow:var(--sh);"
+        onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''"
+        ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
+        ${p.img && (p.img.startsWith('data:') || p.img.startsWith('http'))
+          ? `<div style="aspect-ratio:4/3;overflow:hidden;position:relative;">
+               <img src="${p.img}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy"
+                 onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;\'>${FL_CATS[p.cat]||'📍'}</div>'">
+             </div>`
+          : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;">${FL_CATS[p.cat]||'📍'}</div>`
+        }
+        <div style="padding:8px 10px 10px;">
+          <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name||'Foto Loop'}</div>
+          <div style="font-size:10px;color:var(--or);font-weight:600;margin-top:2px;">${FL_CATS[p.cat]||'📍'} ${p.cat||'lugar'}</div>
+          ${p.desc ? `<div style="font-size:10px;color:var(--gr);margin-top:2px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">${p.desc}</div>` : ''}
+          ${p.authorName ? `<div style="font-size:10px;color:var(--gr);margin-top:3px;">por ${p.authorName.split(' ')[0]}</div>` : ''}
+        </div>
+      </div>`).join('')}
+    </div>`;
+  },
+
+  luSetTab(tab, el) {
+    this._luTab = tab;
+    document.querySelectorAll('#loops-urbanos .com-tab').forEach(t => t.classList.remove('on'));
+    if (el) el.classList.add('on');
+    this._renderLoopsUrbanos();
+  },
+
+  luSetFilter(filter, el) {
     this._luFilter = filter;
-    document.querySelectorAll('#loops-urbanos button[onclick^="App.luSetFilter"]').forEach(b => {
-      b.style.background = 'var(--lt)'; b.style.color = 'var(--md)';
-      b.style.border = '0.5px solid var(--bd)'; b.style.fontWeight = '500';
-    });
-    if (btn) { btn.style.background='var(--c-verde)'; btn.style.color='var(--c-verde-t)'; btn.style.border='0.5px solid var(--c-verde-b)'; btn.style.fontWeight='600'; }
+    // Reset estilos
+    const bc = document.getElementById('lu-btn-cercanos');
+    const bp = document.getElementById('lu-btn-populares');
+    if (bc) { bc.style.background='var(--bg2)'; bc.style.color='var(--md)'; bc.style.border='0.5px solid var(--bd)'; bc.style.fontWeight='500'; }
+    if (bp) { bp.style.background='var(--bg2)'; bp.style.color='var(--md)'; bp.style.border='0.5px solid var(--bd)'; bp.style.fontWeight='500'; }
+    // Activo
+    if (el) { el.style.background='var(--orL)'; el.style.color='var(--or)'; el.style.border='0.5px solid var(--or)33'; el.style.fontWeight='700'; }
     this._renderLoopsUrbanos();
   },
 
