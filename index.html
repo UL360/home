@@ -3020,7 +3020,7 @@ const App = {
   _refreshMain() {
     if (!this.mainMap) return;
     this._removeNavLine();
-    if (this._loopPopup) { this._loopPopup.remove(); this._loopPopup = null; }
+    if (this._loopPopup) { try { this._loopPopup.remove(); } catch(e){} this._loopPopup = null; }
     const panel = document.getElementById('nav-panel'); if (panel) panel.remove();
     this._stopVoice();
     this.selId = null;
@@ -3096,7 +3096,7 @@ const App = {
   _showFilteredRoutes(filter) {
     if (!this.mainMap || !this._layers) return;
     this._removeNavLine();
-    if (this._loopPopup) { this._loopPopup.remove(); this._loopPopup = null; }
+    if (this._loopPopup) { try { this._loopPopup.remove(); } catch(e){} this._loopPopup = null; }
     const panel = document.getElementById('nav-panel'); if (panel) panel.remove();
     this._stopVoice();
     this.selId = null;
@@ -3208,6 +3208,10 @@ const App = {
 
   async _calcAndDrawNav(r) {
     if (!r.pts || !r.pts.length) return;
+    if (!this._locMarker) {
+      this.toast('📍 Activá tu ubicación GPS primero');
+      return;
+    }
     this._loopStarted = false;  // reset flag de inicio de loop
     const loopStart = r.pts[0];
     const loopStartCoord = Array.isArray(loopStart) ? [loopStart[1],loopStart[0]] : [loopStart.lng,loopStart.lat];
@@ -3497,7 +3501,7 @@ const App = {
 
   // Popup con foto + CTA en el mapa (MapLibre)
   _showLoopMapCard(r) {
-    if (this._loopPopup) { this._loopPopup.remove(); this._loopPopup = null; }
+    if (this._loopPopup) { try { this._loopPopup.remove(); } catch(e){} this._loopPopup = null; }
     if (!r.pts || !r.pts.length) return;
     const pt = r.pts[0];
     const lngLat = Array.isArray(pt) ? [pt[1], pt[0]] : [pt.lng, pt.lat];
@@ -3620,10 +3624,12 @@ const App = {
   // ── CARDS ──
   _renderCards(q='', f='all') {
     const cont = document.getElementById('cards-scroll');
+    if (!cont) return;
     let list = this.routes;
     if (f && f!=='all') list = list.filter(r=>r.type===f);
-    if (q) { const ql=q.toLowerCase(); list=list.filter(r=>r.name.toLowerCase().includes(ql)||r.desc.toLowerCase().includes(ql)); }
-    document.getElementById('panel-ct').textContent = `${list.length} disponible${list.length!==1?'s':''}`;
+    if (q) { const ql=q.toLowerCase(); list=list.filter(r=>(r.name||'').toLowerCase().includes(ql)||(r.desc||'').toLowerCase().includes(ql)); }
+    const ctEl = document.getElementById('panel-ct');
+    if (ctEl) ctEl.textContent = `${list.length} disponible${list.length!==1?'s':''}`;
     // Mini cards
     const miniEl = document.getElementById('mini-cards');
     if(miniEl) {
@@ -3631,14 +3637,14 @@ const App = {
     }
     cont.innerHTML = list.map(r=>`
       <div class="rc ${r.id===this.selId?'sel':''}" data-id="${r.id}" onclick="App.selectRoute('${r.id}')">
-        <div class="rc-img-wrap" style="background:linear-gradient(135deg,${r.color}18,${r.color}33)">
-          <span class="rc-emoji">${r.emoji}</span>
-          <img src="${r.img||''}" alt="${r.name}" loading="lazy" onerror="this.style.display='none'">
+        <div class="rc-img-wrap" style="background:linear-gradient(135deg,${r.color||'#FF5F00'}18,${r.color||'#FF5F00'}33)">
+          <span class="rc-emoji">${r.emoji||'🔄'}</span>
+          <img src="${r.img||''}" alt="${r.name||''}" loading="lazy" onerror="this.style.display='none'">
         </div>
         <div class="rc-body">
-          <span class="rc-badge ${r.badge}">${r.emoji} ${this._typeLabel(r.type)}</span>
-          <div class="rc-name">${r.name}</div>
-          <div class="rc-desc">${r.desc}</div>
+          <span class="rc-badge ${r.badge||''}">${r.emoji||'🔄'} ${this._typeLabel(r.type)}</span>
+          <div class="rc-name">${r.name||'Sin nombre'}</div>
+          <div class="rc-desc">${r.desc||''}</div>
           <div class="rc-meta">
             <div class="rc-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>${r.dist||'—'}</div>
             <div class="rc-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${r.dur||'—'}</div>
@@ -4455,6 +4461,7 @@ const App = {
   },
   _renderPts() {
     const c = document.getElementById('pts-list');
+    if (!c) return;
     c.innerHTML = this.aPts.length
       ? this.aPts.map((p,i)=>`
           <div class="pt-item">
@@ -4997,7 +5004,7 @@ const App = {
     if (i > -1) {
       this.likes.splice(i, 1);
       r.likes = Math.max(0, (r.likes||1) - 1);
-      this.toast('❤️ Like quitado');
+      this.toast('Like quitado');
     } else {
       this.likes.push(id);
       r.likes = (r.likes||0) + 1;
@@ -5005,6 +5012,10 @@ const App = {
     }
     this._savePts();
     this._saveData();
+    // Refrescar pantalla de detalle si está abierta para este loop
+    if (this.selId === id) this.showDetail(id);
+    // Refrescar cards si el mapa está activo
+    this._renderCards('', this._activeFilter || 'all');
   },
 
   // ══════════════════════════════════════════
@@ -5821,7 +5832,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     this.closeLoopModal();
     if (this.selId === id) {
       this.selId = null;
-      if(this._loopPopup){ this._loopPopup.remove(); this._loopPopup=null; }
+      if(this._loopPopup){ try { this._loopPopup.remove(); } catch(e){} this._loopPopup=null; }
       const panel = document.getElementById('nav-panel'); if(panel) panel.remove();
       this._stopVoice();
     }
@@ -5888,9 +5899,16 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       // Re-agregar rutas y edificios 3D tras cambio de estilo
       this.mainMap.once('styledata', () => {
         this._layers = {};
+        // Limpiar marcadores POI existentes antes de re-agregar
+        if (this._poiMarkers) {
+          Object.values(this._poiMarkers).forEach(m => { try { m.remove(); } catch(e){} });
+        }
         this._poiMarkers = {};
+        if (this._locMarker) { try { this._locMarker.remove(); } catch(e){} this._locMarker = null; }
         this.routes.forEach(r => this._drawRoute(r));
         if (this._is3D) this._add3DBuildings();
+        // Re-iniciar GPS marker si estaba activo
+        if (this._followMe) this._startGPSTracking();
       });
     }
   },
@@ -5981,20 +5999,23 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     this.selId = null;
     const b = document.getElementById('rt-badge');
     if (b) b.style.display = 'none';
-    if (this._loopPopup) { this._loopPopup.remove(); this._loopPopup = null; }
+    if (this._loopPopup) {
+      try { this._loopPopup.remove(); } catch(e) {}
+      this._loopPopup = null;
+    }
     const panel = document.getElementById('nav-panel'); if (panel) panel.remove();
     const loopPanel = document.getElementById('loop-active-panel'); if (loopPanel) loopPanel.remove();
     const picker = document.getElementById('transport-picker'); if (picker) picker.remove();
     this._removeNavLine();
     this._stopVoice();
     document.querySelectorAll('.rc').forEach(c => c.classList.remove('sel'));
-    // Mostrar todas las rutas de nuevo
     if (this._layers) Object.keys(this._layers).forEach(rid => this._setRouteVisible(rid, true));
   },
 
   // ── TOAST ──
   toast(msg) {
-    const t=document.getElementById('toast');
+    const t = document.getElementById('toast');
+    if (!t) return;
     t.textContent=msg; t.classList.add('show');
     clearTimeout(this._tid);
     this._tid=setTimeout(()=>t.classList.remove('show'),2600);
