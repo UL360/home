@@ -4303,7 +4303,8 @@ const App = {
 
     // ── Detectar ciudad por coordenadas ──
     this.toast('📍 Detectando ciudad...');
-    const cityId = await this._detectCityFromCoords(lat, lng);
+    // Usar la ciudad activa si disponible, sino detectar por GPS
+    const cityId = this._luCity || await this._detectCityFromCoords(lat, lng);
 
     const catEmojis = {
       lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', playa:'🏖️', parque:'🌳',
@@ -4330,6 +4331,7 @@ const App = {
       emoji, color, badge: 'ba',
       lat, lng,
       cityId,                   // ← ciudad detectada por GPS
+      ciudad: cityId,           // ← alias para compatibilidad con filtros
       authorId: this._uid,
       authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Anónimo',
       ts: Date.now(),
@@ -4382,6 +4384,11 @@ const App = {
       this._drawFotoStopsOnMap();   // ← actualizar mapa
       this._addPts(30, 'Parada publicada');
       this._showSaveSuccess(name, `🌐 Publicado en ${cityId}`);
+      // ← Refrescar vistas si están activas
+      const luScr = document.getElementById('loops-urbanos');
+      if (luScr && luScr.classList.contains('active')) this._renderLoopsUrbanos();
+      const comScr = document.getElementById('comunidad');
+      if (comScr && comScr.classList.contains('active')) this._renderComunidad();
     } catch(e) {
       console.error('publishFotoLoop error:', e);
       alert('❌ Error al publicar:\n\n' + e.message);
@@ -5032,7 +5039,7 @@ const App = {
     const FL_CATS = {lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
 
     const posts = (this._fotoPosts||[]).filter(p =>
-      (p.cityId||p.ciudad||'La Paz') === city
+      (p.cityId === city || p.ciudad === city || (!p.cityId && !p.ciudad))
     );
 
     if (posts.length === 0) {
@@ -5268,53 +5275,62 @@ const App = {
       </div>`;
       return;
     }
-    body.innerHTML = list.map(r => {
+    const TYPE_LBL = {trad:'☕',pesca:'🎣',gastro:'🍽️',atardecer:'🌅',running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',relax:'🧘',trabajo:'💼',vacaciones:'🏖️',salidas:'🎉',otra:'🗺️'};
+    const TYPE_NAME = {trad:'Tradicional',pesca:'Pesca',gastro:'Gastro',atardecer:'Atardecer',running:'Running',mtb:'MTB',ciclismo:'Ciclismo',caminata:'Trekking',paseo:'Paseo',relax:'Relax',trabajo:'Trabajo',vacaciones:'Vacaciones',salidas:'Social',otra:'Otra'};
+
+    body.innerHTML = `<div style="display:flex;flex-direction:column;gap:10px;padding:14px;">` +
+    list.map(r => {
       const liked  = (this.likes||[]).includes(r.id);
       const lkCt   = (r.likes||0) + (liked?1:0);
       const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
       const color  = r.color || '#FF5F00';
-      const TYPE_LBL = {trad:'☕ Tradicional',pesca:'🎣 Pesca',gastro:'🍽️ Gastro',atardecer:'🌅 Atardecer',running:'🏃 Running',mtb:'🚵 MTB',ciclismo:'🚴 Ciclismo',caminata:'🥾 Trekking',paseo:'🌳 Paseo',relax:'🧘 Relax',trabajo:'💼 Trabajo',vacaciones:'🏖️ Vacaciones',salidas:'🎉 Social',otra:'🗺️ Otra'};
-      return `<div style="background:var(--wh);border-radius:16px;overflow:hidden;border:0.5px solid var(--bd);box-shadow:var(--sh);cursor:pointer;transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shL)'" onmouseout="this.style.transform='';this.style.boxShadow='var(--sh)'">
-        <!-- Foto o banner de color -->
-        <div style="position:relative;width:100%;height:170px;overflow:hidden;background:linear-gradient(135deg,${color}33,${color}66);" onclick="App.showDetail('${r.id}')">
+      const typeTxt = (TYPE_LBL[r.type]||'🔄') + ' ' + (TYPE_NAME[r.type]||r.type||'Loop');
+      return `
+      <div style="background:var(--wh);border-radius:14px;overflow:hidden;border:0.5px solid var(--bd);box-shadow:var(--sh);display:flex;height:110px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='var(--shL)'" onmouseout="this.style.boxShadow='var(--sh)'">
+
+        <!-- ── Imagen izquierda (40%) ── -->
+        <div style="width:40%;flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(135deg,${color}28,${color}55);cursor:pointer;" onclick="App.showDetail('${r.id}')">
           ${hasImg
-            ? `<img src="${r.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">`
-            : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px;">${r.emoji||'🔄'}</div>`
+            ? `<img src="${r.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+            : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:38px;">${r.emoji||'🔄'}</div>`
           }
-          <!-- Gradiente bottom -->
-          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.65));pointer-events:none;"></div>
-          <!-- Badge tipo -->
-          <div style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;color:white;letter-spacing:.3px;">${TYPE_LBL[r.type]||r.type||'🔄 Loop'}</div>
-          <!-- Likes badge -->
-          <div style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;color:${liked?'#FF8C42':'white'};display:flex;align-items:center;gap:4px;">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="${liked?'#FF8C42':'none'}" stroke="${liked?'#FF8C42':'white'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            ${lkCt}
-          </div>
-          <!-- Nombre del loop superpuesto abajo -->
-          <div style="position:absolute;bottom:10px;left:12px;right:12px;pointer-events:none;">
-            <div style="font-family:var(--fH);font-size:16px;font-weight:800;color:white;text-shadow:0 1px 8px rgba(0,0,0,.6);line-height:1.2;">${r.name||'Loop'}</div>
-            <div style="font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'} · ${r.pts?.length||0} paradas</div>
-          </div>
+          <!-- pill tipo -->
+          <div style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);border-radius:20px;padding:2px 7px;font-size:9px;font-weight:700;color:white;white-space:nowrap;max-width:calc(100% - 12px);overflow:hidden;text-overflow:ellipsis;">${typeTxt}</div>
         </div>
-        <!-- Descripción -->
-        ${r.desc ? `<div style="padding:10px 14px 2px;font-size:13px;color:var(--md);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>` : ''}
-        <!-- Botones de acción -->
-        <div style="display:flex;border-top:0.5px solid var(--bd);margin-top:10px;">
-          <button onclick="App.likeLoop('${r.id}');App._renderComunidad()" style="flex:1;padding:11px 4px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:${liked?'var(--or)':'var(--gr)'};transition:all .2s;font-family:var(--fB);" onmouseover="this.style.background='var(--orL)'" onmouseout="this.style.background='none'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            ${liked?'❤️ Liked':'Like'}
-          </button>
-          <button onclick="App.selectRoute('${r.id}');App.go('explore')" style="flex:1;padding:11px 4px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:600;border:none;border-left:0.5px solid var(--bd);border-right:0.5px solid var(--bd);background:none;cursor:pointer;color:var(--gr);transition:all .2s;font-family:var(--fB);" onmouseover="this.style.background='var(--orL)';this.style.color='var(--or)'" onmouseout="this.style.background='none';this.style.color='var(--gr)'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            Mapa
-          </button>
-          <button onclick="App._shareLoopCom('${r.id}')" style="flex:1;padding:11px 4px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--gr);transition:all .2s;font-family:var(--fB);" onmouseover="this.style.background='var(--orL)';this.style.color='var(--or)'" onmouseout="this.style.background='none';this.style.color='var(--gr)'">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            Compartir
-          </button>
+
+        <!-- ── Detalle derecha (60%) ── -->
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:10px 11px 8px;min-width:0;">
+          <!-- Nombre + desc -->
+          <div style="cursor:pointer;" onclick="App.showDetail('${r.id}')">
+            <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name||'Loop'}</div>
+            ${r.desc ? `<div style="font-size:11px;color:var(--gr);margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>` : ''}
+          </div>
+          <!-- Stats pequeños -->
+          <div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;">
+            <span style="font-size:10px;color:var(--gr);">${r.dist||'—'}</span>
+            <span style="font-size:10px;color:var(--gr);">·</span>
+            <span style="font-size:10px;color:var(--gr);">${r.dur||'—'}</span>
+            <span style="font-size:10px;color:${liked?'var(--or)':'var(--gr)'};margin-left:auto;display:flex;align-items:center;gap:2px;">
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              ${lkCt}
+            </span>
+          </div>
+          <!-- Botones acción -->
+          <div style="display:flex;gap:5px;margin-top:6px;">
+            <button onclick="App.likeLoop('${r.id}');App._renderComunidad()"
+              style="flex:1;height:28px;border-radius:8px;border:0.5px solid ${liked?'var(--or)':'var(--bd)'};background:${liked?'var(--orL)':'var(--bg2)'};color:${liked?'var(--or)':'var(--gr)'};font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;font-family:var(--fB);transition:all .15s;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              ${liked?'Liked':'Like'}
+            </button>
+            <button onclick="App.selectRoute('${r.id}');App.go('explore')"
+              style="flex:1;height:28px;border-radius:8px;border:0.5px solid var(--bd);background:var(--bg2);color:var(--gr);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;font-family:var(--fB);transition:all .15s;" onmouseover="this.style.borderColor='var(--or)';this.style.color='var(--or)'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--gr)'">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2.5"/></svg>
+              Mapa
+            </button>
+          </div>
         </div>
       </div>`;
-    }).join('');
+    }).join('') + `</div>`;
   },
 
   // ─── Tab: FOTO LOOPS de la ciudad ───
