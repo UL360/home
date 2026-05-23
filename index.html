@@ -686,6 +686,14 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 .com-city-chip.on { background:var(--or); border-color:var(--or); color:white; font-weight:700; }
 .com-city-chip:hover:not(.on) { border-color:var(--or); color:var(--or); }
 
+/* ── Visor de imagen / lightbox ── */
+@keyframes fadeInModal { from { opacity:0; } to { opacity:1; } }
+#img-viewer-modal { display:none; }
+#img-viewer-modal img { user-select:none; }
+@media (max-width:768px) {
+  #img-viewer-modal > div:last-child { border-radius:20px 20px 0 0 !important; }
+}
+
 /* ═══════════════════════
    RANKING
 ═══════════════════════ */
@@ -970,7 +978,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
     <img class="sp-logo" src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/Copilot_20260518_091003.png" crossorigin="anonymous" alt="Urban Loop 360°">
     <div class="sp-brand">Urban Loop <span>360°</span></div>
     <div class="sp-sub">Urban Loop 360</div>
-    <div class="sp-tag">Bienvenidos exploradores urbanos.<br> Tu ciudad deja de ser invisible.</div>
+    <div class="sp-tag">Descubrí tu ciudad de otra manera.<br>La comunidad te guía: seguí el loop y encontrá tu lugar.</div>
     <div class="sp-dots">
       <div class="sp-dot on"></div>
       <div class="sp-dot"></div>
@@ -2012,6 +2020,11 @@ const App = {
 
     // Detectar AdBlock — puede bloquear Firestore
     this._checkAdBlock();
+
+    // Cerrar visor con Escape
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') this._closeImgViewer();
+    });
 
     this.go('explore');
     // Inicializar sidebar según dispositivo
@@ -4224,20 +4237,77 @@ const App = {
     `;
   },
 
-  // Detalle de FotoLoop
-  _showFotoDetail(id) {
-    const p = (this._fotoPosts||[]).find(x=>x.id===id);
-    if (!p) return;
-    const FL_CATS = {
-      lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', playa:'🏖️', parque:'🌳',
-      plaza:'🏛️', museo:'🖼️', pesca:'🎣', aventura:'🧗', campo:'🌾', deporte:'⚽',
-      ciclismo:'🚴', arte:'🎨', nocturno:'🌙', perro:'🐕', foto:'📸', otro:'✳️'
-    };
-    this.toast(`${FL_CATS[p.cat]||'📍'} ${p.name}`);
-    if (this.mainMap && p.lat && p.lng) {
-      this.go('explore');
-      setTimeout(()=>this.mainMap.flyTo({ center:[+p.lng,+p.lat], zoom:17, duration:900 }), 300);
+  // ── Visor de imagen / lightbox ──
+  _openImgViewer(id, mode) {
+    // Buscar en fotoPosts o en routes
+    const r = (this._fotoPosts||[]).find(x=>x.id===id)
+           || this.routes.find(x=>x.id===id);
+    if (!r) return;
+
+    const img  = r.img && r.img.startsWith('data:') ? r.img : null;
+    const city = r.cityId || r.ciudad || 'La Paz';
+    const FL_CATS = { lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️' };
+    const catIcon = FL_CATS[r.cat||r.type] || r.emoji || '🔄';
+
+    // Crear/reusar modal
+    let modal = document.getElementById('img-viewer-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'img-viewer-modal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);backdrop-filter:blur(6px);padding:0;animation:fadeInModal .2s ease;';
+      document.body.appendChild(modal);
     }
+    modal.onclick = (e) => { if (e.target === modal) this._closeImgViewer(); };
+
+    modal.innerHTML = `
+      <!-- Botón cerrar -->
+      <button onclick="App._closeImgViewer()" style="position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:white;font-size:22px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;">×</button>
+
+      <!-- Imagen principal -->
+      <div style="position:relative;width:100%;max-width:520px;max-height:70vh;display:flex;align-items:center;justify-content:center;padding:0 16px;">
+        ${img
+          ? `<img src="${img}" style="max-width:100%;max-height:65vh;border-radius:16px;object-fit:contain;box-shadow:0 8px 48px rgba(0,0,0,.6);" loading="lazy">`
+          : `<div style="width:220px;height:220px;border-radius:50%;background:linear-gradient(135deg,${r.color||'#FF5F00'}44,${r.color||'#FF5F00'}22);display:flex;align-items:center;justify-content:center;font-size:80px;">${catIcon}</div>`
+        }
+      </div>
+
+      <!-- Info card debajo -->
+      <div style="width:100%;max-width:520px;background:var(--wh);border-radius:20px 20px 0 0;padding:18px 20px 32px;margin-top:auto;position:absolute;bottom:0;">
+        <div style="width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 16px;"></div>
+        <div style="display:flex;align-items:flex-start;gap:12px;">
+          <div style="width:44px;height:44px;border-radius:12px;background:${r.color||'var(--or)'}22;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${catIcon}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:var(--dk);margin-bottom:3px;">${r.name}</div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <span style="font-size:12px;color:var(--or);font-weight:600;display:flex;align-items:center;gap:3px;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                ${city}
+              </span>
+              ${r.dist ? `<span style="font-size:11px;color:var(--gr);">· ${r.dist}</span>` : ''}
+              ${r.dur  ? `<span style="font-size:11px;color:var(--gr);">· ${r.dur}</span>`  : ''}
+            </div>
+            ${r.desc ? `<div style="font-size:12px;color:var(--gr);margin-top:6px;line-height:1.5;">${r.desc}</div>` : ''}
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:16px;">
+          <button onclick="App._closeImgViewer();App.showDetail('${r.id}')"
+            style="flex:1;height:44px;background:var(--or);color:white;border:none;border-radius:12px;font-family:var(--fH);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Ver en mapa
+          </button>
+          <button onclick="App._closeImgViewer();App.likeLoop('${r.id}');App._renderComunidad();"
+            style="width:44px;height:44px;background:var(--lt);border:1.5px solid var(--bd);border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:20px;">
+            ${(this.likes||[]).includes(r.id) ? '❤️' : '🤍'}
+          </button>
+        </div>
+      </div>`;
+
+    modal.style.display = 'flex';
+  },
+
+  _closeImgViewer() {
+    const m = document.getElementById('img-viewer-modal');
+    if (m) m.style.display = 'none';
   },
 
   // ── ADMIN MAP (MapLibre) ──
@@ -4543,21 +4613,38 @@ const App = {
       const isPrincipal = i === 0 && r._score > 0;
       const color = TYPE_COLORS[r.type] || '#FF5F00';
       const liked = (this.likes||[]).includes(r.id);
+      const hasImg = r.img && r.img.startsWith('data:');
       return `
-      <div class="lu-card ${isPrincipal ? 'principal' : ''}" onclick="App.showDetail('${r.id}')">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div class="lu-dot" style="background:${color};"></div>
-            <span style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${r.name}</span>
-            ${isPrincipal ? '<span class="lu-badge-principal">★ Principal</span>' : (i === 1 ? '<span style="background:var(--lt);color:var(--gr);font-size:9px;padding:2px 6px;border-radius:6px;">2°</span>' : '')}
+      <div class="lu-card ${isPrincipal ? 'principal' : ''}" style="overflow:hidden;padding:0;">
+        ${hasImg
+          ? `<div style="width:100%;height:110px;overflow:hidden;position:relative;cursor:pointer;" onclick="App._openImgViewer('${r.id}')">
+               <img src="${r.img}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'">
+               <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.55));"></div>
+               <div style="position:absolute;bottom:8px;left:10px;display:flex;align-items:center;gap:6px;">
+                 <div style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;"></div>
+                 <span style="font-family:var(--fH);font-size:13px;font-weight:700;color:white;text-shadow:0 1px 3px rgba(0,0,0,.5);">${r.name}</span>
+                 ${isPrincipal ? '<span style="background:#FFA500;color:white;font-size:9px;padding:2px 6px;border-radius:6px;font-weight:700;">★ Principal</span>' : ''}
+               </div>
+             </div>`
+          : `<div style="width:100%;height:52px;background:linear-gradient(135deg,${color}18,${color}33);display:flex;align-items:center;justify-content:center;font-size:28px;cursor:pointer;" onclick="App.showDetail('${r.id}')">${r.emoji||'🔄'}</div>`
+        }
+        <div style="padding:10px 12px 11px;cursor:pointer;" onclick="App.showDetail('${r.id}')">
+          ${!hasImg ? `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="lu-dot" style="background:${color};"></div>
+              <span style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${r.name}</span>
+              ${isPrincipal ? '<span class="lu-badge-principal">★ Principal</span>' : (i === 1 ? '<span style="background:var(--lt);color:var(--gr);font-size:9px;padding:2px 6px;border-radius:6px;">2°</span>' : '')}
+            </div>
+            <span style="font-size:11px;color:var(--gr);">${r.dist||'—'}</span>
+          </div>` : `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+            <span style="font-size:11px;color:var(--gr);">${r.dist||'—'} · ${r.dur||'—'}</span>
+          </div>`}
+          <div class="lu-meta">
+            <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="${liked?color:'none'}" stroke="${liked?color:'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${r.likes||0}</span>
+            <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>${r.paseos||0} paseos</span>
+            <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${r.dur||'—'}</span>
+            ${isPrincipal ? `<span style="font-size:10px;color:#BA7517;font-weight:600;">score: ${r._score}</span>` : ''}
           </div>
-          <span style="font-size:11px;color:var(--gr);">${r.dist||'—'}</span>
-        </div>
-        <div class="lu-meta">
-          <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="${liked?color:'none'}" stroke="${liked?color:'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>${r.likes||0}</span>
-          <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>${r.paseos||0} paseos</span>
-          <span class="lu-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${r.dur||'—'}</span>
-          ${isPrincipal ? `<span style="font-size:10px;color:#BA7517;font-weight:600;">score: ${r._score}</span>` : ''}
         </div>
       </div>`;
     }).join('');
@@ -4691,8 +4778,15 @@ const App = {
       const comment= COMMENTS[i % COMMENTS.length];
       const liked  = (this.likes||[]).includes(r.id);
       const lkCt   = r.likes || 0;
+      const hasImg = r.img && r.img.startsWith('data:');
       return `
       <div class="com-card">
+        ${hasImg
+          ? `<div style="width:100%;height:160px;overflow:hidden;border-radius:14px 14px 0 0;cursor:pointer;" onclick="App._openImgViewer('${r.id}')">
+               <img src="${r.img}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''" onerror="this.parentElement.style.display='none'">
+             </div>`
+          : `<div style="width:100%;height:80px;background:linear-gradient(135deg,${r.color||'var(--or)'}22,${r.color||'var(--or)'}44);display:flex;align-items:center;justify-content:center;font-size:36px;border-radius:14px 14px 0 0;">${r.emoji||'🔄'}</div>`
+        }
         <div class="com-card-hdr">
           <div class="com-avatar" style="background:${uCol};">${uInit}</div>
           <div class="com-user-info" style="flex:1;">
@@ -4736,6 +4830,65 @@ const App = {
         </div>
       </div>`;
     }).join('');
+
+    // ── Sección FotoLoops debajo del feed ──
+    this._renderFotoLoopsCom();
+  },
+
+  _renderFotoLoopsCom() {
+    const body = document.getElementById('com-body');
+    if (!body) return;
+    const FL_CATS = {
+      lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',
+      plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',
+      ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'
+    };
+    const posts = this._fotoPosts || [];
+
+    // También incluir fotostops de this.routes
+    const fotoRoutes = this.routes.filter(r => r.type === 'fotostop');
+    const allFoto = [...posts, ...fotoRoutes.filter(r => !posts.find(p => p.id === r.id))];
+
+    const section = document.createElement('div');
+    section.style.cssText = 'margin-top:8px;';
+
+    // Header de sección
+    section.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:0 2px;">
+        <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);letter-spacing:.7px;text-transform:uppercase;">📸 Foto Loops</div>
+        <button onclick="App.openFotoLoop()" style="background:var(--orL);border:none;color:var(--or);font-size:11px;font-weight:700;padding:5px 12px;border-radius:10px;cursor:pointer;font-family:var(--fH);">+ Subir foto</button>
+      </div>
+      ${allFoto.length === 0
+        ? `<div style="text-align:center;padding:24px 0;background:var(--lt);border-radius:14px;border:0.5px solid var(--bd);">
+             <div style="font-size:30px;margin-bottom:8px;">📸</div>
+             <div style="font-size:13px;color:var(--gr);">Aún no hay Foto Loops.<br>¡Sé el primero!</div>
+           </div>`
+        : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+             ${allFoto.map(p => `
+             <div onclick="App._openImgViewer('${p.id}','foto')"
+               style="border-radius:14px;overflow:hidden;background:var(--lt);border:0.5px solid var(--bd);cursor:pointer;transition:transform .15s;box-shadow:var(--sh);"
+               onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''"
+               ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
+               ${p.img && p.img.startsWith('data:')
+                 ? `<div style="aspect-ratio:4/3;overflow:hidden;">
+                      <img src="${p.img}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" onerror="this.parentElement.style.background='var(--bg2)';this.style.display='none'">
+                    </div>`
+                 : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:38px;">${FL_CATS[p.cat]||'📍'}</div>`
+               }
+               <div style="padding:9px 10px 11px;">
+                 <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
+                 <div style="font-size:11px;color:var(--or);font-weight:600;margin-top:2px;">${FL_CATS[p.cat]||'📍'} ${p.cat||'lugar'}</div>
+                 ${p.desc ? `<div style="font-size:11px;color:var(--gr);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${p.desc}</div>` : ''}
+                 <div style="font-size:10px;color:var(--gr);margin-top:5px;display:flex;align-items:center;gap:3px;">
+                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
+                   <span>${p.cityId||p.ciudad||'La Paz'}</span>
+                   ${p.authorName ? `<span style="margin-left:4px;color:var(--bd);">·</span><span>${p.authorName.split(' ')[0]}</span>` : ''}
+                 </div>
+               </div>
+             </div>`).join('')}
+           </div>`
+      }`;
+    body.appendChild(section);
   },
 
   // Versión síncrona de detección de ciudad (solo tabla local, sin fetch)
