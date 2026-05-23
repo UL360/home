@@ -5003,28 +5003,51 @@ const App = {
         </div>`;
       }
 
-      // ── CARD NORMAL ──
-      return `<div class="lu-card" style="padding:0;overflow:hidden;border-radius:13px;border:0.5px solid var(--bd);display:flex;min-height:80px;">
-        <div style="width:80px;flex-shrink:0;position:relative;cursor:pointer;" onclick="${hasImg?`App._openImgViewer('${r.id}')`:`App.showDetail('${r.id}')`}">
+      // ── CARD NORMAL ── (layout 40/60 horizontal)
+      const TYPE_NAME_LU = {trad:'Tradicional',pesca:'Pesca',gastro:'Gastro',atardecer:'Atardecer',running:'Running',mtb:'MTB',ciclismo:'Ciclismo',caminata:'Trekking',paseo:'Paseo',relax:'Relax',trabajo:'Trabajo',vacaciones:'Vacaciones',salidas:'Social',otra:'Otra'};
+      const TYPE_LBL_LU  = {trad:'☕',pesca:'🎣',gastro:'🍽️',atardecer:'🌅',running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',relax:'🧘',trabajo:'💼',vacaciones:'🏖️',salidas:'🎉',otra:'🗺️'};
+      const typePill = (TYPE_LBL_LU[r.type]||'🔄') + ' ' + (TYPE_NAME_LU[r.type]||r.type||'Loop');
+      return `<div class="lu-card" style="padding:0;overflow:hidden;border-radius:14px;border:0.5px solid var(--bd);box-shadow:var(--sh);display:flex;height:110px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='var(--shL)'" onmouseout="this.style.boxShadow='var(--sh)'">
+
+        <!-- Imagen izquierda 40% -->
+        <div style="width:40%;flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(135deg,${color}28,${color}55);cursor:pointer;" onclick="App.showDetail('${r.id}')">
           ${hasImg
-            ? `<img src="${r.img}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(135deg,${color}18,${color}44)';this.parentElement.innerHTML+='<div style=\"width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;\">${r.emoji||'🔄'}</div>'">`
-            : `<div style="width:100%;height:100%;background:linear-gradient(135deg,${color}18,${color}44);display:flex;align-items:center;justify-content:center;font-size:28px;">${r.emoji||'🔄'}</div>`
+            ? `<img src="${r.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+            : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;">${r.emoji||'🔄'}</div>`
           }
-          <div style="position:absolute;top:4px;left:4px;width:7px;height:7px;border-radius:50%;background:${color};box-shadow:0 0 0 2px white;"></div>
+          <div style="position:absolute;bottom:5px;left:5px;right:5px;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);border-radius:20px;padding:2px 7px;font-size:9px;font-weight:700;color:white;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${typePill}</div>
         </div>
-        <div style="flex:1;padding:10px 11px;cursor:pointer;" onclick="App.showDetail('${r.id}')">
-          <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);">${r.name||'Loop'}</div>
-          ${r.desc ? `<div style="font-size:11px;color:var(--gr);margin-top:1px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>` : ''}
-          <div style="display:flex;gap:7px;margin-top:5px;flex-wrap:wrap;">
-            <span style="font-size:10px;color:var(--gr);">${r.dist||'—'}</span>
-            <span style="font-size:10px;color:var(--gr);">${r.dur||'—'}</span>
-            <span style="font-size:10px;color:${liked?color:'var(--gr)'};">❤️ ${r.likes||0}</span>
+
+        <!-- Detalle derecha 60% -->
+        <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:10px 11px 8px;min-width:0;">
+          <div style="cursor:pointer;" onclick="App.showDetail('${r.id}')">
+            <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name||'Loop'}</div>
+            ${r.desc ? `<div style="font-size:11px;color:var(--gr);margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>` : ''}
+          </div>
+          <div>
+            <div style="display:flex;gap:5px;align-items:center;margin-bottom:6px;">
+              <span style="font-size:10px;color:var(--gr);">${r.dist||'—'}</span>
+              <span style="font-size:10px;color:var(--gr);">·</span>
+              <span style="font-size:10px;color:var(--gr);">${r.dur||'—'}</span>
+              <span style="font-size:10px;color:${liked?color:'var(--gr)'};margin-left:auto;display:flex;align-items:center;gap:2px;">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="${liked?color:'none'}" stroke="${liked?color:'currentColor'}" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                ${r.likes||0}
+              </span>
+            </div>
+            <div style="display:flex;gap:5px;">
+              <button onclick="event.stopPropagation();App.likeLoop('${r.id}');App._renderLoopsUrbanos()"
+                style="flex:1;height:26px;border-radius:7px;border:0.5px solid ${liked?color:'var(--bd)'};background:${liked?color+'18':'var(--bg2)'};color:${liked?color:'var(--gr)'};font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;font-family:var(--fB);transition:all .15s;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="${liked?color:'none'}" stroke="${liked?color:'currentColor'}" stroke-width="2.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                ${liked?'Liked':'Like'}
+              </button>
+              <button onclick="event.stopPropagation();App.selectRoute('${r.id}');App.go('explore')"
+                style="flex:1;height:26px;border-radius:7px;border:0.5px solid var(--bd);background:var(--bg2);color:var(--gr);font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;font-family:var(--fB);transition:all .15s;" onmouseover="this.style.borderColor='${color}';this.style.color='${color}'" onmouseout="this.style.borderColor='var(--bd)';this.style.color='var(--gr)'">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                Mapa
+              </button>
+            </div>
           </div>
         </div>
-        <button onclick="App.selectRoute('${r.id}');App.go('explore')"
-          style="flex-shrink:0;align-self:center;margin-right:10px;width:32px;height:32px;border-radius:50%;background:var(--bg2);border:0.5px solid var(--bd);cursor:pointer;display:flex;align-items:center;justify-content:center;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
-        </button>
       </div>`;
     }).join('');
   },
