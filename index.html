@@ -6,7 +6,7 @@
 <title>Urban Loop 360°</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <!-- Firebase SDKs compat — v9.23.0 estable -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
@@ -23,8 +23,8 @@
   --bg0: #16161C; --bg1: #1E1E26;  --bg2: #272730;  --bg3: #2F2F38;
   --sh: 0 2px 16px rgba(0,0,0,.4); --shL: 0 8px 40px rgba(0,0,0,.6);
   --r: 14px; --rs: 10px; --navH: 0px;
-  --fH: 'Syne', system-ui, sans-serif;
-  --fB: 'DM Sans', system-ui, sans-serif;
+  --fH: 'Bai Jamjuree', system-ui, sans-serif;
+  --fB: 'Bai Jamjuree', system-ui, sans-serif;
   /* Colores secciones modo oscuro */
   --c-verde:  #1A2E1A;  --c-verde-b:  #2A5A2A;  --c-verde-t:  #6FCF97;
   --c-azul:   #1A1E2E;  --c-azul-b:   #2A3A6A;  --c-azul-t:   #56B4F5;
@@ -82,8 +82,38 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 ═══════════════════════ */
 #splash {
   justify-content:center; align-items:center;
-  background: var(--bg0);
+  background: #000;
   gap:0;
+  transition: opacity .5s ease;
+}
+/* Splash: imagen full-cover en mobile */
+#splash img.sp-cover {
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; object-position:center 20%;
+}
+/* Desktop web: imagen contenida y centrada */
+@media (min-width: 769px) {
+  #splash img.sp-cover {
+    width:420px; height:62vh;
+    top:50%; left:50%;
+    transform:translate(-50%,-56%);
+    border-radius:22px;
+    box-shadow:0 16px 60px rgba(0,0,0,.7);
+    object-position:center top;
+  }
+}
+/* Mobile: imagen no tan alta — mostrar más centrada */
+@media (max-width: 768px) {
+  #splash img.sp-cover {
+    object-position: center 15%;
+    height: 70vh;
+    top: 0;
+    width: 100%;
+  }
+  #splash .sp-content {
+    padding-bottom: 40px !important;
+  }
+  #splash .sp-title { font-size:26px !important; }
 }
 .sp-wrap { display:flex; flex-direction:column; align-items:center; animation:fadeUp .7s ease both; }
 .sp-logo {
@@ -395,7 +425,7 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
   body.sb-rail-mode #admin,
   body.sb-rail-mode #detail,
   body.sb-rail-mode #loops,
-  body.sb-rail-mode #ciudad-remota { margin-left: var(--side-w-rail) !important; }
+  body.sb-rail-mode #ciudad-remota { margin-left: var(--side-w-rail) !important; left: var(--side-w-rail) !important; right: 0 !important; width: auto !important; }
 
   body.sb-open-mode #explore,
   body.sb-open-mode #loops-urbanos,
@@ -408,7 +438,7 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
   body.sb-open-mode #admin,
   body.sb-open-mode #detail,
   body.sb-open-mode #loops,
-  body.sb-open-mode #ciudad-remota { margin-left: var(--side-w-open) !important; }
+  body.sb-open-mode #ciudad-remota { margin-left: var(--side-w-open) !important; left: var(--side-w-open) !important; right: 0 !important; width: auto !important; }
 
   #menu-btn { display: none !important; }
   .screens-wrapper { transition: margin-left .28s cubic-bezier(.4,0,.2,1); }
@@ -429,6 +459,9 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
   /* En mobile con rail visible, las screens se desplazan igual */
   body.sb-rail-mode .screen {
     margin-left: var(--side-w-rail) !important;
+    left: var(--side-w-rail) !important;
+    right: 0 !important;
+    width: auto !important;
   }
   #side-panel.sb-open {
     width: var(--side-w-open) !important;
@@ -839,6 +872,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   height: 100% !important;
   z-index: 1;
 }
+/* When sidebar is active, map canvas auto-resizes via mainMap.resize() call */
 /* ═══ NAV AUTO-HIDE TRANSITION ═══ */
 #bnav       { transition: transform .3s ease; }
 /* #btm-panel is now a static floating search bar, no slide transition needed */
@@ -974,17 +1008,19 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 
 <!-- ════════════ SPLASH ════════════ -->
 <div id="splash" class="screen active">
-  <div class="sp-wrap">
-    <img class="sp-logo" src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/Copilot_20260518_091003.png" crossorigin="anonymous" alt="Urban Loop 360°">
-    <div class="sp-brand">Urban Loop <span>360°</span></div>
-    <div class="sp-sub">Urban Loop 360</div>
-    <div class="sp-tag">Descubrí tu ciudad de otra manera.<br>La comunidad te guía: seguí el loop y encontrá tu lugar.</div>
-    <div class="sp-dots">
-      <div class="sp-dot on"></div>
-      <div class="sp-dot"></div>
-      <div class="sp-dot"></div>
+  <!-- Imagen de fondo -->
+  <img class="sp-cover" 
+    src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/imagendeinicio.png"
+    crossorigin="anonymous" alt="">
+  <!-- Gradiente oscuro inferior -->
+  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,transparent 25%,rgba(0,0,0,.65) 60%,rgba(0,0,0,.92) 100%);"></div>
+  <!-- Contenido -->
+  <div class="sp-content" style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;padding-bottom:60px;animation:fadeUp .7s ease both;">
+    <div class="sp-title" style="font-family:var(--fH);font-size:34px;font-weight:700;color:white;letter-spacing:-0.5px;line-height:1.15;text-align:center;">
+      Urban <span style="color:var(--or);">Loop</span><br>
+      <span style="font-size:18px;font-weight:400;letter-spacing:3px;color:rgba(255,255,255,.65);">360°</span>
     </div>
-    <div class="sp-loading">
+    <div class="sp-loading" style="margin-top:28px;">
       <span></span><span></span><span></span>
     </div>
   </div>
@@ -1085,7 +1121,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="text" id="srch" placeholder="Buscar loops..."
         style="border:none;outline:none;font-family:var(--fB);font-size:13px;color:var(--dk);flex:1;background:transparent;"
-        oninput="App._renderCards(this.value, App._activeFilter||'all')">
+        oninput="App._onSrch(this.value)">
     </div>
   </div>
 
@@ -1104,7 +1140,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
       <span class="sb-icon">🏆</span><span class="sb-label" style="color:var(--c-naranja-t);font-weight:600;">Ranking</span>
     </button>
     <button class="sb-nav-btn" id="sb-btn-comunidad" onclick="App.sideNav('comunidad')" style="background:var(--c-viola);border-color:var(--c-viola-b);">
-      <span class="sb-icon">👥</span><span class="sb-label" style="color:var(--c-viola-t);font-weight:600;">Comunidad</span>
+      <span class="sb-icon">👥</span><span class="sb-label" style="color:var(--c-viola-t);font-weight:600;">Somos Loopers</span>
     </button>
     <button class="sb-nav-btn" id="sb-btn-saved" onclick="App.sideNav('saved')">
       <span class="sb-icon">🔖</span><span class="sb-label">Guardados</span>
@@ -1460,7 +1496,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
       </button>
       <div style="flex:1;">
-        <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);">Comunidad</h1>
+        <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);">Somos Loopers</h1>
         <p style="font-size:11px;color:var(--gr);margin-top:1px;" id="com-prov-label">Entre Ríos · feed provincial</p>
       </div>
       <button onclick="App.openNuevoPost()" style="background:var(--or);border:none;border-radius:10px;padding:8px 12px;color:white;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">
@@ -1719,7 +1755,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
       </div>
     </div>
 
-    <!-- Botones Loops / Comunidad -->
+    <!-- Botones Loops / Somos Loopers -->
     <div style="display:flex;gap:8px;padding:8px 14px 10px;">
       <button onclick="App.crGoLoops()" style="flex:1;padding:10px;border-radius:10px;background:var(--c-verde);border:0.5px solid var(--c-verde-b);color:var(--c-verde-t);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>
@@ -1727,7 +1763,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
       </button>
       <button onclick="App.crGoComunidad()" style="flex:1;padding:10px;border-radius:10px;background:var(--c-viola);border:0.5px solid var(--c-viola-b);color:var(--c-viola-t);font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        Comunidad
+        Somos Loopers
       </button>
     </div>
   </div>
@@ -1927,7 +1963,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   <button class="ni" data-s="comunidad" onclick="App.go('comunidad')">
     <div class="ni-pip"></div>
     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    <span class="ni-label">Comunidad</span>
+    <span class="ni-label">Somos Loopers</span>
   </button>
   <button class="ni" data-s="grabar" onclick="App.go('grabar')" style="position:relative;">
     <div style="width:48px;height:48px;background:var(--or);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-top:-18px;box-shadow:0 4px 16px rgba(255,95,0,.45);">
@@ -1971,65 +2007,77 @@ const App = {
   favs: [],
 
   async init() {
-    // Escuchar input de búsqueda
     document.addEventListener('input', e => {
-      if (e.target.id === 'srch') this._renderCards(e.target.value, this._activeFilter||'all');
+      if (e.target.id === 'srch') this._onSrch(e.target.value);
     });
-    // Botón atrás del navegador
     window.addEventListener('popstate', e => {
-      const s = (e.state && e.state.screen) || 'explore';
-      App.go(s, false);
+      App.go((e.state && e.state.screen) || 'explore', false);
     });
     history.replaceState({ screen: 'explore' }, '', '#explore');
-
-    // Splash animation
-    let d = 0;
-    const dots = document.querySelectorAll('.sp-dot');
-    const di = setInterval(() => { d++; dots.forEach((x,i)=>x.classList.toggle('on',i===d%3)); }, 500);
-
-    // Inicializar Firebase (espera hasta que SDK cargue)
-    await this._initFirebase();
-
-    // Si Firebase conectó, esperar a que auth resuelva (máx 4s)
-    // onAuthStateChanged dispara _loadData y _renderCards
-    // Si no hay Firebase, cargar desde localStorage directamente
-    if (this._db) {
-      // auth ya registrado en _initFirebase, esperar primer disparo
-      await new Promise(res => {
-        const unsub = this._auth.onAuthStateChanged(async user => {
-          unsub(); // solo primera vez
-          this._user = user;
-          this._uid  = user ? user.uid : 'public';
-          this._updateProfileUI();
-          await this._loadData();
-          this._renderCards('', this._activeFilter || 'all');
-          if (this.mainMap) this._refreshMain();
-          res();
-        });
-        // timeout de seguridad: si auth tarda más de 4s, seguir igual
-        setTimeout(res, 4000);
-      });
-    } else {
-      // Sin Firebase: cargar desde localStorage
-      await this._loadData();
-      this._renderCards('', this._activeFilter || 'all');
-    }
-
-    clearInterval(di);
-    this._appReady = true;
-
-    // Detectar AdBlock — puede bloquear Firestore
-    this._checkAdBlock();
 
     // Cerrar visor con Escape
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape') this._closeImgViewer();
     });
 
-    this.go('explore');
-    // Inicializar sidebar según dispositivo
-    const isMobile = window.innerWidth <= 768;
-    this._sbApply(isMobile ? 0 : 1); // mobile: cerrado; desktop: rail
+    // Splash dots animation
+    let d = 0;
+    const dots = document.querySelectorAll('.sp-dot');
+    const di = setInterval(() => { d++; dots.forEach((x,i)=>x.classList.toggle('on',i===d%3)); }, 500);
+
+    // Timeout DURO: el splash se cierra sí o sí a los 5s
+    const splashSafe = setTimeout(() => {
+      console.warn('[UL360] Splash safety timeout');
+      clearInterval(di);
+      if (!this._appReady) {
+        this._appReady = true;
+        this._hideSplash();
+      }
+    }, 5000);
+
+    try {
+      await this._initFirebase();
+
+      if (this._db) {
+        await new Promise(res => {
+          const unsub = this._auth.onAuthStateChanged(async user => {
+            unsub();
+            this._user = user;
+            this._uid  = user ? user.uid : 'public';
+            this._updateProfileUI();
+            try { await this._loadData(); } catch(e) { console.warn('loadData:', e); }
+            try { this._renderCards('', this._activeFilter || 'all'); } catch(e) {}
+            if (this.mainMap) try { this._refreshMain(); } catch(e) {}
+            res();
+          });
+          setTimeout(res, 3000);
+        });
+      } else {
+        try { await this._loadData(); } catch(e) { console.warn('loadData:', e); }
+        try { this._renderCards('', this._activeFilter || 'all'); } catch(e) {}
+      }
+    } catch(e) {
+      console.error('[UL360] init error:', e);
+    }
+
+    clearInterval(di);
+    clearTimeout(splashSafe);
+    this._appReady = true;
+    this._hideSplash();
+  },
+
+  _hideSplash() {
+    const sp = document.getElementById('splash');
+    if (!sp) { this.go('explore'); return; }
+    sp.style.opacity = '0';
+    sp.style.pointerEvents = 'none';
+    setTimeout(() => {
+      this.go('explore');
+      // Inicializar sidebar según dispositivo
+      const isMobile = window.innerWidth <= 768;
+      this._sbApply(isMobile ? 0 : 1);
+      this._checkAdBlock();
+    }, 520);
   },
 
   async _checkAdBlock() {
@@ -2046,9 +2094,9 @@ const App = {
   _appReady: false,
 
   async _initFirebase() {
-    // Esperar hasta 5s a que los scripts de Firebase carguen
+    // Esperar hasta 2s a que los scripts de Firebase carguen
     let attempts = 0;
-    while (typeof firebase === 'undefined' && attempts < 20) {
+    while (typeof firebase === 'undefined' && attempts < 8) {
       await new Promise(r => setTimeout(r, 250));
       attempts++;
     }
@@ -2405,6 +2453,28 @@ const App = {
         }
 
         this._updateProfileUI();
+
+        // Cargar FotoLoops (fotostops públicos) desde Firebase
+        try {
+          const flSnap = await this._db.collection('fotoloops').orderBy('ts', 'desc').limit(100)
+            .get().catch(() => this._db.collection('fotoloops').get());
+          this._fotoPosts = [];
+          flSnap.forEach(d => {
+            const p = { ...d.data(), id: d.id };
+            if (p.img === '[[base64]]') p.img = '';
+            this._fotoPosts.push(p);
+          });
+          // Cargar imágenes de fotoposts
+          for (const p of this._fotoPosts) {
+            if (!p.img) {
+              try {
+                const imgSnap = await this._db.collection('loop_imgs').doc(p.id).get();
+                if (imgSnap.exists) p.img = imgSnap.data().img || '';
+              } catch(e) {}
+            }
+          }
+        } catch(e) { console.warn('FotoLoops load:', e); this._fotoPosts = this._fotoPosts || []; }
+
         return;
       } catch(e) {
         console.warn('Error leyendo Firestore:', e);
@@ -2628,6 +2698,7 @@ const App = {
         if (!this.mainMap.hasImage(e.id)) this.mainMap.addImage(e.id, empty);
       });
       this.routes.forEach(r => this._drawRoute(r));
+      this._drawFotoStopsOnMap();   // ← marcadores de fotostops + fotoloops
       this._renderCards('', this._activeFilter);
       this._initCityNotif();
       this._startGPSTracking();
@@ -2823,8 +2894,8 @@ const App = {
     this._followMe = !this._followMe;
     const btn = document.getElementById('locate-btn');
     if (btn) {
-      btn.style.background = this._followMe ? '#FF5F00' : 'var(--wh)';
-      btn.style.color      = this._followMe ? 'white'   : 'var(--md)';
+      btn.style.background = this._followMe ? '#FF5F00' : '#1C1C1E';
+      btn.style.color      = this._followMe ? 'white'   : '#C0C0C8';
     }
     if (this._followMe) {
       if (this._locMarker) {
@@ -2934,7 +3005,15 @@ const App = {
     this._layers[r.id] = layerIds;
   },
 
-  // ── REFRESH CANVAS MAP ROUTES ──
+  // ── FotoLoops solo en Somos Loopers — no se muestran en el mapa ──
+  _fotoMarkers: [],
+  _drawFotoStopsOnMap() {
+    // FotoLoops removidos del mapa por solicitud del usuario.
+    // Se muestran únicamente en la sección "Somos Loopers".
+    (this._fotoMarkers || []).forEach(m => m.remove());
+    this._fotoMarkers = [];
+  },
+
   _refreshMain() {
     if (!this.mainMap) return;
     this._removeNavLine();
@@ -2948,6 +3027,7 @@ const App = {
       if (!this._layers || !this._layers[r.id]) this._drawRoute(r);
       else this._setRouteVisible(r.id, true);
     });
+    this._drawFotoStopsOnMap();
   },
 
   _removeNavLine() {
@@ -3507,8 +3587,17 @@ const App = {
   },
 
   startLoop() {
-    const r = this.routes.find(x=>x.id===this.selId);
-    if (r) this.toast(`🚀 ¡Iniciando "${r.name}"! Activando navegación...`);
+    const r = this.routes.find(x => x.id === this.selId);
+    if (!r) { this.toast('⚠️ Seleccioná un loop primero'); return; }
+
+    // Cerrar el panel de detalle y volver al mapa
+    this.go('explore');
+
+    // Pequeño delay para que el mapa esté visible antes de iniciar nav
+    setTimeout(() => {
+      this.toast(`🚀 Iniciando "${r.name}"…`);
+      this._startNav(r);
+    }, 350);
   },
 
   // ── CARDS ──
@@ -3541,6 +3630,17 @@ const App = {
         <button class="rc-detail-btn" onclick="event.stopPropagation();App.showDetail('${r.id}')">Ver →</button>
       </div>
     `).join('');
+  },
+
+  _srchTimer: null,
+  _onSrch(val) {
+    clearTimeout(this._srchTimer);
+    this._srchTimer = setTimeout(() => {
+      this._renderCards(val, this._activeFilter || 'all');
+      // Sincronizar el buscador del explore si está visible
+      const ex = document.getElementById('main-srch');
+      if (ex && ex !== document.activeElement) ex.value = val;
+    }, 180);
   },
 
   _typeLabel(t) {
@@ -3634,23 +3734,6 @@ const App = {
       if (label) label.style.display = 'flex';
     }
   },
-  _loadAdmImgPreview(r) {
-    this._imgBase64 = r.img && r.img.startsWith('data:') ? r.img : null;
-    const prev  = document.getElementById('adm-img-preview');
-    const thumb = document.getElementById('adm-img-thumb');
-    const label = document.getElementById('adm-img-label');
-    const sizeEl= document.getElementById('adm-img-size');
-    if (this._imgBase64) {
-      if (prev)  prev.style.display  = 'block';
-      if (label) label.style.display = 'none';
-      if (thumb) thumb.src = this._imgBase64;
-      if (sizeEl) sizeEl.textContent = `${Math.round(this._imgBase64.length*0.75/1024)} KB · guardada`;
-    } else {
-      if (prev)  prev.style.display  = 'none';
-      if (label) label.style.display = 'flex';
-    }
-  },
-
   // ── Grab loop: foto de portada ──
   _handleGrabCover(input) {
     const file = input.files[0]; if (!file) return;
@@ -3949,6 +4032,7 @@ const App = {
       cityId,                   // ← ciudad detectada por GPS
       authorId: this._uid,
       authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Anónimo',
+      ts: Date.now(),
       createdAt: Date.now(),
       likes: 0
     };
@@ -3960,7 +4044,7 @@ const App = {
           this.toast('⚠️ Iniciá sesión primero');
           this.closeFotoLoop(); this.go('profile'); return;
         }
-        await this._db.collection('fotostops').doc(stopId).set(stopData);
+        await this._db.collection('fotoloops').doc(stopId).set(stopData);
         if (this._fotoLoopImg) {
           await this._db.collection('loop_imgs').doc(stopId).set({ img: this._fotoLoopImg });
         }
@@ -3991,23 +4075,11 @@ const App = {
         if (this.mainMap) this._drawRoute(loopForMap);
       }
 
-      // Marcador en mapa principal (MapLibre)
-      if (this.mainMap) {
-        const markerEl = document.createElement('div');
-        markerEl.style.cssText = `width:36px;height:36px;border-radius:50%;background:${color};border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(0,0,0,.4);cursor:pointer;`;
-        markerEl.textContent = emoji;
-        const popup = new maplibregl.Popup({ offset: 20 })
-          .setHTML(`<b>${emoji} ${name}</b><br><small>${desc||''}</small><br><small style="color:#999;">📍 ${cityId}</small>`);
-        new maplibregl.Marker({ element: markerEl, anchor: 'center' })
-          .setLngLat([lng, lat])
-          .setPopup(popup)
-          .addTo(this.mainMap);
-      }
-
       this.closeFotoLoop();
       // Guardar en lista local para preview inmediato
       if (!this._fotoPosts) this._fotoPosts = [];
       this._fotoPosts.unshift({ ...stopData, img: this._fotoLoopImg || '' });
+      this._drawFotoStopsOnMap();   // ← actualizar mapa
       this._addPts(30, 'Parada publicada');
       this._showSaveSuccess(name, `🌐 Publicado en ${cityId}`);
     } catch(e) {
@@ -4166,21 +4238,6 @@ const App = {
 
   // ── VUELTAS LIST ──
   _renderLoops() {
-    const FL_CATS = {
-      lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', playa:'🏖️', parque:'🌳',
-      plaza:'🏛️', museo:'🖼️', pesca:'🎣', aventura:'🧗', campo:'🌾', deporte:'⚽',
-      ciclismo:'🚴', arte:'🎨', nocturno:'🌙', perro:'🐕', foto:'📸', otro:'✳️'
-    };
-    const catLabel = c => {
-      const names = {
-        lugar:'Lugar', gastro:'Gastro', naturaleza:'Natural', rio:'Río', playa:'Playa',
-        parque:'Parque', plaza:'Plaza', museo:'Museo', pesca:'Pesca', aventura:'Aventura',
-        campo:'Campo', deporte:'Deporte', ciclismo:'Ciclismo', arte:'Arte',
-        nocturno:'Noche', perro:'Pet', foto:'Foto', otro:'Otro'
-      };
-      return `${FL_CATS[c]||'📍'} ${names[c]||c}`;
-    };
-
     // ── Loops normales ──
     const loopsHtml = this.routes.map(r=>`
       <div class="rli" onclick="App.showDetail('${r.id}')">
@@ -4193,47 +4250,28 @@ const App = {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
       </div>`).join('');
 
-    // ── FotoLoops ──
+    // ── FotoLoops — solo botón CTA, los marcadores están en el mapa ──
     const fotoPosts = this._fotoPosts || [];
-    const fotoHtml = fotoPosts.length === 0
-      ? `<div style="text-align:center;padding:20px 0;color:var(--gr);font-size:13px;">
-           <div style="font-size:32px;margin-bottom:8px;">📸</div>
-           Aún no hay Foto Loops publicados.<br>¡Sé el primero en agregar uno!
-         </div>`
-      : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-          ${fotoPosts.map(p=>`
-          <div onclick="App._showFotoDetail('${p.id}')"
-            style="border-radius:14px;overflow:hidden;background:var(--lt);border:0.5px solid var(--bd);cursor:pointer;transition:transform .15s;"
-            onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''" ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
-            ${p.img
-              ? `<div style="aspect-ratio:4/3;background:var(--bg0);overflow:hidden;">
-                   <img src="${p.img}" style="width:100%;height:100%;object-fit:cover;" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\\'display:flex;align-items:center;justify-content:center;height:100%;font-size:32px;\\'>${FL_CATS[p.cat]||'📍'}</div>'">
-                 </div>`
-              : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:40px;">${FL_CATS[p.cat]||'📍'}</div>`
-            }
-            <div style="padding:9px 10px 10px;">
-              <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name}</div>
-              <div style="font-size:11px;color:var(--or);font-weight:600;margin-top:2px;">${catLabel(p.cat)}</div>
-              <div style="font-size:11px;color:var(--gr);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.desc||''}</div>
-              <div style="font-size:10px;color:var(--gr);margin-top:5px;display:flex;align-items:center;gap:4px;">
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                ${p.lat?`${Number(p.lat).toFixed(4)}, ${Number(p.lng).toFixed(4)}`:'Sin ubicación'}
-              </div>
-            </div>
-          </div>`).join('')}
-        </div>`;
+    const fotoCount = fotoPosts.length;
 
     document.getElementById('loops-body').innerHTML = `
       <!-- Loops -->
       <div style="font-family:var(--fH);font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.8px;margin-bottom:10px;">RUTAS</div>
       ${loopsHtml}
 
-      <!-- Foto Loops -->
+      <!-- Foto Loops — botón para ir al mapa -->
       <div style="font-family:var(--fH);font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.8px;margin:20px 0 10px;display:flex;align-items:center;justify-content:space-between;">
         <span>FOTO LOOPS</span>
         <button onclick="App.openFotoLoop()" style="background:var(--orL);border:none;color:var(--or);font-size:11px;font-weight:700;padding:4px 12px;border-radius:10px;cursor:pointer;font-family:var(--fH);">+ Agregar</button>
       </div>
-      ${fotoHtml}
+      <div style="background:var(--wh);border-radius:14px;border:0.5px solid var(--bd);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;" onclick="App.go('explore')">
+        <div style="width:44px;height:44px;border-radius:12px;background:var(--orL);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📍</div>
+        <div style="flex:1;">
+          <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${fotoCount} Foto Loop${fotoCount !== 1 ? 's' : ''} en el mapa</div>
+          <div style="font-size:12px;color:var(--gr);margin-top:2px;">Mirá todos los puntos marcados directamente en el mapa 🗺️</div>
+        </div>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
     `;
   },
 
