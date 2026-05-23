@@ -362,7 +362,9 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 #side-panel.sb-rail .sb-city-wrap,
 #side-panel.sb-rail .sb-filters-wrap,
 #side-panel.sb-rail .sb-footer,
-#side-panel.sb-rail .sb-grabar-btn { display: none !important; }
+#side-panel.sb-rail .sb-grabar-btn,
+#side-panel.sb-rail .sb-section-label,
+#side-panel.sb-rail .sb-divider { display: none !important; }
 
 /* En rail: centrar iconos */
 #side-panel.sb-rail .sb-nav-btn {
@@ -377,19 +379,101 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 #side-panel.sb-rail .sb-rail-logo { display: flex !important; }
 #side-panel.sb-open  .sb-rail-logo { display: none !important; }
 
+/* En open: section labels y dividers visibles */
+#side-panel.sb-open .sb-section-label { display: block !important; }
+#side-panel.sb-open .sb-divider { display: block !important; }
+
 /* ── Botones de nav ── */
 .sb-nav-btn {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px;
-  background: var(--lt); border: 0.5px solid var(--bd);
+  display: flex; align-items: center; gap: 11px;
+  padding: 9px 12px;
+  background: transparent; border: none;
   border-radius: 10px; cursor: pointer; width: 100%;
-  text-align: left; transition: all .2s;
+  text-align: left; transition: all .15s;
   white-space: nowrap; overflow: hidden;
 }
-.sb-nav-btn:hover { border-color: var(--or); }
-.sb-nav-btn.active { background: var(--orL); border-color: var(--or); }
-.sb-nav-btn .sb-icon { font-size: 18px; flex-shrink: 0; }
-.sb-label { font-family: var(--fB); font-size: 13px; font-weight: 500; color: var(--md); }
+.sb-nav-btn:hover { background: var(--bg2); }
+.sb-nav-btn.active { background: var(--orL); }
+.sb-nav-btn.active .sb-label { color: var(--or); font-weight: 700; }
+.sb-nav-btn .sb-icon {
+  width: 32px; height: 32px; border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+  background: var(--bg2); border: 0.5px solid var(--bd);
+  transition: all .15s;
+}
+.sb-nav-btn.active .sb-icon { background: var(--orL); border-color: var(--or); }
+.sb-label { font-family: var(--fB); font-size: 13px; font-weight: 500; color: var(--md); flex:1; }
+.sb-badge { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: var(--or); color: white; font-weight: 700; flex-shrink:0; }
+.sb-badge-soon { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: var(--bg3); color: var(--gr); font-weight: 600; flex-shrink:0; border: 0.5px solid var(--bd); }
+.sb-badge-new  { font-size: 10px; padding: 2px 7px; border-radius: 10px; background: #534AB7; color: white; font-weight: 700; flex-shrink:0; }
+.sb-section-label {
+  font-size: 10px; font-weight: 700; color: var(--gr);
+  letter-spacing: .7px; text-transform: uppercase;
+  padding: 10px 14px 4px; display: block;
+}
+.sb-divider { height: 0.5px; background: var(--bd); margin: 6px 12px; }
+
+/* ── Tabs comunidad ── */
+.com-tab {
+  flex: 1; padding: 10px 4px; font-size: 12px; font-weight: 500;
+  color: var(--gr); background: none; border: none; cursor: pointer;
+  border-bottom: 2.5px solid transparent; font-family: var(--fB);
+  transition: all .15s;
+}
+.com-tab.on { color: var(--or); border-bottom-color: var(--or); font-weight: 700; }
+/* ── Tipo de evento / post (botones grilla modal) ── */
+.ev-type-btn {
+  padding: 9px 10px; border-radius: 10px; border: 1.5px solid var(--bd);
+  font-size: 12px; font-weight: 500; color: var(--md); cursor: pointer;
+  text-align: center; background: var(--lt); transition: all .15s; font-family: var(--fB);
+}
+.ev-type-btn.on { border-color: var(--or); background: var(--orL); color: var(--or); font-weight: 700; }
+/* ── Cards de evento ── */
+.ev-card {
+  background: var(--wh); border-radius: 14px; border: 0.5px solid var(--bd);
+  overflow: hidden; box-shadow: var(--sh); transition: transform .12s;
+}
+.ev-card:hover { transform: translateY(-1px); }
+.ev-card-banner {
+  height: 6px;
+}
+.ev-card-body { padding: 12px 14px; }
+.ev-card-type { font-size: 10px; font-weight: 700; color: var(--gr); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; }
+.ev-card-name { font-family: var(--fH); font-size: 15px; font-weight: 700; color: var(--dk); margin-bottom: 4px; }
+.ev-card-meta { font-size: 12px; color: var(--gr); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.ev-card-actions { display: flex; gap: 8px; }
+.ev-action-btn {
+  flex: 1; padding: 8px; border-radius: 9px; border: 0.5px solid var(--bd);
+  font-size: 12px; font-weight: 600; cursor: pointer; background: var(--lt);
+  color: var(--md); font-family: var(--fB); transition: all .15s;
+}
+.ev-action-btn.primary { background: var(--or); border-color: var(--or); color: white; }
+.ev-action-btn:hover { opacity: .85; }
+/* ── Post cards en feed ── */
+.post-card {
+  background: var(--wh); border-radius: 14px; border: 0.5px solid var(--bd);
+  overflow: hidden; box-shadow: var(--sh);
+}
+.post-card-header { padding: 11px 13px 8px; display: flex; align-items: center; gap: 9px; }
+.post-avatar { width: 34px; height: 34px; border-radius: 50%; background: var(--orL); display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: var(--or); flex-shrink: 0; font-family: var(--fH); }
+.post-author { font-size: 13px; font-weight: 600; color: var(--dk); font-family: var(--fH); }
+.post-time { font-size: 11px; color: var(--gr); }
+.post-type-tag { font-size: 10px; padding: 2px 7px; border-radius: 8px; font-weight: 700; margin-left: auto; flex-shrink: 0; }
+.post-body { padding: 0 13px 10px; font-size: 13px; color: var(--md); line-height: 1.55; }
+.post-loop-ref { margin: 0 13px 10px; padding: 9px 11px; background: var(--bg2); border-radius: 10px; border: 0.5px solid var(--bd); display: flex; align-items: center; gap: 9px; cursor: pointer; }
+.post-img { width: 100%; aspect-ratio: 4/3; object-fit: cover; display: block; }
+.post-actions { padding: 8px 13px 12px; display: flex; gap: 12px; border-top: 0.5px solid var(--bd); margin-top: 2px; }
+.post-action { background: none; border: none; font-size: 12px; color: var(--gr); cursor: pointer; display: flex; align-items: center; gap: 5px; font-family: var(--fB); padding: 0; }
+.post-action.liked { color: var(--or); }
+/* Thread / hilo */
+.thread-replies { padding: 0 13px 12px; display: flex; flex-direction: column; gap: 8px; }
+.thread-reply { display: flex; gap: 8px; }
+.thread-reply-avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--bg2); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--gr); flex-shrink: 0; }
+.thread-reply-bubble { background: var(--bg2); border-radius: 10px; padding: 7px 10px; flex: 1; font-size: 12px; color: var(--md); line-height: 1.45; }
+.thread-reply-input { display: flex; gap: 8px; padding: 8px 13px 12px; border-top: 0.5px solid var(--bd); }
+.thread-reply-input input { flex: 1; border: 0.5px solid var(--bd); border-radius: 20px; padding: 7px 12px; font-size: 12px; color: var(--dk); background: var(--bg2); outline: none; font-family: var(--fB); }
+.thread-reply-input button { background: var(--or); border: none; border-radius: 50%; width: 30px; height: 30px; color: white; cursor: pointer; font-size: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
 /* ── Botón hamburger dentro del rail ── */
 #sb-toggle-btn {
@@ -426,7 +510,8 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
   body.sb-rail-mode #admin,
   body.sb-rail-mode #detail,
   body.sb-rail-mode #loops,
-  body.sb-rail-mode #ciudad-remota { margin-left: var(--side-w-rail) !important; left: var(--side-w-rail) !important; right: 0 !important; width: auto !important; }
+  body.sb-rail-mode #ciudad-remota,
+  body.sb-rail-mode #eventos { margin-left: var(--side-w-rail) !important; left: var(--side-w-rail) !important; right: 0 !important; width: auto !important; }
 
   body.sb-open-mode #explore,
   body.sb-open-mode #loops-urbanos,
@@ -439,7 +524,8 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
   body.sb-open-mode #admin,
   body.sb-open-mode #detail,
   body.sb-open-mode #loops,
-  body.sb-open-mode #ciudad-remota { margin-left: var(--side-w-open) !important; left: var(--side-w-open) !important; right: 0 !important; width: auto !important; }
+  body.sb-open-mode #ciudad-remota,
+  body.sb-open-mode #eventos { margin-left: var(--side-w-open) !important; left: var(--side-w-open) !important; right: 0 !important; width: auto !important; }
 
   #menu-btn { display: none !important; }
   .screens-wrapper { transition: margin-left .28s cubic-bezier(.4,0,.2,1); }
@@ -1100,73 +1186,90 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 <!-- ════════════ SIDEBAR COLAPSABLE ════════════ -->
 <div id="side-panel" class="sb-rail">
 
-  <!-- Botón toggle (siempre visible) -->
+  <!-- Toggle -->
   <button id="sb-toggle-btn" onclick="App.toggleSidebar()" title="Menú">
     <span></span><span></span><span></span>
   </button>
 
   <!-- Logo mini (solo rail) -->
-  <div class="sb-rail-logo" style="display:none;padding:4px 0 10px;text-align:center;font-size:11px;font-weight:700;font-family:var(--fH);color:var(--or);">UL</div>
-
-  <!-- Header full (solo abierto) -->
-  <div class="sb-header-full" style="padding:0 16px 14px;border-bottom:0.5px solid var(--bd);">
-    <div style="font-family:var(--fH);font-size:18px;font-weight:700;color:var(--dk);">
-      Urban <span style="color:var(--or);">Loop</span> <span style="font-size:12px;color:var(--gr);font-weight:400;font-family:var(--fB);">360°</span>
-    </div>
-    <div style="font-size:11px;color:var(--gr);margin-top:2px;" id="side-city-name">📍 La Paz, Entre Ríos</div>
-    <button onclick="App.toggleTheme()" id="theme-toggle-btn" title="Modo día / noche"
-      style="margin-top:10px;width:34px;height:34px;background:var(--lt);border:0.5px solid var(--bd);border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s;">☀️</button>
+  <div class="sb-rail-logo" style="display:none;padding:4px 0 8px;text-align:center;">
+    <div style="width:32px;height:32px;border-radius:9px;background:var(--or);display:flex;align-items:center;justify-content:center;margin:0 auto;font-size:14px;font-weight:800;font-family:var(--fH);color:white;">UL</div>
   </div>
 
-  <!-- Búsqueda (solo abierto) -->
-  <div class="sb-search-wrap" style="padding:12px 16px 0;">
-    <div style="background:var(--lt);border:1.5px solid var(--bd);border-radius:var(--rs);height:40px;display:flex;align-items:center;gap:8px;padding:0 12px;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+  <!-- Header full (solo abierto) -->
+  <div class="sb-header-full" style="padding:4px 14px 14px;border-bottom:0.5px solid var(--bd);">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:var(--dk);">Urban <span style="color:var(--or);">Loop</span> <span style="font-size:11px;color:var(--gr);font-weight:400;">360°</span></div>
+        <div style="font-size:11px;color:var(--gr);margin-top:1px;" id="side-city-name">📍 La Paz, Entre Ríos</div>
+      </div>
+      <button onclick="App.toggleTheme()" id="theme-toggle-btn" title="Día/Noche"
+        style="width:32px;height:32px;background:var(--lt);border:0.5px solid var(--bd);border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;flex-shrink:0;">☀️</button>
+    </div>
+    <!-- Buscador -->
+    <div style="margin-top:10px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:var(--rs);height:36px;display:flex;align-items:center;gap:8px;padding:0 10px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
       <input type="text" id="srch" placeholder="Buscar loops..."
-        style="border:none;outline:none;font-family:var(--fB);font-size:13px;color:var(--dk);flex:1;background:transparent;"
+        style="border:none;outline:none;font-family:var(--fB);font-size:12px;color:var(--dk);flex:1;background:transparent;"
         oninput="App._onSrch(this.value)">
     </div>
   </div>
 
   <!-- Nav list -->
-  <div id="sb-nav-list" style="padding:10px 8px 0;display:flex;flex-direction:column;gap:4px;flex:1;">
+  <div id="sb-nav-list" style="padding:6px 6px 0;display:flex;flex-direction:column;gap:1px;flex:1;overflow-y:auto;">
+
+    <!-- PRINCIPAL -->
+    <span class="sb-section-label">Principal</span>
     <button class="sb-nav-btn" id="sb-btn-explore" onclick="App.sideNav('explore')">
       <span class="sb-icon">🗺️</span><span class="sb-label">Mapa</span>
     </button>
-    <button class="sb-nav-btn" id="sb-btn-loops-urbanos" onclick="App.sideNav('loops-urbanos')" style="background:var(--c-verde);border-color:var(--c-verde-b);">
-      <span class="sb-icon">🔄</span><span class="sb-label" style="color:var(--c-verde-t);font-weight:600;">Loops Urbanos</span>
+    <button class="sb-nav-btn" id="sb-btn-loops-urbanos" onclick="App.sideNav('loops-urbanos')">
+      <span class="sb-icon">🔄</span><span class="sb-label">Loops Urbanos</span>
     </button>
-    <button class="sb-nav-btn" id="sb-btn-explorar-ciudades" onclick="App.sideNav('explorar-ciudades')" style="background:var(--c-azul);border-color:var(--c-azul-b);">
-      <span class="sb-icon">🔍</span><span class="sb-label" style="color:var(--c-azul-t);font-weight:600;">Explorar ciudades</span>
+    <button class="sb-nav-btn" id="sb-btn-explorar-ciudades" onclick="App.sideNav('explorar-ciudades')">
+      <span class="sb-icon">🔍</span><span class="sb-label">Explorar ciudades</span>
     </button>
-    <button class="sb-nav-btn" id="sb-btn-ranking" onclick="App.sideNav('ranking')" style="background:var(--c-naranja);border-color:var(--c-naranja-b);">
-      <span class="sb-icon">🏆</span><span class="sb-label" style="color:var(--c-naranja-t);font-weight:600;">Ranking</span>
+
+    <!-- COMUNIDAD -->
+    <div class="sb-divider"></div>
+    <span class="sb-section-label">Comunidad</span>
+    <button class="sb-nav-btn" id="sb-btn-comunidad" onclick="App.sideNav('comunidad')">
+      <span class="sb-icon">👥</span><span class="sb-label">Somos Loopers</span>
     </button>
-    <button class="sb-nav-btn" id="sb-btn-comunidad" onclick="App.sideNav('comunidad')" style="background:var(--c-viola);border-color:var(--c-viola-b);">
-      <span class="sb-icon">👥</span><span class="sb-label" style="color:var(--c-viola-t);font-weight:600;">Somos Loopers</span>
+    <button class="sb-nav-btn" id="sb-btn-eventos" onclick="App.sideNav('eventos')">
+      <span class="sb-icon">📅</span><span class="sb-label">Eventos</span>
+      
     </button>
+    <button class="sb-nav-btn" id="sb-btn-ranking" onclick="App.sideNav('ranking')">
+      <span class="sb-icon">🏆</span><span class="sb-label">Ranking</span>
+    </button>
+
+    <!-- MIS COSAS -->
+    <div class="sb-divider"></div>
+    <span class="sb-section-label">Mis cosas</span>
     <button class="sb-nav-btn" id="sb-btn-saved" onclick="App.sideNav('saved')">
       <span class="sb-icon">🔖</span><span class="sb-label">Guardados</span>
     </button>
     <button class="sb-nav-btn" id="sb-btn-profile" onclick="App.sideNav('profile')">
       <span class="sb-icon">👤</span><span class="sb-label">Perfil</span>
     </button>
+
   </div>
 
   <!-- Grabar CTA (solo abierto) -->
-  <div class="sb-grabar-btn" style="padding:12px 8px 14px;">
+  <div class="sb-grabar-btn" style="padding:10px 8px 12px;">
     <button onclick="App.sideNav('grabar');"
-      style="width:100%;height:46px;background:var(--or);color:white;border:none;border-radius:12px;
-             font-family:var(--fH);font-size:14px;font-weight:700;cursor:pointer;
+      style="width:100%;height:44px;background:var(--or);color:white;border:none;border-radius:11px;
+             font-family:var(--fH);font-size:13px;font-weight:700;cursor:pointer;
              display:flex;align-items:center;justify-content:center;gap:8px;
-             box-shadow:0 4px 20px rgba(255,95,0,.4);">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="white" stroke="none"/></svg>
+             box-shadow:0 4px 16px rgba(255,95,0,.4);">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="white" stroke="none"/></svg>
       Grabar Loop
     </button>
   </div>
 
-  <!-- Footer (solo abierto) -->
-  <div class="sb-footer" style="text-align:center;padding:2px 0 10px;font-size:10px;color:var(--bd);">Urban Loop 360° · v2.0</div>
+  <!-- Footer -->
+  <div class="sb-footer" style="text-align:center;padding:2px 0 8px;font-size:10px;color:var(--bd);">Urban Loop 360° · v3.0</div>
 </div>
 
 <!-- ════════════ DETAIL ════════════ -->
@@ -1492,23 +1595,23 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 <!-- ════════════ COMUNIDAD — Módulo 2 ════════════ -->
 <div id="comunidad" class="screen" style="background:var(--bg0);">
 
-  <!-- Header -->
-  <div style="padding:14px 16px 10px;background:var(--wh);border-bottom:1px solid var(--bd);flex-shrink:0;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-      <button class="scr-back-btn" onclick="App.go('explore')" title="Volver al mapa">
+  <!-- Header fijo -->
+  <div style="flex-shrink:0;background:var(--wh);border-bottom:0.5px solid var(--bd);">
+    <div style="padding:12px 14px 10px;display:flex;align-items:center;gap:10px;">
+      <button class="scr-back-btn" onclick="App.go('explore')" title="Volver">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
       </button>
       <div style="flex:1;">
-        <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);">Somos Loopers</h1>
-        <p style="font-size:11px;color:var(--gr);margin-top:1px;" id="com-prov-label">Entre Ríos · feed provincial</p>
+        <h1 style="font-family:var(--fH);font-size:19px;font-weight:800;color:var(--dk);">Somos Loopers</h1>
+        <p style="font-size:11px;color:var(--gr);margin-top:1px;" id="com-prov-label">📍 La Paz, Entre Ríos</p>
       </div>
-      <button onclick="App.openNuevoPost()" style="background:var(--or);border:none;border-radius:10px;padding:8px 12px;color:white;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">
+      <button onclick="App.openNuevoPost()" style="background:var(--or);border:none;border-radius:10px;padding:8px 13px;color:white;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;flex-shrink:0;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Publicar
       </button>
     </div>
-    <!-- City filter chips -->
-    <div id="com-city-chips" style="display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;scrollbar-width:none;">
+    <!-- City chips -->
+    <div id="com-city-chips" style="display:flex;gap:6px;overflow-x:auto;padding:0 14px 10px;scrollbar-width:none;">
       <div class="com-city-chip" data-city="all" onclick="App.comSetCity(this,'all')">Todas</div>
       <div class="com-city-chip on" data-city="La Paz" onclick="App.comSetCity(this,'La Paz')">📍 La Paz</div>
       <div class="com-city-chip" data-city="Paraná" onclick="App.comSetCity(this,'Paraná')">Paraná</div>
@@ -1516,13 +1619,129 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
       <div class="com-city-chip" data-city="Gualeguaychú" onclick="App.comSetCity(this,'Gualeguaychú')">Gualeguaychú</div>
       <div class="com-city-chip" data-city="Colón" onclick="App.comSetCity(this,'Colón')">Colón</div>
       <div class="com-city-chip" data-city="Rosario" onclick="App.comSetCity(this,'Rosario')">Rosario</div>
-      <div class="com-city-chip" data-city="Buenos Aires" onclick="App.comSetCity(this,'Buenos Aires')">Buenos Aires</div>
+      <div class="com-city-chip" data-city="Buenos Aires" onclick="App.comSetCity(this,'Buenos Aires')">Bs. Aires</div>
       <div class="com-city-chip" data-city="Córdoba" onclick="App.comSetCity(this,'Córdoba')">Córdoba</div>
+    </div>
+    <!-- Tabs: Feed / Loops / Foto Loops -->
+    <div style="display:flex;border-top:0.5px solid var(--bd);">
+      <button id="com-tab-feed" onclick="App.comSetTab('feed',this)" class="com-tab on">💬 Feed</button>
+      <button id="com-tab-loops" onclick="App.comSetTab('loops',this)" class="com-tab">🔄 Loops</button>
+      <button id="com-tab-foto" onclick="App.comSetTab('foto',this)" class="com-tab">📸 Foto Loops</button>
     </div>
   </div>
 
-  <!-- Feed body -->
+  <!-- Body dinámico -->
   <div class="com-body" id="com-body"></div>
+</div>
+
+<!-- ════════════ EVENTOS ════════════ -->
+<div id="eventos" class="screen" style="background:var(--bg0);">
+  <div style="flex-shrink:0;background:var(--wh);border-bottom:0.5px solid var(--bd);">
+    <div style="padding:12px 14px 10px;display:flex;align-items:center;gap:10px;">
+      <button class="scr-back-btn" onclick="App.go('explore')">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
+      </button>
+      <div style="flex:1;">
+        <h1 style="font-family:var(--fH);font-size:19px;font-weight:800;color:var(--dk);">Eventos</h1>
+        <p style="font-size:11px;color:var(--gr);margin-top:1px;" id="ev-city-label">📍 La Paz, Entre Ríos</p>
+      </div>
+      <button onclick="App.openCrearEvento()" style="background:var(--or);border:none;border-radius:10px;padding:8px 13px;color:white;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Crear
+      </button>
+    </div>
+    <!-- Filtro tipo -->
+    <div style="display:flex;gap:6px;overflow-x:auto;padding:0 14px 10px;scrollbar-width:none;">
+      <div class="com-city-chip on" data-evtype="all" onclick="App.evSetFilter('all',this)">Todos</div>
+      <div class="com-city-chip" data-evtype="salida" onclick="App.evSetFilter('salida',this)">🏃 Salidas</div>
+      <div class="com-city-chip" data-evtype="desafio" onclick="App.evSetFilter('desafio',this)">🏆 Desafíos</div>
+      <div class="com-city-chip" data-evtype="foto" onclick="App.evSetFilter('foto',this)">📸 Fotográficos</div>
+      <div class="com-city-chip" data-evtype="perro" onclick="App.evSetFilter('perro',this)">🐕 Pet-friendly</div>
+      <div class="com-city-chip" data-evtype="encuentro" onclick="App.evSetFilter('encuentro',this)">☕ Encuentros</div>
+    </div>
+  </div>
+  <div id="eventos-body" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;"></div>
+</div>
+
+<!-- MODAL CREAR EVENTO -->
+<div id="crear-evento-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--wh);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:20px 18px 32px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+      <h2 style="font-family:var(--fH);font-size:18px;font-weight:800;color:var(--dk);">Crear Evento</h2>
+      <button onclick="App.closeCrearEvento()" style="background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:18px;color:var(--gr);display:flex;align-items:center;justify-content:center;">×</button>
+    </div>
+    <!-- Tipo de evento -->
+    <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.6px;margin-bottom:8px;">TIPO DE EVENTO</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;" id="ev-type-grid">
+      <div class="ev-type-btn on" data-t="salida" onclick="App.evSelectType('salida',this)">🏃 Salida grupal</div>
+      <div class="ev-type-btn" data-t="desafio" onclick="App.evSelectType('desafio',this)">🏆 Desafío de loop</div>
+      <div class="ev-type-btn" data-t="foto" onclick="App.evSelectType('foto',this)">📸 Loop fotográfico</div>
+      <div class="ev-type-btn" data-t="perro" onclick="App.evSelectType('perro',this)">🐕 Con mascotas</div>
+      <div class="ev-type-btn" data-t="encuentro" onclick="App.evSelectType('encuentro',this)">☕ Encuentro</div>
+      <div class="ev-type-btn" data-t="estreno" onclick="App.evSelectType('estreno',this)">🆕 Estreno de loop</div>
+    </div>
+    <!-- Nombre -->
+    <div class="fg" style="margin-bottom:12px;">
+      <label class="fl">Nombre del evento *</label>
+      <input type="text" class="fi" id="ev-name" placeholder="ej. Salida grupal costanera sábado">
+    </div>
+    <!-- Descripción -->
+    <div class="fg" style="margin-bottom:12px;">
+      <label class="fl">Descripción</label>
+      <textarea class="fi" id="ev-desc" rows="2" placeholder="Contá de qué se trata el evento..."></textarea>
+    </div>
+    <!-- Loop asociado -->
+    <div class="fg" style="margin-bottom:12px;">
+      <label class="fl">Loop asociado (opcional)</label>
+      <select class="fi" id="ev-loop-select">
+        <option value="">— Sin loop específico —</option>
+      </select>
+    </div>
+    <!-- Fecha y hora -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div class="fg">
+        <label class="fl">Fecha *</label>
+        <input type="date" class="fi" id="ev-fecha">
+      </div>
+      <div class="fg">
+        <label class="fl">Hora *</label>
+        <input type="time" class="fi" id="ev-hora" value="08:00">
+      </div>
+    </div>
+    <!-- Cupo -->
+    <div class="fg" style="margin-bottom:16px;">
+      <label class="fl">Cupo máximo</label>
+      <input type="number" class="fi" id="ev-cupo" placeholder="ej. 20 (vacío = ilimitado)" min="1">
+    </div>
+    <button onclick="App.saveEvento()" style="width:100%;padding:14px;background:var(--or);color:white;border:none;border-radius:13px;font-family:var(--fH);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(255,95,0,.4);">
+      Publicar Evento 📅
+    </button>
+  </div>
+</div>
+
+<!-- MODAL PUBLICAR POST -->
+<div id="nuevo-post-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center;">
+  <div style="background:var(--wh);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:20px 18px 32px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <h2 style="font-family:var(--fH);font-size:18px;font-weight:800;color:var(--dk);">Publicar en el feed</h2>
+      <button onclick="App.closeNuevoPost()" style="background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:18px;color:var(--gr);display:flex;align-items:center;justify-content:center;">×</button>
+    </div>
+    <!-- Tipo de post -->
+    <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.6px;margin-bottom:8px;">¿QUÉ QUERÉS PUBLICAR?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+      <div class="ev-type-btn on" data-pt="loop" onclick="App.postSelectType('loop',this)">🔄 Compartir loop</div>
+      <div class="ev-type-btn" data-pt="foto" onclick="App.postSelectType('foto',this)">📸 Foto Loop</div>
+      <div class="ev-type-btn" data-pt="tema" onclick="App.postSelectType('tema',this)">💬 Tema / hilo</div>
+      <div class="ev-type-btn" data-pt="recomendacion" onclick="App.postSelectType('recomendacion',this)">📍 Recomendación</div>
+    </div>
+    <!-- Contenido dinámico según tipo -->
+    <div id="post-content-area">
+      <!-- Se rellena por JS según tipo -->
+    </div>
+    <button onclick="App.savePost()" style="width:100%;padding:14px;background:var(--or);color:white;border:none;border-radius:13px;font-family:var(--fH);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(255,95,0,.4);">
+      Publicar 🚀
+    </button>
+  </div>
 </div>
 
 <!-- ════════════ RANKING — Módulo 3 Municipal ════════════ -->
@@ -2478,6 +2697,25 @@ const App = {
           }
         } catch(e) { console.warn('FotoLoops load:', e); this._fotoPosts = this._fotoPosts || []; }
 
+        // Cargar feed posts
+        try {
+          const fpSnap = await this._db.collection('feed_posts').orderBy('ts','desc').limit(60).get();
+          this._feedPosts = [];
+          fpSnap.forEach(d => {
+            const p = {...d.data(), id: d.id};
+            this._feedPosts.push(p);
+          });
+          // Cargar imágenes de posts con img base64
+          for (const p of this._feedPosts) {
+            if (p.img === '[[base64]]') {
+              try {
+                const imgSnap = await this._db.collection('feed_imgs').doc(p.id).get();
+                if (imgSnap.exists) p.img = imgSnap.data().img || '';
+              } catch(e) {}
+            }
+          }
+        } catch(e) { console.warn('Feed posts load:', e); this._feedPosts = this._feedPosts || []; }
+
         return;
       } catch(e) {
         console.warn('Error leyendo Firestore:', e);
@@ -2648,7 +2886,7 @@ const App = {
     const target = document.getElementById(sid);
     if (target) target.classList.add('active');
 
-    const navScreens = ['explore','loops','loops-urbanos','saved','profile','comunidad','ranking','grabar','detail','admin','explorar-ciudades','ciudad-remota'];
+    const navScreens = ['explore','loops','loops-urbanos','saved','profile','comunidad','eventos','ranking','grabar','detail','admin','explorar-ciudades','ciudad-remota'];
     const fab = document.getElementById('fab-loop');
     const showFab = ['explore','loops','loops-urbanos','comunidad','ranking','profile'].includes(sid);
     if (fab) fab.style.display = showFab ? 'flex' : 'none';
@@ -2666,10 +2904,16 @@ const App = {
     if (sid==='loops')           this._renderLoops();
     if (sid==='loops-urbanos')   { this._renderLoopsUrbanos(); }
     if (sid==='comunidad')       { this._renderComunidad(); }
+    if (sid==='eventos')         { this._renderEventos(); }
     if (sid==='ranking')         { this._renderRanking(); }
     if (sid==='explorar-ciudades') { this._renderExplorar(); }
     if (sid==='grabar')          { setTimeout(()=>this._initGrabMap(),100); }
     if (sid==='profile')         { this._updateProfileUI(); }
+
+    // Update active sidebar button
+    document.querySelectorAll('.sb-nav-btn').forEach(b => b.classList.remove('active'));
+    const sbBtn = document.getElementById('sb-btn-' + sid);
+    if (sbBtn) sbBtn.classList.add('active');
   },
 
   // ── MAIN MAP (MapLibre GL JS) ──
@@ -4988,12 +5232,516 @@ const App = {
     this._renderComunidad();
   },
 
-  comTab(el, tab) {
+  comSetTab(tab, el) {
+    this._comTab = tab;
+    document.querySelectorAll('.com-tab').forEach(t => t.classList.remove('on'));
+    if (el) el.classList.add('on');
     this._renderComunidad();
   },
 
+  // ── RENDER COMUNIDAD (tabs: feed / loops / foto) ──
+  _renderComunidad() {
+    const body = document.getElementById('com-body');
+    if (!body) return;
+    const city = this._comCity || 'La Paz';
+    const tab  = this._comTab  || 'feed';
+    body.innerHTML = '';
+
+    if (tab === 'feed')  return this._renderFeed(body, city);
+    if (tab === 'loops') return this._renderComLoops(body, city);
+    if (tab === 'foto')  return this._renderComFoto(body, city);
+  },
+
+  // ─── Tab: FEED ───
+  _renderFeed(body, city) {
+    const posts = (this._feedPosts || []).filter(p =>
+      city === 'all' || !p.city || p.city === city
+    ).sort((a,b) => (b.ts||0) - (a.ts||0));
+
+    if (posts.length === 0) {
+      body.innerHTML = `
+        <div style="text-align:center;padding:48px 20px;color:var(--gr);">
+          <div style="font-size:40px;margin-bottom:12px;">💬</div>
+          <div style="font-size:14px;font-weight:600;margin-bottom:6px;">Sin publicaciones en ${city === 'all' ? 'la región' : city}</div>
+          <div style="font-size:12px;">¡Sé el primero en publicar!</div>
+        </div>`;
+      return;
+    }
+
+    const TYPE_LABEL = { loop:'🔄 Loop', foto:'📸 Foto', tema:'💬 Tema', recomendacion:'📍 Reco', evento:'📅 Evento' };
+    const TYPE_COLOR = { loop:'#1a8a4a', foto:'#7B2F9E', tema:'#2563EB', recomendacion:'#d97706', evento:'#FF5F00' };
+
+    body.innerHTML = posts.map(p => {
+      const initials = (p.authorName||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+      const liked = (this.likes||[]).includes('post_'+p.id);
+      const lkCt  = (p.likes||0) + (liked ? 1 : 0);
+      const loopRef = p.loopId ? this.routes.find(r=>r.id===p.loopId) : null;
+
+      return `<div class="post-card">
+        <div class="post-card-header">
+          <div class="post-avatar">${initials}</div>
+          <div style="flex:1;">
+            <div class="post-author">${p.authorName||'Looper'}</div>
+            <div class="post-time">${this._timeAgo(p.ts||0)} · ${p.city||city}</div>
+          </div>
+          <span class="post-type-tag" style="background:${TYPE_COLOR[p.type]||'var(--gr)'}22;color:${TYPE_COLOR[p.type]||'var(--gr)'};">${TYPE_LABEL[p.type]||p.type}</span>
+        </div>
+        ${p.text ? `<div class="post-body">${p.text}</div>` : ''}
+        ${p.img  ? `<img class="post-img" src="${p.img}" loading="lazy" onerror="this.style.display='none'">` : ''}
+        ${loopRef ? `<div class="post-loop-ref" onclick="App.showDetail('${loopRef.id}')">
+          <span style="font-size:22px;">${loopRef.emoji||'🔄'}</span>
+          <div><div style="font-size:13px;font-weight:600;color:var(--dk);">${loopRef.name}</div>
+          <div style="font-size:11px;color:var(--gr);">${loopRef.dist||'—'} · ${loopRef.dur||'—'}</div></div>
+          <svg style="margin-left:auto;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </div>` : ''}
+        ${p.replies && p.replies.length ? `<div class="thread-replies">${p.replies.map(r=>`
+          <div class="thread-reply">
+            <div class="thread-reply-avatar">${(r.authorName||'?')[0].toUpperCase()}</div>
+            <div class="thread-reply-bubble"><span style="font-weight:600;">${r.authorName||'Looper'}:</span> ${r.text}</div>
+          </div>`).join('')}</div>` : ''}
+        <div class="thread-reply-input">
+          <input id="reply-input-${p.id}" placeholder="Responder..." onkeydown="if(event.key==='Enter')App._sendReply('${p.id}')">
+          <button onclick="App._sendReply('${p.id}')">➤</button>
+        </div>
+        <div class="post-actions">
+          <button class="post-action ${liked?'liked':''}" onclick="App._likePost('${p.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            ${lkCt > 0 ? lkCt : ''} Me gusta
+          </button>
+          <button class="post-action" onclick="App._sharePost('${p.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Compartir
+          </button>
+          ${p.authorId === this._uid ? `<button class="post-action" onclick="App._deletePost('${p.id}')" style="color:var(--err);">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            Borrar
+          </button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  // ─── Tab: LOOPS de la ciudad ───
+  _renderComLoops(body, city) {
+    const list = this.routes.filter(r =>
+      r.type !== 'fotostop' &&
+      (city === 'all' || !r.cityId || r.cityId === city || r.ciudad === city)
+    );
+    if (list.length === 0) {
+      body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
+        <div style="font-size:40px;margin-bottom:12px;">🔄</div>
+        <div style="font-size:14px;font-weight:600;">Sin loops en ${city === 'all' ? 'la región' : city}</div>
+      </div>`;
+      return;
+    }
+    body.innerHTML = list.map(r => {
+      const liked = (this.likes||[]).includes(r.id);
+      const lkCt = (r.likes||0) + (liked?1:0);
+      return `<div class="post-card" style="padding:0;">
+        <div style="padding:12px 14px;display:flex;gap:12px;align-items:center;">
+          <div style="width:48px;height:48px;border-radius:12px;background:${r.color||'var(--or)'}22;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${r.emoji||'🔄'}</div>
+          <div style="flex:1;">
+            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${r.name||'Loop'}</div>
+            <div style="font-size:12px;color:var(--gr);margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'} · ❤️ ${lkCt}</div>
+            ${r.desc ? `<div style="font-size:12px;color:var(--md);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>` : ''}
+          </div>
+        </div>
+        <div class="post-actions">
+          <button class="post-action ${liked?'liked':''}" onclick="App.likeLoop('${r.id}');App._renderComunidad()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            ${liked?'Me gustó':'Me gusta'}
+          </button>
+          <button class="post-action" onclick="App.showDetail('${r.id}')">Ver loop →</button>
+          <button class="post-action" onclick="App.selectRoute('${r.id}');App.go('explore')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
+            Ver en mapa
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  // ─── Tab: FOTO LOOPS de la ciudad ───
+  _renderComFoto(body, city) {
+    const FL_CATS = {lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
+    const posts = (this._fotoPosts||[]).filter(p =>
+      city === 'all' || !p.cityId || p.cityId === city || p.ciudad === city
+    );
+    if (posts.length === 0) {
+      body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
+        <div style="font-size:40px;margin-bottom:12px;">📸</div>
+        <div style="font-size:14px;font-weight:600;">Sin Foto Loops en ${city === 'all' ? 'la región' : city}</div>
+        <div style="font-size:12px;margin-top:6px;">¡Subí el primero!</div>
+        <button onclick="App.openFotoLoop()" style="margin-top:14px;background:var(--or);border:none;border-radius:10px;padding:10px 20px;color:white;font-size:13px;font-weight:700;cursor:pointer;">+ Agregar Foto Loop</button>
+      </div>`;
+      return;
+    }
+    body.innerHTML = `<div style="padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      ${posts.map(p => `
+      <div onclick="App._openImgViewer('${p.id}','foto')"
+        style="border-radius:14px;overflow:hidden;background:var(--lt);border:0.5px solid var(--bd);cursor:pointer;transition:transform .12s;box-shadow:var(--sh);"
+        onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''"
+        ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
+        ${p.img && p.img.startsWith('data:')
+          ? `<div style="aspect-ratio:4/3;overflow:hidden;"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\'aspect-ratio:4/3;background:var(--orL);display:flex;align-items:center;justify-content:center;font-size:36px;\'>${FL_CATS[p.cat]||'📍'}</div>'"></div>`
+          : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;">${FL_CATS[p.cat]||'📍'}</div>`
+        }
+        <div style="padding:8px 10px 10px;">
+          <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name||'Foto Loop'}</div>
+          <div style="font-size:11px;color:var(--or);font-weight:600;margin-top:2px;">${FL_CATS[p.cat]||'📍'} ${p.cat||'lugar'}</div>
+          ${p.authorName ? `<div style="font-size:10px;color:var(--gr);margin-top:3px;">por ${p.authorName.split(' ')[0]}</div>` : ''}
+        </div>
+      </div>`).join('')}
+    </div>
+    <div style="padding:0 14px 14px;text-align:center;">
+      <button onclick="App.openFotoLoop()" style="background:var(--orL);border:none;border-radius:10px;padding:10px 24px;color:var(--or);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fH);">+ Agregar Foto Loop</button>
+    </div>`;
+  },
+
+  // ── LIKE en post de feed ──
+  _likePost(postId) {
+    this.likes = this.likes || [];
+    const key = 'post_' + postId;
+    const i = this.likes.indexOf(key);
+    const post = (this._feedPosts||[]).find(p=>p.id===postId);
+    if (i > -1) { this.likes.splice(i,1); if(post) post.likes = Math.max(0,(post.likes||1)-1); }
+    else { this.likes.push(key); if(post) post.likes = (post.likes||0)+1; this._addPts(1,'Like en feed'); }
+    this._savePts();
+    this._renderComunidad();
+    // Actualizar en Firestore
+    if (this._db && post) {
+      this._db.collection('feed_posts').doc(postId).update({ likes: post.likes||0 }).catch(()=>{});
+    }
+  },
+
+  _sharePost(postId) {
+    const url = location.href.split('#')[0] + '#comunidad';
+    navigator.clipboard && navigator.clipboard.writeText(url).then(()=>this.toast('🔗 Link copiado')).catch(()=>this.toast('🔗 '+url));
+  },
+
+  async _deletePost(postId) {
+    if (!confirm('¿Borrar esta publicación?')) return;
+    this._feedPosts = (this._feedPosts||[]).filter(p=>p.id!==postId);
+    if (this._db) await this._db.collection('feed_posts').doc(postId).delete().catch(()=>{});
+    this._renderComunidad();
+    this.toast('Publicación eliminada');
+  },
+
+  async _sendReply(postId) {
+    const input = document.getElementById('reply-input-'+postId);
+    if (!input || !input.value.trim()) return;
+    if (!this._uid) { this.toast('Iniciá sesión para responder'); return; }
+    const text = input.value.trim();
+    input.value = '';
+    const reply = { authorId: this._uid, authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Looper', text, ts: Date.now() };
+    const post = (this._feedPosts||[]).find(p=>p.id===postId);
+    if (post) { post.replies = post.replies || []; post.replies.push(reply); }
+    if (this._db) {
+      await this._db.collection('feed_posts').doc(postId).update({ replies: post?.replies || [reply] }).catch(()=>{});
+    }
+    this._renderComunidad();
+  },
+
+  // ── PUBLICAR POST ──
+  _postType: 'loop',
+
   openNuevoPost() {
-    this.toast('📝 Próximamente: publicar en la comunidad');
+    if (!this._uid) { this.toast('Iniciá sesión para publicar'); return; }
+    const m = document.getElementById('nuevo-post-modal');
+    if (m) { m.style.display = 'flex'; this._postType = 'loop'; this._renderPostContentArea(); }
+  },
+
+  closeNuevoPost() {
+    const m = document.getElementById('nuevo-post-modal');
+    if (m) m.style.display = 'none';
+  },
+
+  postSelectType(type, el) {
+    this._postType = type;
+    document.querySelectorAll('[data-pt]').forEach(b => b.classList.remove('on'));
+    if (el) el.classList.add('on');
+    this._renderPostContentArea();
+  },
+
+  _renderPostContentArea() {
+    const area = document.getElementById('post-content-area');
+    if (!area) return;
+    const loopOptions = this.routes.map(r => `<option value="${r.id}">${r.emoji||'🔄'} ${r.name}</option>`).join('');
+    const TEMA_CATS = ['Recomendación','Busco compañía','Estado del recorrido','Clima y condiciones','Proponer loop','Pregunta general'];
+
+    if (this._postType === 'loop') {
+      area.innerHTML = `
+        <div class="fg" style="margin-bottom:12px;"><label class="fl">Elegí un loop</label>
+        <select class="fi" id="post-loop-id"><option value="">— Elegí un loop —</option>${loopOptions}</select></div>
+        <div class="fg" style="margin-bottom:16px;"><label class="fl">Tu comentario</label>
+        <textarea class="fi" id="post-text" rows="3" placeholder="¿Qué destacás de este loop?"></textarea></div>`;
+    } else if (this._postType === 'foto') {
+      area.innerHTML = `
+        <div class="fg" style="margin-bottom:12px;"><label class="fl">Foto *</label>
+        <div style="background:var(--bg2);border:1.5px dashed var(--bd);border-radius:10px;padding:20px;text-align:center;cursor:pointer;" onclick="document.getElementById('post-img-input').click()">
+          <div id="post-img-preview" style="display:none;margin-bottom:8px;"><img id="post-img-thumb" style="max-height:140px;border-radius:8px;max-width:100%;"></div>
+          <div id="post-img-label">📸 Tocá para agregar foto</div>
+          <input type="file" id="post-img-input" accept="image/*" style="display:none" onchange="App._previewPostImg(this)">
+        </div></div>
+        <div class="fg" style="margin-bottom:12px;"><label class="fl">Descripción</label>
+        <textarea class="fi" id="post-text" rows="2" placeholder="¿Qué es este lugar?"></textarea></div>`;
+    } else if (this._postType === 'tema') {
+      area.innerHTML = `
+        <div class="fg" style="margin-bottom:12px;"><label class="fl">Categoría</label>
+        <select class="fi" id="post-tema-cat"><option value="">— Elegí una categoría —</option>${TEMA_CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div class="fg" style="margin-bottom:16px;"><label class="fl">Tu pregunta o comentario *</label>
+        <textarea class="fi" id="post-text" rows="4" placeholder="Escribí tu mensaje para la comunidad..."></textarea></div>`;
+    } else if (this._postType === 'recomendacion') {
+      area.innerHTML = `
+        <div class="fg" style="margin-bottom:12px;"><label class="fl">Loop recomendado (opcional)</label>
+        <select class="fi" id="post-loop-id"><option value="">— Sin loop específico —</option>${loopOptions}</select></div>
+        <div class="fg" style="margin-bottom:16px;"><label class="fl">Tu recomendación *</label>
+        <textarea class="fi" id="post-text" rows="4" placeholder="¿Qué recomendás y por qué?"></textarea></div>`;
+    }
+  },
+
+  _previewPostImg(input) {
+    const file = input.files[0]; if (!file) return;
+    const r = new FileReader();
+    r.onload = e => {
+      this._postImgB64 = e.target.result;
+      const thumb = document.getElementById('post-img-thumb');
+      const prev  = document.getElementById('post-img-preview');
+      const lbl   = document.getElementById('post-img-label');
+      if (thumb) thumb.src = this._postImgB64;
+      if (prev)  prev.style.display = 'block';
+      if (lbl)   lbl.style.display  = 'none';
+    };
+    r.readAsDataURL(file);
+  },
+
+  async savePost() {
+    if (!this._uid) { this.toast('Iniciá sesión para publicar'); return; }
+    const textEl = document.getElementById('post-text');
+    const text = textEl ? textEl.value.trim() : '';
+    const loopEl = document.getElementById('post-loop-id');
+    const loopId = loopEl ? loopEl.value : '';
+
+    if (!text && !loopId && !this._postImgB64) { this.toast('Completá el contenido antes de publicar'); return; }
+
+    const btn = document.querySelector('#nuevo-post-modal button:last-child');
+    if (btn) { btn.textContent = 'Publicando...'; btn.disabled = true; }
+
+    const post = {
+      id: 'post_' + Date.now(),
+      type: this._postType,
+      text, loopId,
+      img: this._postType === 'foto' ? (this._postImgB64||'') : '',
+      authorId: this._uid,
+      authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Looper',
+      city: this._luCity || this._comCity || 'La Paz',
+      ts: Date.now(), likes: 0, replies: []
+    };
+
+    // Guardar imagen separada si es foto
+    const postForDB = { ...post };
+    if (postForDB.img && postForDB.img.length > 100) {
+      if (this._db) await this._db.collection('feed_imgs').doc(post.id).set({ img: postForDB.img }).catch(()=>{});
+      postForDB.img = '[[base64]]';
+    }
+
+    if (this._db) await this._db.collection('feed_posts').doc(post.id).set(postForDB).catch(e => console.warn(e));
+
+    this._feedPosts = this._feedPosts || [];
+    this._feedPosts.unshift(post);
+    this._postImgB64 = null;
+
+    if (btn) { btn.textContent = 'Publicar 🚀'; btn.disabled = false; }
+    this.closeNuevoPost();
+    this._comTab = 'feed';
+    document.querySelectorAll('.com-tab').forEach(t=>t.classList.remove('on'));
+    const feedTab = document.getElementById('com-tab-feed');
+    if (feedTab) feedTab.classList.add('on');
+    this._renderComunidad();
+    this.toast('✅ Publicado en el feed');
+    this._addPts(5, 'Publicación en feed');
+    this._savePts();
+  },
+
+  // ── EVENTOS ──
+  _evFilter: 'all',
+
+  evSetFilter(type, el) {
+    this._evFilter = type;
+    document.querySelectorAll('[data-evtype]').forEach(c => c.classList.remove('on'));
+    if (el) el.classList.add('on');
+    this._renderEventos();
+  },
+
+  _evType: 'salida',
+
+  evSelectType(type, el) {
+    this._evType = type;
+    document.querySelectorAll('[data-t]').forEach(b => b.classList.remove('on'));
+    if (el) el.classList.add('on');
+  },
+
+  openCrearEvento() {
+    if (!this._uid) { this.toast('Iniciá sesión para crear eventos'); return; }
+    const m = document.getElementById('crear-evento-modal');
+    if (!m) return;
+    m.style.display = 'flex';
+    this._evType = 'salida';
+    // Llenar select de loops
+    const sel = document.getElementById('ev-loop-select');
+    if (sel) sel.innerHTML = '<option value="">— Sin loop específico —</option>' +
+      this.routes.map(r=>`<option value="${r.id}">${r.emoji||'🔄'} ${r.name}</option>`).join('');
+    // Fecha mínima hoy
+    const fechaEl = document.getElementById('ev-fecha');
+    if (fechaEl) fechaEl.min = new Date().toISOString().split('T')[0];
+  },
+
+  closeCrearEvento() {
+    const m = document.getElementById('crear-evento-modal');
+    if (m) m.style.display = 'none';
+  },
+
+  async saveEvento() {
+    const name  = (document.getElementById('ev-name')?.value||'').trim();
+    const desc  = (document.getElementById('ev-desc')?.value||'').trim();
+    const fecha = document.getElementById('ev-fecha')?.value;
+    const hora  = document.getElementById('ev-hora')?.value || '08:00';
+    const cupo  = parseInt(document.getElementById('ev-cupo')?.value)||0;
+    const loopId = document.getElementById('ev-loop-select')?.value||'';
+
+    if (!name)  { this.toast('Poné un nombre al evento'); return; }
+    if (!fecha) { this.toast('Elegí una fecha'); return; }
+
+    const EV_EMOJI = { salida:'🏃',desafio:'🏆',foto:'📸',perro:'🐕',encuentro:'☕',estreno:'🆕' };
+    const EV_COLOR = { salida:'#FF5F00',desafio:'#F59E0B',foto:'#7B2F9E',perro:'#10B981',encuentro:'#3B82F6',estreno:'#EC4899' };
+
+    const btn = document.querySelector('#crear-evento-modal button:last-child');
+    if (btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
+
+    const ev = {
+      id: 'ev_' + Date.now(),
+      type: this._evType || 'salida',
+      name, desc, fecha, hora, cupo, loopId,
+      emoji: EV_EMOJI[this._evType||'salida'],
+      color: EV_COLOR[this._evType||'salida'],
+      authorId: this._uid,
+      authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Looper',
+      city: this._luCity || 'La Paz',
+      ts: Date.now(), attendees: [this._uid], likes: 0
+    };
+
+    if (this._db) await this._db.collection('eventos').doc(ev.id).set(ev).catch(e=>console.warn(e));
+    this._eventos = this._eventos || [];
+    this._eventos.unshift(ev);
+
+    // También publicar en feed
+    const feedPost = { id:'post_ev_'+ev.id, type:'evento', text:`📅 Nuevo evento: "${ev.name}" — ${ev.fecha} ${ev.hora}${ev.desc?' — '+ev.desc:''}`, loopId, authorId:ev.authorId, authorName:ev.authorName, city:ev.city, ts:ev.ts, likes:0, replies:[], evId:ev.id };
+    this._feedPosts = this._feedPosts||[];
+    this._feedPosts.unshift(feedPost);
+    if (this._db) await this._db.collection('feed_posts').doc(feedPost.id).set(feedPost).catch(()=>{});
+
+    if (btn) { btn.textContent = 'Publicar Evento 📅'; btn.disabled = false; }
+    this.closeCrearEvento();
+    this._renderEventos();
+    this.toast('🎉 Evento creado y publicado en el feed');
+    this._addPts(10, 'Evento creado'); this._savePts();
+  },
+
+  async _joinEvento(evId) {
+    if (!this._uid) { this.toast('Iniciá sesión para sumarte'); return; }
+    const ev = (this._eventos||[]).find(e=>e.id===evId);
+    if (!ev) return;
+    const joined = (ev.attendees||[]).includes(this._uid);
+    if (joined) {
+      ev.attendees = ev.attendees.filter(u=>u!==this._uid);
+      this.toast('Te diste de baja del evento');
+    } else {
+      if (ev.cupo && ev.attendees.length >= ev.cupo) { this.toast('⚠️ El evento está lleno'); return; }
+      ev.attendees = ev.attendees||[];
+      ev.attendees.push(this._uid);
+      this.toast('🎉 ¡Te sumaste al evento!');
+      this._addPts(3,'Inscripción a evento'); this._savePts();
+    }
+    if (this._db) await this._db.collection('eventos').doc(evId).update({ attendees: ev.attendees }).catch(()=>{});
+    this._renderEventos();
+  },
+
+  async _renderEventos() {
+    const body = document.getElementById('eventos-body');
+    if (!body) return;
+    const filter = this._evFilter || 'all';
+
+    // Cargar eventos si no están en memoria
+    if (!this._eventos) {
+      this._eventos = [];
+      if (this._db) {
+        try {
+          const snap = await this._db.collection('eventos').orderBy('ts','desc').limit(50).get();
+          snap.forEach(d => this._eventos.push({...d.data(), id:d.id}));
+        } catch(e) { console.warn('Eventos load:', e); }
+      }
+    }
+
+    let list = this._eventos || [];
+    if (filter !== 'all') list = list.filter(e => e.type === filter);
+    // Ordenar: próximos primero
+    const now = new Date().toISOString().split('T')[0];
+    list = list.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+
+    if (list.length === 0) {
+      body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
+        <div style="font-size:40px;margin-bottom:12px;">📅</div>
+        <div style="font-size:14px;font-weight:600;">Sin eventos próximos</div>
+        <div style="font-size:12px;margin-top:6px;">¡Creá el primero!</div>
+        <button onclick="App.openCrearEvento()" style="margin-top:14px;background:var(--or);border:none;border-radius:10px;padding:10px 20px;color:white;font-size:13px;font-weight:700;cursor:pointer;">+ Crear evento</button>
+      </div>`;
+      return;
+    }
+
+    const EV_LABEL = { salida:'🏃 Salida grupal',desafio:'🏆 Desafío',foto:'📸 Fotográfico',perro:'🐕 Pet-friendly',encuentro:'☕ Encuentro',estreno:'🆕 Estreno de loop' };
+    const loop = ev => ev.loopId ? this.routes.find(r=>r.id===ev.loopId) : null;
+
+    body.innerHTML = list.map(ev => {
+      const joined  = (ev.attendees||[]).includes(this._uid||'');
+      const full    = ev.cupo > 0 && (ev.attendees||[]).length >= ev.cupo;
+      const past    = ev.fecha < now;
+      const cnt     = (ev.attendees||[]).length;
+      const loopRef = loop(ev);
+      return `<div class="ev-card">
+        <div class="ev-card-banner" style="background:${ev.color||'var(--or)'};"></div>
+        <div class="ev-card-body">
+          <div class="ev-card-type">${EV_LABEL[ev.type]||ev.type}</div>
+          <div class="ev-card-name">${ev.emoji||'📅'} ${ev.name}</div>
+          <div class="ev-card-meta">
+            <span>📅 ${ev.fecha} ${ev.hora}</span>
+            <span>👥 ${cnt}${ev.cupo ? '/'+ev.cupo : ''} personas</span>
+            <span>📍 ${ev.city||'La Paz'}</span>
+            ${past ? '<span style="color:var(--gr);">Finalizado</span>' : ''}
+            ${full && !past ? '<span style="color:#EF4444;font-weight:600;">🔴 Sin cupo</span>' : ''}
+          </div>
+          ${ev.desc ? `<div style="font-size:12px;color:var(--md);margin-bottom:10px;line-height:1.5;">${ev.desc}</div>` : ''}
+          ${loopRef ? `<div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:8px;padding:7px 10px;margin-bottom:10px;cursor:pointer;" onclick="App.showDetail('${loopRef.id}')">
+            <span style="font-size:18px;">${loopRef.emoji||'🔄'}</span>
+            <div><div style="font-size:12px;font-weight:600;color:var(--dk);">${loopRef.name}</div><div style="font-size:11px;color:var(--gr);">${loopRef.dist||'—'} · ${loopRef.dur||'—'}</div></div>
+          </div>` : ''}
+          <div style="font-size:11px;color:var(--gr);margin-bottom:8px;">Organiza: <strong>${ev.authorName||'Looper'}</strong></div>
+          <div class="ev-card-actions">
+            ${!past ? `<button class="ev-action-btn ${joined?'':'primary'}" onclick="App._joinEvento('${ev.id}')">
+              ${joined ? '✓ Me sumé' : (full ? 'Lista de espera' : '+ Sumarme')}
+            </button>` : ''}
+            ${ev.authorId === this._uid ? `<button class="ev-action-btn" onclick="App._deleteEvento('${ev.id}')" style="color:var(--err);border-color:var(--err)20;">Cancelar</button>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  async _deleteEvento(evId) {
+    if (!confirm('¿Cancelar este evento?')) return;
+    this._eventos = (this._eventos||[]).filter(e=>e.id!==evId);
+    if (this._db) await this._db.collection('eventos').doc(evId).delete().catch(()=>{});
+    this._renderEventos();
+    this.toast('Evento cancelado');
   },
 
   likeLoop(id) {
