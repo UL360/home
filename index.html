@@ -1665,7 +1665,8 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 
 <!-- MODAL CREAR EVENTO -->
 <div id="crear-evento-modal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);align-items:flex-end;justify-content:center;">
-  <div style="background:var(--wh);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;padding:20px 18px 32px;">
+  <div style="background:var(--wh);border-radius:20px 20px 0 0;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding:20px 18px 36px;">
+    <div style="width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 16px;"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
       <h2 style="font-family:var(--fH);font-size:18px;font-weight:800;color:var(--dk);">Crear Evento</h2>
       <button onclick="App.closeCrearEvento()" style="background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:18px;color:var(--gr);display:flex;align-items:center;justify-content:center;">×</button>
@@ -1709,11 +1710,40 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
       </div>
     </div>
     <!-- Cupo -->
-    <div class="fg" style="margin-bottom:16px;">
+    <div class="fg" style="margin-bottom:14px;">
       <label class="fl">Cupo máximo</label>
       <input type="number" class="fi" id="ev-cupo" placeholder="ej. 20 (vacío = ilimitado)" min="1">
     </div>
-    <button onclick="App.saveEvento()" style="width:100%;padding:14px;background:var(--or);color:white;border:none;border-radius:13px;font-family:var(--fH);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(255,95,0,.4);">
+
+    <!-- ── FOTO DEL EVENTO ── -->
+    <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.6px;margin-bottom:8px;">FOTO DEL EVENTO</div>
+    <div id="ev-img-preview" style="display:none;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:var(--bg0);margin-bottom:10px;">
+      <img id="ev-img-thumb" style="width:100%;height:100%;object-fit:cover;" src="" alt="preview">
+      <button onclick="App._clearEvImg()" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:white;font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">×</button>
+    </div>
+    <div id="ev-img-label" style="display:flex;gap:8px;margin-bottom:14px;">
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span style="font-size:12px;color:var(--or);font-weight:600;">Cámara</span>
+        <input type="file" accept="image/*" capture="environment" style="display:none" onchange="App._handleEvImg(this)">
+      </label>
+      <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span style="font-size:12px;color:var(--or);font-weight:600;">Galería</span>
+        <input type="file" accept="image/*" style="display:none" onchange="App._handleEvImg(this)">
+      </label>
+    </div>
+
+    <!-- ── PUNTO DE ENCUENTRO (mapa) ── -->
+    <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.6px;margin-bottom:8px;">PUNTO DE ENCUENTRO</div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <input id="ev-lugar" type="text" class="fi" placeholder="ej. Costanera norte, Plaza San Martín..." style="flex:1;">
+      <button onclick="App._evUseMyLocation()" style="flex-shrink:0;height:44px;padding:0 12px;background:var(--orL);border:none;border-radius:var(--rs);color:var(--or);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">📍 Mi ubicación</button>
+    </div>
+    <div id="ev-map" style="height:190px;border-radius:12px;border:1.5px solid var(--bd);overflow:hidden;background:var(--bg0);margin-bottom:6px;"></div>
+    <div id="ev-coords-lbl" style="font-size:11px;color:var(--gr);text-align:center;margin-bottom:16px;">Tocá el mapa para marcar el lugar de encuentro</div>
+
+    <button id="ev-save-btn" onclick="App.saveEvento()" style="width:100%;padding:14px;background:var(--or);color:white;border:none;border-radius:13px;font-family:var(--fH);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(255,95,0,.4);">
       Publicar Evento 📅
     </button>
   </div>
@@ -5242,30 +5272,45 @@ const App = {
       const liked  = (this.likes||[]).includes(r.id);
       const lkCt   = (r.likes||0) + (liked?1:0);
       const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
-      const color  = r.color || 'var(--or)';
-      return `<div class="post-card" style="padding:0;overflow:hidden;">
-        ${hasImg
-          ? `<div style="width:100%;height:150px;overflow:hidden;cursor:pointer;" onclick="App._openImgViewer('${r.id}')">
-               <img src="${r.img}" style="width:100%;height:100%;object-fit:cover;display:block;transition:transform .3s;" onmouseover="this.style.transform='scale(1.03)'" onmouseout="this.style.transform=''" onerror="this.parentElement.style.display='none'">
-             </div>`
-          : `<div style="width:100%;height:70px;background:linear-gradient(135deg,${color}22,${color}44);display:flex;align-items:center;justify-content:center;font-size:34px;">${r.emoji||'🔄'}</div>`
-        }
-        <div style="padding:12px 14px;display:flex;gap:12px;align-items:center;">
-          <div style="flex:1;">
-            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${r.name||'Loop'}</div>
-            <div style="font-size:12px;color:var(--gr);margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'} · ❤️ ${lkCt}</div>
-            ${r.desc ? `<div style="font-size:12px;color:var(--md);margin-top:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>` : ''}
+      const color  = r.color || '#FF5F00';
+      const TYPE_LBL = {trad:'☕ Tradicional',pesca:'🎣 Pesca',gastro:'🍽️ Gastro',atardecer:'🌅 Atardecer',running:'🏃 Running',mtb:'🚵 MTB',ciclismo:'🚴 Ciclismo',caminata:'🥾 Trekking',paseo:'🌳 Paseo',relax:'🧘 Relax',trabajo:'💼 Trabajo',vacaciones:'🏖️ Vacaciones',salidas:'🎉 Social',otra:'🗺️ Otra'};
+      return `<div style="background:var(--wh);border-radius:16px;overflow:hidden;border:0.5px solid var(--bd);box-shadow:var(--sh);cursor:pointer;transition:all .2s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shL)'" onmouseout="this.style.transform='';this.style.boxShadow='var(--sh)'">
+        <!-- Foto o banner de color -->
+        <div style="position:relative;width:100%;height:170px;overflow:hidden;background:linear-gradient(135deg,${color}33,${color}66);" onclick="App.showDetail('${r.id}')">
+          ${hasImg
+            ? `<img src="${r.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none'">`
+            : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px;">${r.emoji||'🔄'}</div>`
+          }
+          <!-- Gradiente bottom -->
+          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.65));pointer-events:none;"></div>
+          <!-- Badge tipo -->
+          <div style="position:absolute;top:10px;left:10px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;color:white;letter-spacing:.3px;">${TYPE_LBL[r.type]||r.type||'🔄 Loop'}</div>
+          <!-- Likes badge -->
+          <div style="position:absolute;top:10px;right:10px;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);border-radius:20px;padding:3px 10px;font-size:10px;font-weight:700;color:${liked?'#FF8C42':'white'};display:flex;align-items:center;gap:4px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="${liked?'#FF8C42':'none'}" stroke="${liked?'#FF8C42':'white'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            ${lkCt}
+          </div>
+          <!-- Nombre del loop superpuesto abajo -->
+          <div style="position:absolute;bottom:10px;left:12px;right:12px;pointer-events:none;">
+            <div style="font-family:var(--fH);font-size:16px;font-weight:800;color:white;text-shadow:0 1px 8px rgba(0,0,0,.6);line-height:1.2;">${r.name||'Loop'}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'} · ${r.pts?.length||0} paradas</div>
           </div>
         </div>
-        <div class="post-actions">
-          <button class="post-action ${liked?'liked':''}" onclick="App.likeLoop('${r.id}');App._renderComunidad()">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            ${liked?'Me gustó':'Me gusta'}
+        <!-- Descripción -->
+        ${r.desc ? `<div style="padding:10px 14px 2px;font-size:13px;color:var(--md);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>` : ''}
+        <!-- Botones de acción -->
+        <div style="display:flex;border-top:0.5px solid var(--bd);margin-top:10px;">
+          <button onclick="App.likeLoop('${r.id}');App._renderComunidad()" style="flex:1;padding:11px 4px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:${liked?'var(--or)':'var(--gr)'};transition:all .2s;font-family:var(--fB);" onmouseover="this.style.background='var(--orL)'" onmouseout="this.style.background='none'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="${liked?'var(--or)':'none'}" stroke="${liked?'var(--or)':'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            ${liked?'❤️ Liked':'Like'}
           </button>
-          <button class="post-action" onclick="App.showDetail('${r.id}')">Ver loop →</button>
-          <button class="post-action" onclick="App.selectRoute('${r.id}');App.go('explore')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg>
-            Ver en mapa
+          <button onclick="App.selectRoute('${r.id}');App.go('explore')" style="flex:1;padding:11px 4px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:600;border:none;border-left:0.5px solid var(--bd);border-right:0.5px solid var(--bd);background:none;cursor:pointer;color:var(--gr);transition:all .2s;font-family:var(--fB);" onmouseover="this.style.background='var(--orL)';this.style.color='var(--or)'" onmouseout="this.style.background='none';this.style.color='var(--gr)'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Mapa
+          </button>
+          <button onclick="App._shareLoopCom('${r.id}')" style="flex:1;padding:11px 4px;display:flex;align-items:center;justify-content:center;gap:5px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--gr);transition:all .2s;font-family:var(--fB);" onmouseover="this.style.background='var(--orL)';this.style.color='var(--or)'" onmouseout="this.style.background='none';this.style.color='var(--gr)'">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            Compartir
           </button>
         </div>
       </div>`;
@@ -5498,6 +5543,13 @@ const App = {
     if (!m) return;
     m.style.display = 'flex';
     this._evType = 'salida';
+    this._evLat = null; this._evLng = null; this._evImg = null;
+    // Reset imagen
+    const prev = document.getElementById('ev-img-preview');
+    const lbl  = document.getElementById('ev-img-label');
+    if (prev) prev.style.display = 'none';
+    if (lbl)  lbl.style.display  = 'flex';
+    document.getElementById('ev-coords-lbl').textContent = 'Tocá el mapa para marcar el lugar de encuentro';
     // Llenar select de loops
     const sel = document.getElementById('ev-loop-select');
     if (sel) sel.innerHTML = '<option value="">— Sin loop específico —</option>' +
@@ -5505,11 +5557,94 @@ const App = {
     // Fecha mínima hoy
     const fechaEl = document.getElementById('ev-fecha');
     if (fechaEl) fechaEl.min = new Date().toISOString().split('T')[0];
+    // Init mapa evento (con delay para que el modal esté visible)
+    setTimeout(() => this._initEvMap(), 150);
+  },
+
+  _evMapInst: null,
+  _evMarker: null,
+
+  _initEvMap() {
+    const el = document.getElementById('ev-map');
+    if (!el || el._evMapReady) return;
+    el._evMapReady = true;
+    const isDark = !document.body.classList.contains('day');
+    const style = isDark ? this._ML_STYLE_DARK : this._ML_STYLE_LIGHT;
+    // Centro en La Paz, Entre Ríos
+    const center = this._userLng ? [this._userLng, this._userLat] : [-60.4831, -30.7394];
+    this._evMapInst = new maplibregl.Map({
+      container: el,
+      style,
+      center,
+      zoom: 14,
+      attributionControl: false
+    });
+    this._evMapInst.on('click', e => {
+      const { lng, lat } = e.lngLat;
+      this._evLat = lat; this._evLng = lng;
+      if (this._evMarker) this._evMarker.remove();
+      const markerEl = document.createElement('div');
+      markerEl.innerHTML = `<div style="width:32px;height:32px;background:var(--or);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:14px;">📍</span></div>`;
+      this._evMarker = new maplibregl.Marker({ element: markerEl, anchor: 'bottom' })
+        .setLngLat([lng, lat]).addTo(this._evMapInst);
+      document.getElementById('ev-coords-lbl').textContent = `📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    });
+  },
+
+  _evUseMyLocation() {
+    if (!this._userLat) { this.toast('Sin ubicación disponible'); return; }
+    const lat = this._userLat, lng = this._userLng;
+    this._evLat = lat; this._evLng = lng;
+    if (this._evMapInst) {
+      this._evMapInst.flyTo({ center: [lng, lat], zoom: 15 });
+      if (this._evMarker) this._evMarker.remove();
+      const markerEl = document.createElement('div');
+      markerEl.innerHTML = `<div style="width:32px;height:32px;background:var(--or);border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;"><span style="transform:rotate(45deg);font-size:14px;">📍</span></div>`;
+      this._evMarker = new maplibregl.Marker({ element: markerEl, anchor: 'bottom' })
+        .setLngLat([lng, lat]).addTo(this._evMapInst);
+    }
+    document.getElementById('ev-coords-lbl').textContent = `📍 Mi ubicación: ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    this.toast('📍 Ubicación usada');
+  },
+
+  _handleEvImg(input) {
+    const file = input.files?.[0]; if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const raw = e.target.result;
+      // Comprimir con canvas
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 800;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        this._evImg = c.toDataURL('image/jpeg', 0.78);
+        document.getElementById('ev-img-thumb').src = this._evImg;
+        document.getElementById('ev-img-preview').style.display = 'block';
+        document.getElementById('ev-img-label').style.display = 'none';
+      };
+      img.src = raw;
+    };
+    reader.readAsDataURL(file);
+  },
+
+  _clearEvImg() {
+    this._evImg = null;
+    document.getElementById('ev-img-thumb').src = '';
+    document.getElementById('ev-img-preview').style.display = 'none';
+    document.getElementById('ev-img-label').style.display = 'flex';
   },
 
   closeCrearEvento() {
     const m = document.getElementById('crear-evento-modal');
     if (m) m.style.display = 'none';
+    // Limpiar mapa para reinicializar la próxima vez
+    const el = document.getElementById('ev-map');
+    if (el) el._evMapReady = false;
+    if (this._evMapInst) { try { this._evMapInst.remove(); } catch(e){} this._evMapInst = null; }
+    if (this._evMarker) { this._evMarker = null; }
   },
 
   async saveEvento() {
@@ -5519,6 +5654,7 @@ const App = {
     const hora  = document.getElementById('ev-hora')?.value || '08:00';
     const cupo  = parseInt(document.getElementById('ev-cupo')?.value)||0;
     const loopId = document.getElementById('ev-loop-select')?.value||'';
+    const lugar  = (document.getElementById('ev-lugar')?.value||'').trim();
 
     if (!name)  { this.toast('Poné un nombre al evento'); return; }
     if (!fecha) { this.toast('Elegí una fecha'); return; }
@@ -5526,13 +5662,13 @@ const App = {
     const EV_EMOJI = { salida:'🏃',desafio:'🏆',foto:'📸',perro:'🐕',encuentro:'☕',estreno:'🆕' };
     const EV_COLOR = { salida:'#FF5F00',desafio:'#F59E0B',foto:'#7B2F9E',perro:'#10B981',encuentro:'#3B82F6',estreno:'#EC4899' };
 
-    const btn = document.querySelector('#crear-evento-modal button:last-child');
+    const btn = document.getElementById('ev-save-btn');
     if (btn) { btn.textContent = '☁️ Guardando en nube...'; btn.disabled = true; }
 
     const ev = {
       id: 'ev_' + Date.now(),
       type: this._evType || 'salida',
-      name, desc, fecha, hora, cupo, loopId,
+      name, desc, fecha, hora, cupo, loopId, lugar,
       emoji: EV_EMOJI[this._evType||'salida'],
       color: EV_COLOR[this._evType||'salida'],
       authorId: this._uid,
@@ -5540,6 +5676,11 @@ const App = {
       city: this._luCity || 'La Paz',
       ts: Date.now(), attendees: [this._uid], likes: 0
     };
+
+    // Incluir imagen si la cargaron
+    if (this._evImg) ev.img = this._evImg;
+    // Incluir coordenadas del punto de encuentro
+    if (this._evLat) { ev.lat = this._evLat; ev.lng = this._evLng; }
 
     // ── Guardar en Firestore con feedback real ──
     let savedToCloud = false;
@@ -5631,10 +5772,20 @@ const App = {
       const past    = ev.fecha < now;
       const cnt     = (ev.attendees||[]).length;
       const loopRef = loop(ev);
+      const hasImg  = ev.img && (ev.img.startsWith('data:') || ev.img.startsWith('http'));
       return `<div class="ev-card">
-        <div class="ev-card-banner" style="background:${ev.color||'var(--or)'};"></div>
+        ${hasImg
+          ? `<div style="width:100%;height:160px;overflow:hidden;position:relative;border-radius:12px 12px 0 0;">
+               <img src="${ev.img}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.parentElement.style.display='none'">
+               <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 50%,rgba(0,0,0,.55));pointer-events:none;"></div>
+               <div style="position:absolute;bottom:10px;left:12px;">
+                 <span style="background:${ev.color||'var(--or)'};color:white;font-size:10px;font-weight:700;padding:3px 9px;border-radius:12px;">${EV_LABEL[ev.type]||ev.type}</span>
+               </div>
+             </div>`
+          : `<div class="ev-card-banner" style="background:${ev.color||'var(--or)'};"></div>`
+        }
         <div class="ev-card-body">
-          <div class="ev-card-type">${EV_LABEL[ev.type]||ev.type}</div>
+          ${!hasImg ? `<div class="ev-card-type">${EV_LABEL[ev.type]||ev.type}</div>` : ''}
           <div class="ev-card-name">${ev.emoji||'📅'} ${ev.name}</div>
           <div class="ev-card-meta">
             <span>📅 ${ev.fecha} ${ev.hora}</span>
@@ -5643,15 +5794,25 @@ const App = {
             ${past ? '<span style="color:var(--gr);">Finalizado</span>' : ''}
             ${full && !past ? '<span style="color:#EF4444;font-weight:600;">🔴 Sin cupo</span>' : ''}
           </div>
+          ${ev.lugar ? `<div style="font-size:12px;color:var(--md);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${ev.lugar}</div>` : ''}
           ${ev.desc ? `<div style="font-size:12px;color:var(--md);margin-bottom:10px;line-height:1.5;">${ev.desc}</div>` : ''}
           ${loopRef ? `<div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:8px;padding:7px 10px;margin-bottom:10px;cursor:pointer;" onclick="App.showDetail('${loopRef.id}')">
             <span style="font-size:18px;">${loopRef.emoji||'🔄'}</span>
             <div><div style="font-size:12px;font-weight:600;color:var(--dk);">${loopRef.name}</div><div style="font-size:11px;color:var(--gr);">${loopRef.dist||'—'} · ${loopRef.dur||'—'}</div></div>
           </div>` : ''}
+          ${ev.lat ? `<div id="ev-map-${ev.id}" style="height:130px;border-radius:10px;overflow:hidden;margin-bottom:10px;border:0.5px solid var(--bd);background:var(--bg0);" data-lat="${ev.lat}" data-lng="${ev.lng}">
+            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gr);gap:6px;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+              <a href="https://www.google.com/maps?q=${ev.lat},${ev.lng}" target="_blank" style="color:var(--or);font-weight:600;text-decoration:none;">Ver en Google Maps →</a>
+            </div>
+          </div>` : ''}
           <div style="font-size:11px;color:var(--gr);margin-bottom:8px;">Organiza: <strong>${ev.authorName||'Looper'}</strong></div>
           <div class="ev-card-actions">
             ${!past ? `<button class="ev-action-btn ${joined?'':'primary'}" onclick="App._joinEvento('${ev.id}')">
               ${joined ? '✓ Me sumé' : (full ? 'Lista de espera' : '+ Sumarme')}
+            </button>` : ''}
+            ${ev.lat ? `<button class="ev-action-btn" onclick="window.open('https://www.google.com/maps?q=${ev.lat},${ev.lng}','_blank')" style="display:flex;align-items:center;gap:5px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/></svg> Cómo llegar
             </button>` : ''}
             ${ev.authorId === this._uid ? `<button class="ev-action-btn" onclick="App._deleteEvento('${ev.id}')" style="color:var(--err);border-color:var(--err)20;">Cancelar</button>` : ''}
           </div>
@@ -5666,6 +5827,18 @@ const App = {
     if (this._db) await this._db.collection('eventos').doc(evId).delete().catch(()=>{});
     this._renderEventos();
     this.toast('Evento cancelado');
+  },
+
+  _shareLoopCom(id) {
+    const r = this.routes.find(x => x.id === id);
+    if (!r) return;
+    const url = location.href.split('#')[0] + '#explore';
+    const text = `🔄 ${r.name} — ${r.dist||''} ${r.dur||''}\n${r.desc||''}\n${url}`;
+    if (navigator.share) {
+      navigator.share({ title: r.name, text, url }).catch(()=>{});
+    } else {
+      navigator.clipboard?.writeText(text).then(()=>this.toast('✅ Link copiado')).catch(()=>this.toast('No se pudo copiar'));
+    }
   },
 
   likeLoop(id) {
