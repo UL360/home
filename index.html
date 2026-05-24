@@ -6548,8 +6548,41 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   // ══════════════════════════════════════════
   // NOTIFICACIONES — Notification API + Firestore
   // ══════════════════════════════════════════
-  _notifPerm: 'default',  // 'default' | 'granted' | 'denied'
+  _notifPerm: 'default',
   _notifLastCheck: 0,
+
+  // City notif banner (mantener para compatibilidad con HTML existente)
+  _initCityNotif() {
+    setTimeout(()=>this.showCityNotif({
+      city:'La Paz, Entre Ríos',
+      symbols:[
+        {em:'🌅',lbl:'Atardecer'},{em:'🎣',lbl:'Pesca'},{em:'🌳',lbl:'Parques'},
+        {em:'🍽️',lbl:'Restoranes'},{em:'⚓',lbl:'Puerto'},{em:'🏃',lbl:'Running'},
+        {em:'☕',lbl:'Cafés'},{em:'🏛️',lbl:'Historia'},{em:'🚴',lbl:'Ciclovía'},
+      ],
+      loops: this.routes.length
+    }), 4000);
+  },
+  showCityNotif({city, symbols, loops}) {
+    const t = document.getElementById('cn-title');
+    const c = document.getElementById('cn-loops-ct');
+    const s = document.getElementById('cn-symbols');
+    if(t) t.textContent = 'Pasando por ' + city;
+    if(c) c.textContent = loops + ' loop' + (loops!==1?'s':'') + ' disponible' + (loops!==1?'s':'');
+    if(s) s.innerHTML = symbols.map(x=>`<div class="cn-sym"><div class="cn-sym-bubble">${x.em}</div><div class="cn-sym-lbl">${x.lbl}</div></div>`).join('');
+    const notif = document.getElementById('city-notif');
+    if(!notif) return;
+    notif.style.display = 'block';
+    setTimeout(()=>notif.classList.add('show'), 20);
+    clearTimeout(this._cnTimer);
+    this._cnTimer = setTimeout(()=>this.closeCityNotif(), 8000);
+  },
+  closeCityNotif() {
+    const notif = document.getElementById('city-notif');
+    if(!notif) return;
+    notif.classList.remove('show');
+    setTimeout(()=>notif.style.display='none', 400);
+  },
 
   async _initNotifications() {
     if (!('Notification' in window)) return;
