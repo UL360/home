@@ -2677,24 +2677,23 @@ const App = {
       const avEl   = document.getElementById('pf-av-txt');
       const nameEl = document.getElementById('pf-display-name');
       const emailEl= document.getElementById('pf-email-txt');
+      const ptsEl  = document.getElementById('pf-stat-pts');
       // Actualizar estado del botón de notificaciones
-    const notifLbl = document.getElementById('notif-setting-lbl');
-    const notifSub = document.getElementById('notif-setting-sub');
-    const notifIc  = document.getElementById('notif-ic');
-    if (notifLbl && 'Notification' in window) {
-      const perm = Notification.permission;
-      if (perm === 'granted') {
-        notifLbl.textContent = '🔔 Notificaciones activas';
-        if(notifSub) notifSub.textContent = 'Recibís avisos de nuevos eventos';
-        if(notifIc) notifIc.style.background = '#D1FAE5';
-        if(notifIc) notifIc.querySelector('svg')?.setAttribute('stroke','#059669');
-      } else if (perm === 'denied') {
-        notifLbl.textContent = '🔕 Notificaciones bloqueadas';
-        if(notifSub) notifSub.textContent = 'Activarlas desde config del navegador';
-        if(notifIc) notifIc.style.background = '#FEE2E2';
-        if(notifIc) notifIc.querySelector('svg')?.setAttribute('stroke','#EF4444');
+      const notifLbl = document.getElementById('notif-setting-lbl');
+      const notifSub = document.getElementById('notif-setting-sub');
+      const notifIc  = document.getElementById('notif-ic');
+      if (notifLbl && 'Notification' in window) {
+        const perm = Notification.permission;
+        if (perm === 'granted') {
+          notifLbl.textContent = '🔔 Notificaciones activas';
+          if(notifSub) notifSub.textContent = 'Recibís avisos de nuevos eventos';
+          if(notifIc) notifIc.style.background = '#D1FAE5';
+        } else if (perm === 'denied') {
+          notifLbl.textContent = '🔕 Notificaciones bloqueadas';
+          if(notifSub) notifSub.textContent = 'Activarlas desde config del navegador';
+          if(notifIc) notifIc.style.background = '#FEE2E2';
+        }
       }
-    }
       const loopsEl= document.getElementById('pf-stat-loops');
       if (avEl)    avEl.textContent = this._user.photoURL
         ? '' : initials;
