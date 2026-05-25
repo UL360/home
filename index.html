@@ -3262,6 +3262,8 @@ const App = {
           this.mainMap.flyTo({ center: [lng, lat], zoom: 16, duration: 900 });
           this._locCentered = false;
         }
+        // Detectar ciudad real del usuario y actualizar filtros
+        this._updateCityFromGPS(lat, lng);
         this.toast('📍 Ubicación encontrada');
       } else {
         // Actualizar marcador
@@ -4512,10 +4514,9 @@ const App = {
 
     if (!lat || !lng) return this.toast('⚠️ Marcá la ubicación en el mapa');
 
-    // ── Detectar ciudad por coordenadas ──
+    // ── Detectar ciudad por las coordenadas del punto marcado en el mapa (no del GPS del usuario) ──
     this.toast('📍 Detectando ciudad...');
-    // Usar la ciudad activa si disponible, sino detectar por GPS
-    const cityId = this._luCity || await this._detectCityFromCoords(lat, lng);
+    const cityId = await this._cityFromMapPoint(lat, lng);
 
     const catEmojis = {
       lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', playa:'🏖️', parque:'🌳',
@@ -5114,8 +5115,23 @@ const App = {
           this.go('profile');
           return;
         }
-        // Detectar ciudad: usar el dropdown adm-city (que se auto-completa al colocar el primer punto)
-        let cityId = document.getElementById('adm-city')?.value || this._luCity || 'La Paz';
+        // Ciudad: siempre del primer punto dibujado en el mapa (no del GPS del usuario)
+        const fp = this.aPts[0];
+        const fpLat = Array.isArray(fp) ? fp[0] : fp?.lat;
+        const fpLng = Array.isArray(fp) ? fp[1] : fp?.lng;
+        let cityId = await this._cityFromMapPoint(fpLat, fpLng);
+        // También actualizar el dropdown para que sea consistente
+        const selCity = document.getElementById('adm-city');
+        if (selCity) {
+          const opts = Array.from(selCity.options);
+          const match = opts.find(o => cityId.toLowerCase().includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(cityId.toLowerCase()));
+          if (match) { selCity.value = match.value; cityId = match.value; }
+          else {
+            const newOpt = document.createElement('option');
+            newOpt.value = cityId; newOpt.textContent = `📍 ${cityId}`;
+            selCity.appendChild(newOpt); selCity.value = cityId;
+          }
+        }
         const r = {
           id:`custom-${Date.now()}`, name, type, desc:desc||`Loop ${name}, ${cityId}.`,
           emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
@@ -5209,9 +5225,17 @@ const App = {
     const list = document.getElementById('lu-list');
     if (!list) return;
 
-    let loops = this.routes.filter(r => r.type !== 'fotostop');
-    const cityLoops = loops.filter(r => (r.cityId||r.ciudad||'La Paz') === city);
-    if (cityLoops.length) loops = cityLoops;
+    // Normalizar ciudad para comparación (ej: "Ciudad Autónoma de Buenos Aires" → "Buenos Aires")
+    const normCity = c => (c||'')
+      .replace(/ciudad aut[oó]noma de /i,'')
+      .replace(/partido de /i,'')
+      .trim().toLowerCase();
+
+    const loops = this.routes.filter(r => {
+      if (r.type === 'fotostop') return false;
+      const c = normCity(r.cityId || r.ciudad || '');
+      return c === normCity(city);
+    });
 
     const scored = loops.map(r => ({
       ...r, _score: (r.likes||0)*2 + (r.paseos||0)
@@ -5337,9 +5361,15 @@ const App = {
 
     const FL_CATS = {lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
 
-    const posts = (this._fotoPosts||[]).filter(p =>
-      (p.cityId === city || p.ciudad === city || (!p.cityId && !p.ciudad))
-    );
+    const normCity = c => (c||'')
+      .replace(/ciudad aut[oó]noma de /i,'')
+      .replace(/partido de /i,'')
+      .trim().toLowerCase();
+
+    const posts = (this._fotoPosts||[]).filter(p => {
+      const c = normCity(p.cityId || p.ciudad || '');
+      return c === normCity(city);
+    });
 
     if (posts.length === 0) {
       list.innerHTML = `<div style="text-align:center;padding:48px 20px;">
@@ -5437,7 +5467,49 @@ const App = {
     } catch(e) { return this._luCity || 'La Paz'; }
   },
 
-  // Versión síncrona de detección de ciudad (solo tabla local, sin fetch)
+  // Detecta la ciudad real del usuario desde GPS y actualiza _luCity + filtros
+  async _updateCityFromGPS(lat, lng) {
+    if (this._cityDetected) return; // solo la primera vez
+    this._cityDetected = true;
+    try {
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
+        { headers: { 'Accept-Language': 'es' } }
+      );
+      const data = await r.json();
+      const city = data.address?.city || data.address?.town || data.address?.village || '';
+      if (city && city !== this._luCity) {
+        this._luCity = city;
+        this._comCity = city;
+        // Actualizar label si la pantalla está visible
+        const lbl = document.getElementById('lu-city-label');
+        if (lbl) lbl.textContent = city + ', Entre Ríos';
+        console.log(`[GPS] Ciudad detectada: ${city}`);
+      }
+    } catch(e) {
+      // Fallback a tabla local
+      const city = this._cityFromCoordsSync(lat, lng);
+      if (city && city !== this._luCity) {
+        this._luCity = city;
+        this._comCity = city;
+      }
+    }
+  },
+
+  // Detecta la ciudad de un punto del mapa via Nominatim (async)
+  async _cityFromMapPoint(lat, lng) {
+    try {
+      const r = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
+        { headers: { 'Accept-Language': 'es' } }
+      );
+      const data = await r.json();
+      const city = data.address?.city || data.address?.town || data.address?.village || '';
+      if (city) return city;
+    } catch(e) {}
+    // Fallback a tabla local
+    return this._cityFromCoordsSync(lat, lng);
+  },
   _cityFromCoordsSync(lat, lng) {
     if (!lat || !lng) return this._luCity || 'La Paz';
     const KNOWN = [
@@ -5504,8 +5576,9 @@ const App = {
 
   // ─── Tab: FEED ───
   _renderFeed(body, city) {
+    const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
     const posts = (this._feedPosts || []).filter(p =>
-      city === 'all' || !p.city || p.city === city
+      city === 'all' || normCity(p.city) === normCity(city)
     ).sort((a,b) => (b.ts||0) - (a.ts||0));
 
     if (posts.length === 0) {
@@ -5573,9 +5646,10 @@ const App = {
 
   // ─── Tab: LOOPS de la ciudad ───
   _renderComLoops(body, city) {
+    const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
     const list = this.routes.filter(r =>
       r.type !== 'fotostop' &&
-      (city === 'all' || !r.cityId || r.cityId === city || r.ciudad === city)
+      (city === 'all' || normCity(r.cityId || r.ciudad) === normCity(city))
     );
     if (list.length === 0) {
       body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
@@ -5645,8 +5719,9 @@ const App = {
   // ─── Tab: FOTO LOOPS de la ciudad ───
   _renderComFoto(body, city) {
     const FL_CATS = {lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
+    const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
     const posts = (this._fotoPosts||[]).filter(p =>
-      city === 'all' || !p.cityId || p.cityId === city || p.ciudad === city
+      city === 'all' || normCity(p.cityId || p.ciudad) === normCity(city)
     );
     if (posts.length === 0) {
       body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
