@@ -1317,6 +1317,13 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
       <span class="sb-icon">👤</span><span class="sb-label">Perfil</span>
     </button>
 
+    <!-- ADMINISTRACIÓN -->
+    <div class="sb-divider"></div>
+    <span class="sb-section-label">Administración</span>
+    <button class="sb-nav-btn" id="sb-btn-admin" onclick="App.sideNav('admin')">
+      <span class="sb-icon">🛡️</span><span class="sb-label">Panel Admin</span>
+    </button>
+
   </div>
 
   <!-- Grabar CTA (solo abierto) -->
@@ -1435,13 +1442,6 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 
       <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);letter-spacing:.8px;margin-bottom:8px;">CONFIGURACIÓN</div>
 
-      <div class="set-item" onclick="App.go('admin')">
-        <div class="set-l">
-          <div class="set-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
-          <div><h4>Crear loop</h4><small>Agregar una nueva ruta</small></div>
-        </div>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-      </div>
       <div class="set-item" id="notif-setting-row" onclick="App._requestNotifPerm()" style="cursor:pointer;">
         <div class="set-l">
           <div class="set-ic" id="notif-ic" style="background:#FEF3C7;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
@@ -1533,10 +1533,14 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
         <div class="fg"><label class="fl">Ciudad</label>
           <select class="fi" id="adm-city">
             <option value="La Paz">📍 La Paz</option>
+            <option value="Santa Elena">📍 Santa Elena</option>
             <option value="Paraná">Paraná</option>
             <option value="Concordia">Concordia</option>
             <option value="Gualeguaychú">Gualeguaychú</option>
             <option value="Colón">Colón</option>
+            <option value="Victoria">Victoria</option>
+            <option value="Diamante">Diamante</option>
+            <option value="Nogoyá">Nogoyá</option>
             <option value="Rosario">Rosario</option>
             <option value="Buenos Aires">Buenos Aires</option>
             <option value="Córdoba">Córdoba</option>
@@ -4830,7 +4834,10 @@ const App = {
         try{if(this.admMap.getSource(id))this.admMap.removeSource(id);}catch(e){}
       });
       this._admLine=null;
-      this._renderPts(); this._renderPois(); return;
+      this._renderPts(); this._renderPois();
+      // Re-centrar en GPS actual
+      this._admCenterOnGPS();
+      return;
     }
     this.admMap = new maplibregl.Map({
       container: 'admin-map',
@@ -4841,8 +4848,51 @@ const App = {
     this.admMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
     this.admMap.on('load', () => {
       this.admMap.on('click', e => this._addAdmPt(e.lngLat.lat, e.lngLat.lng));
+      // Centrar en ubicación real del usuario
+      this._admCenterOnGPS();
     });
     this._renderPts(); this._renderPois();
+  },
+
+  // Centra el mapa admin en la posición GPS real y auto-llena la ciudad
+  _admCenterOnGPS() {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async pos => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      if (this.admMap) {
+        this.admMap.flyTo({ center: [lng, lat], zoom: 14, duration: 1200 });
+      }
+      // Detectar ciudad real via Nominatim
+      try {
+        const r = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
+          { headers: { 'Accept-Language': 'es' } }
+        );
+        const data = await r.json();
+        const detectedCity = data.address?.city || data.address?.town || data.address?.village || '';
+        if (detectedCity) {
+          const sel = document.getElementById('adm-city');
+          if (sel) {
+            // Buscar opción que coincida (exacto o parcial)
+            const opts = Array.from(sel.options);
+            const match = opts.find(o => detectedCity.toLowerCase().includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(detectedCity.toLowerCase()));
+            if (match) {
+              sel.value = match.value;
+              this.toast(`📍 Ciudad detectada: ${match.value}`);
+            } else {
+              // Agregar opción dinámica si no existe
+              const newOpt = document.createElement('option');
+              newOpt.value = detectedCity;
+              newOpt.textContent = `📍 ${detectedCity}`;
+              sel.appendChild(newOpt);
+              sel.value = detectedCity;
+              this.toast(`📍 Ciudad detectada: ${detectedCity}`);
+            }
+          }
+        }
+      } catch(e) { /* silencioso */ }
+    }, () => { /* sin permiso GPS — queda en La Paz */ }, { timeout: 8000 });
   },
 
   /* _addPt legacy removed */
@@ -4893,6 +4943,31 @@ const App = {
     this._redrawAdmLine();
     this._renderPts(); this._updatePtBadge();
     this.toast(`Punto ${n} agregado`);
+    // Al colocar el primer punto: auto-detectar ciudad real via Nominatim
+    if (n === 1) {
+      fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
+        { headers: { 'Accept-Language': 'es' } }
+      ).then(r => r.json()).then(data => {
+        const city = data.address?.city || data.address?.town || data.address?.village || '';
+        if (!city) return;
+        const sel = document.getElementById('adm-city');
+        if (!sel) return;
+        const opts = Array.from(sel.options);
+        const match = opts.find(o => city.toLowerCase().includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(city.toLowerCase()));
+        if (match) {
+          sel.value = match.value;
+          this.toast(`📍 Ciudad actualizada: ${match.value}`);
+        } else {
+          const newOpt = document.createElement('option');
+          newOpt.value = city;
+          newOpt.textContent = `📍 ${city}`;
+          sel.appendChild(newOpt);
+          sel.value = city;
+          this.toast(`📍 Ciudad: ${city}`);
+        }
+      }).catch(()=>{});
+    }
   },
   _updatePtBadge() {
     const el = document.getElementById('adm-pts-count');
@@ -4995,14 +5070,8 @@ const App = {
           this.go('profile');
           return;
         }
-        // Detectar ciudad por el primer punto del loop
-        let cityId = this._luCity || 'La Paz';
-        if (this.aPts.length > 0) {
-          const fp = this.aPts[0];
-          const lat = Array.isArray(fp) ? fp[0] : fp.lat;
-          const lng = Array.isArray(fp) ? fp[1] : fp.lng;
-          cityId = this._cityFromCoordsSync(lat, lng);
-        }
+        // Detectar ciudad: usar el dropdown adm-city (que se auto-completa al colocar el primer punto)
+        let cityId = document.getElementById('adm-city')?.value || this._luCity || 'La Paz';
         const r = {
           id:`custom-${Date.now()}`, name, type, desc:desc||`Loop ${name}, ${cityId}.`,
           emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
@@ -5328,12 +5397,22 @@ const App = {
   _cityFromCoordsSync(lat, lng) {
     if (!lat || !lng) return this._luCity || 'La Paz';
     const KNOWN = [
-      [-30.749,-59.645,20,'La Paz'],[-31.730,-60.530,35,'Paraná'],
-      [-31.390,-57.950,25,'Concordia'],[-33.011,-58.522,25,'Gualeguaychú'],
-      [-32.227,-58.140,20,'Colón'],[-32.946,-60.639,40,'Rosario'],
-      [-27.468,-58.834,35,'Corrientes'],[-34.603,-58.381,60,'Buenos Aires'],
-      [-38.000,-57.558,35,'Mar del Plata'],[-32.890,-68.845,40,'Mendoza'],
-      [-31.417,-64.183,40,'Córdoba'],[-27.480,-55.765,40,'Misiones'],
+      [-30.749,-59.645,20,'La Paz'],
+      [-30.953,-60.078,20,'Santa Elena'],
+      [-31.730,-60.530,35,'Paraná'],
+      [-31.390,-57.950,25,'Concordia'],
+      [-33.011,-58.522,25,'Gualeguaychú'],
+      [-32.227,-58.140,20,'Colón'],
+      [-32.615,-60.155,20,'Victoria'],
+      [-32.067,-60.641,20,'Diamante'],
+      [-32.393,-59.793,20,'Nogoyá'],
+      [-32.946,-60.639,40,'Rosario'],
+      [-27.468,-58.834,35,'Corrientes'],
+      [-34.603,-58.381,60,'Buenos Aires'],
+      [-38.000,-57.558,35,'Mar del Plata'],
+      [-32.890,-68.845,40,'Mendoza'],
+      [-31.417,-64.183,40,'Córdoba'],
+      [-27.480,-55.765,40,'Misiones'],
     ];
     const d=(a,b,c,e)=>{const R=6371,dL=(c-a)*Math.PI/180,dG=(e-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));};
     let best=null,min=Infinity;
