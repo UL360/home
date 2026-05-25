@@ -1361,7 +1361,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   <div class="dt-hero" id="dt-hero">
     <img id="dt-img" class="dt-hero-img" src="" alt="">
     <div class="dt-hero-grad"></div>
-    <button class="dt-back" onclick="App.go('explore')">
+    <button class="dt-back" onclick="App.go(App._prevScreen||'explore')">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
     </button>
     <button class="dt-fav" id="dt-fav-btn" onclick="App.toggleFav()">
@@ -1791,17 +1791,12 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
         Publicar
       </button>
     </div>
-    <!-- City chips -->
-    <div id="com-city-chips" style="display:flex;gap:6px;overflow-x:auto;padding:0 14px 10px;scrollbar-width:none;">
-      <div class="com-city-chip" data-city="all" onclick="App.comSetCity(this,'all')">Todas</div>
-      <div class="com-city-chip on" data-city="La Paz" onclick="App.comSetCity(this,'La Paz')">📍 La Paz</div>
-      <div class="com-city-chip" data-city="Paraná" onclick="App.comSetCity(this,'Paraná')">Paraná</div>
-      <div class="com-city-chip" data-city="Concordia" onclick="App.comSetCity(this,'Concordia')">Concordia</div>
-      <div class="com-city-chip" data-city="Gualeguaychú" onclick="App.comSetCity(this,'Gualeguaychú')">Gualeguaychú</div>
-      <div class="com-city-chip" data-city="Colón" onclick="App.comSetCity(this,'Colón')">Colón</div>
-      <div class="com-city-chip" data-city="Rosario" onclick="App.comSetCity(this,'Rosario')">Rosario</div>
-      <div class="com-city-chip" data-city="Buenos Aires" onclick="App.comSetCity(this,'Buenos Aires')">Bs. Aires</div>
-      <div class="com-city-chip" data-city="Córdoba" onclick="App.comSetCity(this,'Córdoba')">Córdoba</div>
+    <!-- Ciudad detectada automáticamente desde GPS — no hay filtro manual -->
+    <div id="com-city-chips" style="display:none;"></div>
+    <!-- Label de ciudad activa -->
+    <div style="padding:4px 14px 10px;display:flex;align-items:center;gap:6px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      <span id="com-city-label" style="font-size:12px;font-weight:600;color:var(--md);">Detectando ciudad...</span>
     </div>
     <!-- Tabs: Feed / Loops / Foto Loops -->
     <div style="display:flex;border-top:0.5px solid var(--bd);">
@@ -3122,6 +3117,12 @@ const App = {
 
   // ── NAVIGATION ──
   go(sid, pushHistory=true) {
+    // Guardar pantalla anterior para navegación "atrás"
+    if (this._currentScreen && this._currentScreen !== sid) {
+      this._prevScreen = this._currentScreen;
+    }
+    this._currentScreen = sid;
+
     // history.pushState falla en file:// (Edge/Chrome lo bloquea por seguridad)
     if (pushHistory && location.protocol !== 'file:') {
       try { history.pushState({ screen: sid }, '', '#' + sid); } catch(e) {}
@@ -3498,13 +3499,47 @@ const App = {
     this._layers[r.id] = layerIds;
   },
 
-  // ── FotoLoops solo en Somos Loopers — no se muestran en el mapa ──
+  // ── FotoLoops aprobados → aparecen en el mapa como etiqueta/tag ──
   _fotoMarkers: [],
   _drawFotoStopsOnMap() {
-    // FotoLoops removidos del mapa por solicitud del usuario.
-    // Se muestran únicamente en la sección "Somos Loopers".
-    (this._fotoMarkers || []).forEach(m => m.remove());
+    // Limpiar marcadores anteriores
+    (this._fotoMarkers || []).forEach(m => { try { m.remove(); } catch(e){} });
     this._fotoMarkers = [];
+    if (!this.mainMap) return;
+    // Mostrar solo fotoloops APROBADOS, con lat/lng válido
+    const approved = (this._fotoPosts || []).filter(p => p.status === 'approved' && p.lat && p.lng);
+    const FL_CATS = {
+      lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',
+      plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',
+      ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'
+    };
+    approved.forEach(p => {
+      const emoji = FL_CATS[p.cat] || p.emoji || '📍';
+      const label = p.cat || 'lugar';
+      const el = document.createElement('div');
+      el.style.cssText = [
+        'background:#1E1E26',
+        'border:1.5px solid #FF5F00',
+        'border-radius:10px',
+        'padding:3px 8px',
+        'display:flex',
+        'align-items:center',
+        'gap:4px',
+        'font-size:13px',
+        'box-shadow:0 2px 10px rgba(0,0,0,.4)',
+        'cursor:pointer',
+        'white-space:nowrap',
+        'max-width:110px',
+        'pointer-events:all'
+      ].join(';');
+      el.innerHTML = `<span>${emoji}</span><span style="font-size:10px;font-weight:700;color:#FF5F00;overflow:hidden;text-overflow:ellipsis;">${label}</span>`;
+      el.title = p.name || 'Foto Loop';
+      el.onclick = () => App._openImgViewer(p.id, 'foto');
+      const mkr = new maplibregl.Marker({ element: el, anchor: 'bottom-left' })
+        .setLngLat([p.lng, p.lat])
+        .addTo(this.mainMap);
+      this._fotoMarkers.push(mkr);
+    });
   },
 
   _refreshMain() {
@@ -5115,23 +5150,27 @@ const App = {
           this.go('profile');
           return;
         }
-        // Ciudad: siempre del primer punto dibujado en el mapa (no del GPS del usuario)
-        const fp = this.aPts[0];
-        const fpLat = Array.isArray(fp) ? fp[0] : fp?.lat;
-        const fpLng = Array.isArray(fp) ? fp[1] : fp?.lng;
-        let cityId = await this._cityFromMapPoint(fpLat, fpLng);
-        // También actualizar el dropdown para que sea consistente
+        // Ciudad: usar el select como fuente autoritaria (ya auto-detectado en _addAdmPt al primer click)
         const selCity = document.getElementById('adm-city');
-        if (selCity) {
-          const opts = Array.from(selCity.options);
-          const match = opts.find(o => cityId.toLowerCase().includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(cityId.toLowerCase()));
-          if (match) { selCity.value = match.value; cityId = match.value; }
-          else {
-            const newOpt = document.createElement('option');
-            newOpt.value = cityId; newOpt.textContent = `📍 ${cityId}`;
-            selCity.appendChild(newOpt); selCity.value = cityId;
+        let cityId = (selCity?.value || '').trim();
+        // Si por alguna razón el select está vacío, intentar detectar desde el primer punto
+        if (!cityId) {
+          const fp = this.aPts[0];
+          const fpLat = Array.isArray(fp) ? fp[0] : fp?.lat;
+          const fpLng = Array.isArray(fp) ? fp[1] : fp?.lng;
+          cityId = await this._cityFromMapPoint(fpLat, fpLng);
+          if (selCity && cityId) {
+            const opts = Array.from(selCity.options);
+            const match = opts.find(o => cityId.toLowerCase().includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(cityId.toLowerCase()));
+            if (match) { selCity.value = match.value; cityId = match.value; }
+            else {
+              const newOpt = document.createElement('option');
+              newOpt.value = cityId; newOpt.textContent = `📍 ${cityId}`;
+              selCity.appendChild(newOpt); selCity.value = cityId;
+            }
           }
         }
+        console.log(`[saveRoute] Ciudad detectada: "${cityId}" (desde select: "${selCity?.value}")`);
         const r = {
           id:`custom-${Date.now()}`, name, type, desc:desc||`Loop ${name}, ${cityId}.`,
           emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
@@ -5484,6 +5523,9 @@ const App = {
         // Actualizar label si la pantalla está visible
         const lbl = document.getElementById('lu-city-label');
         if (lbl) lbl.textContent = city + ', Entre Ríos';
+        // Actualizar también el label de Comunidad
+        const comLbl = document.getElementById('com-city-label');
+        if (comLbl) comLbl.textContent = city + ', Entre Ríos';
         console.log(`[GPS] Ciudad detectada: ${city}`);
       }
     } catch(e) {
@@ -5547,6 +5589,40 @@ const App = {
     return 'ahora';
   },
 
+  // ── Distancia Haversine en km entre dos puntos ──
+  _haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dL = (lat2-lat1)*Math.PI/180, dG = (lng2-lng1)*Math.PI/180;
+    const a = Math.sin(dL/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dG/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  },
+
+  // Tabla de coords de ciudades conocidas para filtro de proximidad
+  _CITY_COORDS: {
+    'La Paz':       { lat:-30.749, lng:-59.645 },
+    'Santa Elena':  { lat:-30.953, lng:-60.078 },
+    'Paraná':       { lat:-31.730, lng:-60.530 },
+    'Concordia':    { lat:-31.390, lng:-57.950 },
+    'Gualeguaychú': { lat:-33.011, lng:-58.522 },
+    'Colón':        { lat:-32.227, lng:-58.140 },
+    'Victoria':     { lat:-32.615, lng:-60.155 },
+    'Diamante':     { lat:-32.067, lng:-60.641 },
+    'Nogoyá':       { lat:-32.393, lng:-59.793 },
+    'Rosario':      { lat:-32.946, lng:-60.639 },
+    'Corrientes':   { lat:-27.468, lng:-58.834 },
+    'Buenos Aires': { lat:-34.603, lng:-58.381 },
+    'Córdoba':      { lat:-31.417, lng:-64.183 },
+    'Mendoza':      { lat:-32.890, lng:-68.845 },
+    'Misiones':     { lat:-27.480, lng:-55.765 },
+  },
+
+  // ¿El usuario está a menos de km del centro de una ciudad?
+  _isNearCity(cityName, km=15) {
+    const coords = this._CITY_COORDS[cityName];
+    if (!coords || !this._lastLat || !this._lastLng) return true; // sin GPS → mostrar todo
+    return this._haversineKm(this._lastLat, this._lastLng, coords.lat, coords.lng) <= km;
+  },
+
   comSetCity(el, city) {
     this._comCity = city;
     document.querySelectorAll('.com-city-chip').forEach(c => c.classList.remove('on'));
@@ -5565,9 +5641,14 @@ const App = {
   _renderComunidad() {
     const body = document.getElementById('com-body');
     if (!body) return;
-    const city = this._comCity || 'La Paz';
+    // Ciudad: usar la detectada por GPS, no un filtro manual
+    const city = this._luCity || this._comCity || 'La Paz';
+    this._comCity = city; // sincronizar
     const tab  = this._comTab  || 'feed';
     body.innerHTML = '';
+    // Actualizar label de ciudad en la UI
+    const lbl = document.getElementById('com-city-label');
+    if (lbl) lbl.textContent = city + ', Entre Ríos';
 
     if (tab === 'feed')  return this._renderFeed(body, city);
     if (tab === 'loops') return this._renderComLoops(body, city);
@@ -5649,7 +5730,8 @@ const App = {
     const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
     const list = this.routes.filter(r =>
       r.type !== 'fotostop' &&
-      (city === 'all' || normCity(r.cityId || r.ciudad) === normCity(city))
+      (city === 'all' || normCity(r.cityId || r.ciudad) === normCity(city)) &&
+      this._isNearCity(r.cityId || r.ciudad || city, 15)
     );
     if (list.length === 0) {
       body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
@@ -5720,8 +5802,11 @@ const App = {
   _renderComFoto(body, city) {
     const FL_CATS = {lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
     const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
+    // Solo aprobados, dentro de la ciudad del usuario y en radio de 15km
     const posts = (this._fotoPosts||[]).filter(p =>
-      city === 'all' || normCity(p.cityId || p.ciudad) === normCity(city)
+      p.status === 'approved' &&
+      (city === 'all' || normCity(p.cityId || p.ciudad) === normCity(city)) &&
+      this._isNearCity(p.cityId || p.ciudad || city, 15)
     );
     if (posts.length === 0) {
       body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
@@ -7045,8 +7130,10 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (this._db) {
       try { await this._db.collection('fotoloops').doc(id).update({status}); } catch(e){}
     }
+    // Refrescar marcadores del mapa si está disponible
+    if (this.mainMap) this._drawFotoStopsOnMap();
     this._admRenderFotoloops();
-    this.toast(status==='approved' ? '✅ Foto loop aprobado' : '❌ Foto loop rechazado');
+    this.toast(status==='approved' ? '✅ Foto loop aprobado — aparece en el mapa' : '❌ Foto loop rechazado');
   },
 
   async _admDeleteFL(id) {
