@@ -2577,6 +2577,20 @@ const App = {
         // Siempre actualizar la UI del perfil
         this._updateProfileUI();
 
+        // Guardar/actualizar documento de perfil en users/{uid} para que el admin pueda listarlos
+        if (user && this._db) {
+          try {
+            await this._db.collection('users').doc(user.uid).set({
+              uid: user.uid,
+              displayName: user.displayName || user.email?.split('@')[0] || 'Anónimo',
+              email: user.email || '',
+              photoURL: user.photoURL || '',
+              createdAt: (await this._db.collection('users').doc(user.uid).get()).data()?.createdAt || Date.now(),
+              lastSeen: Date.now()
+            }, { merge: true });
+          } catch(e) { /* silencioso */ }
+        }
+
         // Si ya arrancó la app (no el init), recargar datos y navegar a perfil
         if (this._appReady) {
           await this._loadData();
@@ -7017,7 +7031,13 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (!this._db) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Firebase no disponible</div>`; return; }
     el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--gr);font-size:13px;">Cargando usuarios...</div>`;
     try {
-      const snap = await this._db.collection('users').orderBy('createdAt','desc').limit(50).get();
+      let snap;
+      try {
+        snap = await this._db.collection('users').orderBy('createdAt','desc').limit(50).get();
+      } catch(e) {
+        // Fallback sin orderBy si falta el índice o el campo
+        snap = await this._db.collection('users').limit(50).get();
+      }
       if (snap.empty) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin usuarios registrados</div>`; return; }
       el.innerHTML = snap.docs.map(doc => {
         const u = {id:doc.id,...doc.data()};
