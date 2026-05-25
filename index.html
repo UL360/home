@@ -662,6 +662,28 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 /* ═══════════════════════
    ADMIN
 ═══════════════════════ */
+.adm-tab { padding:10px 14px;border:none;background:none;font-size:13px;font-weight:600;color:var(--gr);cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent;font-family:var(--fH);transition:all .15s; }
+.adm-tab.on { color:var(--or);border-bottom-color:var(--or); }
+.adm-panel { padding:14px 14px calc(var(--navH) + 16px); }
+.adm-stat { background:var(--bg2);border-radius:12px;padding:14px;text-align:center; }
+.adm-stat-n { font-family:var(--fH);font-size:26px;font-weight:800;color:var(--dk); }
+.adm-stat-l { font-size:11px;color:var(--gr);margin-top:2px; }
+.adm-stat-warn .adm-stat-n { color:#EF4444; }
+.adm-item { background:var(--wh);border-radius:12px;border:0.5px solid var(--bd);padding:12px 14px;display:flex;flex-direction:column;gap:6px; }
+.adm-item-row { display:flex;align-items:center;gap:8px; }
+.adm-item-thumb { width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;background:var(--bg2); }
+.adm-item-info { flex:1;min-width:0; }
+.adm-item-name { font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.adm-item-meta { font-size:11px;color:var(--gr);margin-top:1px; }
+.adm-item-actions { display:flex;gap:6px;flex-wrap:wrap; }
+.adm-btn { padding:6px 12px;border-radius:8px;border:none;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--fH); }
+.adm-btn-green { background:#D1FAE5;color:#065F46; }
+.adm-btn-red { background:#FEE2E2;color:#991B1B; }
+.adm-btn-blue { background:#DBEAFE;color:#1E40AF; }
+.adm-btn-orange { background:var(--orL);color:var(--or); }
+.adm-activity-item { display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border-radius:10px; }
+.adm-activity-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+.adm-notif-item { background:var(--bg2);border-radius:10px;padding:10px 12px; }
 #admin { background:var(--lt); overflow-y:auto; }
 .adm-hdr {
   background:var(--wh); padding:14px 16px;
@@ -1457,103 +1479,180 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 <!-- ════════════ ADMIN ════════════ -->
 <div id="admin" class="screen">
   <div class="adm-hdr">
-    <button class="adm-back" onclick="App.go('explore')">
+    <button class="adm-back" onclick="App._admBack()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#374151" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
     </button>
     <div class="adm-hdr-txt">
-      <h2>Cargá tu loop de ciudad</h2>
-      <p>Panel de administración · Urban Loop 360°</p>
+      <h2 id="adm-hdr-title">Panel Admin</h2>
+      <p id="adm-hdr-sub">Urban Loop 360° · Solo vos</p>
     </div>
+    <div style="font-size:20px;">🛡️</div>
   </div>
-  <div class="adm-body">
 
-    <!-- Info card -->
-    <div class="ac">
-      <div class="act">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        Información de el loop
+  <!-- ─── ACCESO DENEGADO ─── -->
+  <div id="adm-denied" style="display:none;flex:1;align-items:center;justify-content:center;flex-direction:column;gap:16px;padding:40px 24px;text-align:center;">
+    <div style="font-size:52px;">🔒</div>
+    <div style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);">Acceso restringido</div>
+    <div style="font-size:14px;color:var(--gr);max-width:280px;">Solo el administrador puede acceder a este panel.</div>
+    <button onclick="App.go('explore')" style="padding:12px 28px;background:var(--or);color:white;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--fH);">Volver al inicio</button>
+  </div>
+
+  <!-- ─── CONTENIDO ADMIN ─── -->
+  <div id="adm-content" style="display:none;flex:1;overflow-y:auto;">
+
+    <!-- NAV TABS -->
+    <div style="display:flex;overflow-x:auto;padding:0 14px;border-bottom:0.5px solid var(--bd);background:var(--wh);gap:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;" id="adm-tabs">
+      <button class="adm-tab on" data-tab="dashboard" onclick="App._admTab('dashboard',this)">📊 Dashboard</button>
+      <button class="adm-tab" data-tab="crear-loop" onclick="App._admTab('crear-loop',this)">➕ Crear loop</button>
+      <button class="adm-tab" data-tab="loops" onclick="App._admTab('loops',this)">🔄 Loops</button>
+      <button class="adm-tab" data-tab="fotoloops" onclick="App._admTab('fotoloops',this)">📸 FotoLoops</button>
+      <button class="adm-tab" data-tab="eventos" onclick="App._admTab('eventos',this)">📅 Eventos</button>
+      <button class="adm-tab" data-tab="usuarios" onclick="App._admTab('usuarios',this)">👥 Usuarios</button>
+      <button class="adm-tab" data-tab="reportes" onclick="App._admTab('reportes',this)">🚩 Reportes</button>
+      <button class="adm-tab" data-tab="notifs" onclick="App._admTab('notifs',this)">🔔 Notif.</button>
+    </div>
+
+    <!-- ── DASHBOARD ── -->
+    <div id="adm-tab-dashboard" class="adm-panel">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;">
+        <div class="adm-stat"><div class="adm-stat-n" id="aStat-users">—</div><div class="adm-stat-l">Usuarios</div></div>
+        <div class="adm-stat"><div class="adm-stat-n" id="aStat-loops">—</div><div class="adm-stat-l">Loops</div></div>
+        <div class="adm-stat"><div class="adm-stat-n" id="aStat-eventos">—</div><div class="adm-stat-l">Eventos</div></div>
+        <div class="adm-stat adm-stat-warn"><div class="adm-stat-n" id="aStat-reportes">—</div><div class="adm-stat-l">Reportes pend.</div></div>
       </div>
-      <div class="fg"><label class="fl">Nombre *</label><input type="text" class="fi" id="adm-name" placeholder="ej. Loop del Arroyo Las Tunas…"></div>
-      <div class="fg"><label class="fl">Descripción</label><textarea class="fi" id="adm-desc" placeholder="Describí la experiencia de este loop..."></textarea></div>
-      <div class="fg"><label class="fl">Tipo de loop</label>
-        <select class="fi" id="adm-type">
-          <option value="trad">☕ Tradicional</option>
-          <option value="pesca">🎣 Pesca</option>
-          <option value="gastro">🍽️ Gastronómica</option>
-          <option value="atardecer">🌅 Atardecer</option>
-          <option value="running">🏃 Running</option>
-          <option value="mtb">🚵 MTB</option>
-          <option value="ciclismo">🚴 Ciclismo / Ruta</option>
-          <option value="caminata">🥾 Caminata / Trekking</option>
-          <option value="paseo">🌳 Paseo</option>
-          <option value="relax">🧘 Relax / Meditación</option>
-          <option value="trabajo">💼 Trabajo</option>
-          <option value="vacaciones">🏖️ Vacaciones</option>
-          <option value="salidas">🎉 Salidas / Social</option>
-          <option value="otra">🗺️ Otra</option>
+      <div style="font-size:12px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:10px;">ACTIVIDAD RECIENTE</div>
+      <div id="adm-activity" style="display:flex;flex-direction:column;gap:8px;"></div>
+    </div>
+
+    <!-- ── CREAR LOOP ── -->
+    <div id="adm-tab-crear-loop" class="adm-panel" style="display:none;">
+      <div class="ac">
+        <div class="act">📝 Información del loop</div>
+        <div class="fg"><label class="fl">Nombre *</label><input type="text" class="fi" id="adm-name" placeholder="ej. Loop del Arroyo Las Tunas…"></div>
+        <div class="fg"><label class="fl">Descripción</label><textarea class="fi" id="adm-desc" placeholder="Describí la experiencia de este loop..."></textarea></div>
+        <div class="fg"><label class="fl">Ciudad</label>
+          <select class="fi" id="adm-city">
+            <option value="La Paz">📍 La Paz</option>
+            <option value="Paraná">Paraná</option>
+            <option value="Concordia">Concordia</option>
+            <option value="Gualeguaychú">Gualeguaychú</option>
+            <option value="Colón">Colón</option>
+            <option value="Rosario">Rosario</option>
+            <option value="Buenos Aires">Buenos Aires</option>
+            <option value="Córdoba">Córdoba</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl">Tipo de loop</label>
+          <select class="fi" id="adm-type">
+            <option value="trad">☕ Tradicional</option><option value="pesca">🎣 Pesca</option>
+            <option value="gastro">🍽️ Gastronómica</option><option value="atardecer">🌅 Atardecer</option>
+            <option value="running">🏃 Running</option><option value="mtb">🚵 MTB</option>
+            <option value="ciclismo">🚴 Ciclismo / Ruta</option><option value="caminata">🥾 Caminata / Trekking</option>
+            <option value="paseo">🌳 Paseo</option><option value="relax">🧘 Relax / Meditación</option>
+            <option value="trabajo">💼 Trabajo</option><option value="vacaciones">🏖️ Vacaciones</option>
+            <option value="salidas">🎉 Salidas / Social</option><option value="otra">🗺️ Otra</option>
+          </select>
+        </div>
+      </div>
+      <div class="ac">
+        <div class="act">🗺️ Trazado de la Ruta</div>
+        <div id="admin-map"></div>
+        <div class="map-hint">💡 Hacé clic en el mapa para agregar puntos a la ruta</div>
+        <div class="pts-list" id="pts-list"></div>
+        <button class="btn-clr" onclick="App.clearPts()">🗑 Limpiar puntos</button>
+      </div>
+      <div class="ac">
+        <div class="act">📍 Puntos de Interés (POIs)</div>
+        <div class="poi-list" id="poi-list"></div>
+        <button class="btn-add" onclick="App.addPOI()">＋ Agregar POI</button>
+      </div>
+      <div class="ac">
+        <div class="act">🖼️ Foto del Loop</div>
+        <div id="adm-img-preview" style="display:none;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:var(--bg0);margin-bottom:10px;">
+          <img id="adm-img-thumb" style="width:100%;height:100%;object-fit:cover;" src="" alt="preview">
+          <button onclick="App._clearAdmImg()" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:white;font-size:18px;cursor:pointer;">×</button>
+          <div id="adm-img-size" style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.55);color:white;font-size:10px;padding:2px 8px;border-radius:10px;"></div>
+        </div>
+        <div id="adm-img-label" style="display:flex;gap:8px;">
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span style="font-size:12px;color:var(--or);font-weight:600;">Cámara</span>
+            <input type="file" accept="image/*" capture="environment" style="display:none" onchange="App._handleAdmImg(this)">
+          </label>
+          <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            <span style="font-size:12px;color:var(--or);font-weight:600;">Galería</span>
+            <input type="file" id="adm-img-input" accept="image/*" style="display:none" onchange="App._handleAdmImg(this)">
+          </label>
+        </div>
+        <div style="font-size:11px;color:var(--gr);text-align:center;margin-top:6px;">Se comprime a ~75 KB automáticamente</div>
+      </div>
+      <button class="btn-save" id="adm-save-btn" onclick="App.saveRoute()">Guardar Loop 🚀</button>
+      <div style="height:24px;"></div>
+    </div>
+
+    <!-- ── LOOPS ── -->
+    <div id="adm-tab-loops" class="adm-panel" style="display:none;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;">
+        <input id="adm-loops-q" type="text" class="fi" placeholder="Buscar loop..." style="flex:1;" oninput="App._admRenderLoops()">
+        <select class="fi" id="adm-loops-city" style="width:120px;" onchange="App._admRenderLoops()">
+          <option value="">Todas</option>
+          <option value="La Paz">La Paz</option><option value="Paraná">Paraná</option>
+          <option value="Concordia">Concordia</option><option value="Gualeguaychú">Gualeguaychú</option>
         </select>
       </div>
+      <div id="adm-loops-list" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
 
-    <!-- Map card -->
-    <div class="ac">
-      <div class="act">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-        Trazado de la Ruta
+    <!-- ── FOTOLOOPS ── -->
+    <div id="adm-tab-fotoloops" class="adm-panel" style="display:none;">
+      <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+        <select class="fi" id="adm-fl-filter" style="width:140px;" onchange="App._admRenderFotoloops()">
+          <option value="all">Todos</option>
+          <option value="pending">⏳ Pendientes</option>
+          <option value="approved">✅ Aprobados</option>
+          <option value="rejected">❌ Rechazados</option>
+        </select>
+        <span id="adm-fl-count" style="font-size:12px;color:var(--gr);margin-left:auto;"></span>
       </div>
-      <div id="admin-map"></div>
-      <div class="map-hint">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        Hacé clic en el mapa para agregar puntos a la ruta
-      </div>
-      <div class="pts-list" id="pts-list"></div>
-      <button class="btn-clr" onclick="App.clearPts()">🗑 Limpiar todos los puntos</button>
+      <div id="adm-fl-list" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
 
-    <!-- POIs card -->
-    <div class="ac">
-      <div class="act">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        Puntos de Interés (POIs)
-      </div>
-      <div class="poi-list" id="poi-list"></div>
-      <button class="btn-add" onclick="App.addPOI()">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        Agregar POI
-      </button>
+    <!-- ── EVENTOS ── -->
+    <div id="adm-tab-eventos" class="adm-panel" style="display:none;">
+      <div id="adm-ev-list" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
 
-    <!-- ── FOTO DEL LOOP ── -->
-    <div class="ac" style="margin-top:12px;">
-      <div class="act">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-        Foto del Loop
-      </div>
-      <!-- Preview -->
-      <div id="adm-img-preview" style="display:none;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:var(--bg0);margin-bottom:10px;">
-        <img id="adm-img-thumb" style="width:100%;height:100%;object-fit:cover;" src="" alt="preview">
-        <button onclick="App._clearAdmImg()" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:white;font-size:18px;line-height:1;cursor:pointer;">×</button>
-        <div id="adm-img-size" style="position:absolute;bottom:8px;left:8px;background:rgba(0,0,0,.55);color:white;font-size:10px;padding:2px 8px;border-radius:10px;"></div>
-      </div>
-      <!-- Upload label: cámara + galería -->
-      <div id="adm-img-label" style="display:flex;gap:8px;">
-        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <span style="font-size:12px;color:var(--or);font-weight:600;">Cámara</span>
-          <input type="file" accept="image/*" capture="environment" style="display:none" onchange="App._handleAdmImg(this)">
-        </label>
-        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--bg0);">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-          <span style="font-size:12px;color:var(--or);font-weight:600;">Galería</span>
-          <input type="file" id="adm-img-input" accept="image/*" style="display:none" onchange="App._handleAdmImg(this)">
-        </label>
-      </div>
-      <div style="font-size:11px;color:var(--gr);text-align:center;margin-top:6px;">Se comprime a ~75 KB automáticamente</div>
+    <!-- ── USUARIOS ── -->
+    <div id="adm-tab-usuarios" class="adm-panel" style="display:none;">
+      <div id="adm-users-list" style="display:flex;flex-direction:column;gap:8px;"></div>
     </div>
 
-    <button class="btn-save" onclick="App.saveRoute()">Guardar Loop 🚀</button>
-    <div style="height:24px;"></div>
-  </div>
+    <!-- ── REPORTES ── -->
+    <div id="adm-tab-reportes" class="adm-panel" style="display:none;">
+      <div id="adm-rep-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+      <div id="adm-rep-empty" style="display:none;text-align:center;padding:40px 20px;color:var(--gr);">
+        <div style="font-size:32px;margin-bottom:8px;">✅</div>
+        <div>Sin reportes pendientes</div>
+      </div>
+    </div>
+
+    <!-- ── NOTIFICACIONES ── -->
+    <div id="adm-tab-notifs" class="adm-panel" style="display:none;">
+      <div class="ac">
+        <div class="act">📢 Enviar notificación a todos</div>
+        <div class="fg"><label class="fl">Título</label><input type="text" class="fi" id="adm-notif-title" placeholder="ej. Nuevo evento este sábado!"></div>
+        <div class="fg"><label class="fl">Mensaje</label><textarea class="fi" id="adm-notif-body" rows="3" placeholder="Escribí el mensaje que recibirán todos los usuarios..."></textarea></div>
+        <button onclick="App._admSendNotif()" style="width:100%;padding:13px;background:var(--or);color:white;border:none;border-radius:12px;font-weight:700;font-size:14px;cursor:pointer;font-family:var(--fH);margin-top:4px;">🔔 Enviar a todos</button>
+      </div>
+      <div class="ac" style="margin-top:12px;">
+        <div class="act">📋 Historial de envíos</div>
+        <div id="adm-notif-history" style="display:flex;flex-direction:column;gap:8px;"></div>
+      </div>
+    </div>
+
+  </div><!-- /adm-content -->
+  <div class="adm-body" id="adm-body-old" style="display:none;"></div>
 </div>
 
 
@@ -2996,8 +3095,7 @@ const App = {
       else setTimeout(()=>{ this.mainMap && this.mainMap.resize(); if(!this.selId) this._refreshMain(); this._renderCards('', this._activeFilter||'all'); },120);
     }
     if (sid==='admin') {
-      if(!this.admMap) setTimeout(()=>this._initAdminMap(),120);
-      else setTimeout(()=>this.admMap && this.admMap.resize(),120);
+      this._initAdmin();
     }
     if (sid==='loops')           this._renderLoops();
     if (sid==='loops-urbanos')   { this._renderLoopsUrbanos(); }
@@ -6545,8 +6643,413 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   shareLoop(id) { this._qrId=id; this.shareQR(); },
 
   // ══════════════════════════════════════════
-  // NOTIFICACIONES — Notification API + Firestore
+  // ADMIN PANEL
   // ══════════════════════════════════════════
+  ADMIN_UID: '1OUEsPkVYrgvHP2jA0DcIvYjsUJ3',  // ← pegá tu UID de Firebase acá
+
+  _admCurrentTab: 'dashboard',
+
+  _isAdmin() {
+    return this._uid && (this._uid === this.ADMIN_UID);
+  },
+
+  _initAdmin() {
+    const denied  = document.getElementById('adm-denied');
+    const content = document.getElementById('adm-content');
+    if (!this._isAdmin()) {
+      if (denied)  denied.style.display  = 'flex';
+      if (content) content.style.display = 'none';
+      return;
+    }
+    if (denied)  denied.style.display  = 'none';
+    if (content) content.style.display = 'flex';
+    // Inicializar mapa del admin (crear-loop tab)
+    if (!this.admMap) setTimeout(()=>this._initAdminMap(), 120);
+    else setTimeout(()=>this.admMap && this.admMap.resize(), 120);
+    // Cargar datos del tab activo
+    this._admTab(this._admCurrentTab || 'dashboard');
+  },
+
+  _admBack() {
+    this.go('explore');
+  },
+
+  _admTab(tab, btnEl) {
+    this._admCurrentTab = tab;
+    // Actualizar tabs visuales
+    document.querySelectorAll('.adm-tab').forEach(b => b.classList.remove('on'));
+    if (btnEl) btnEl.classList.add('on');
+    else {
+      const b = document.querySelector(`.adm-tab[data-tab="${tab}"]`);
+      if (b) b.classList.add('on');
+    }
+    // Mostrar/ocultar paneles
+    document.querySelectorAll('.adm-panel').forEach(p => p.style.display = 'none');
+    const panel = document.getElementById(`adm-tab-${tab}`);
+    if (panel) panel.style.display = 'block';
+    // Resize mapa si toca
+    if (tab === 'crear-loop') setTimeout(()=>this.admMap && this.admMap.resize(), 120);
+    // Cargar datos
+    if (tab === 'dashboard')   this._admLoadDashboard();
+    if (tab === 'loops')       this._admRenderLoops();
+    if (tab === 'fotoloops')   this._admRenderFotoloops();
+    if (tab === 'eventos')     this._admRenderEventos();
+    if (tab === 'usuarios')    this._admRenderUsuarios();
+    if (tab === 'reportes')    this._admRenderReportes();
+    if (tab === 'notifs')      this._admRenderNotifHistory();
+  },
+
+  // ── Dashboard ──
+  async _admLoadDashboard() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('aStat-loops',    this.routes.filter(r=>r.type!=='fotostop').length);
+    set('aStat-eventos',  (this._eventos||[]).filter(e=>e.fecha >= new Date().toISOString().split('T')[0]).length);
+    // Cargar contadores desde Firebase
+    if (this._db) {
+      try {
+        const [users, reports] = await Promise.all([
+          this._db.collection('users').get(),
+          this._db.collection('reports').where('status','==','pending').get()
+        ]);
+        set('aStat-users',    users.size);
+        set('aStat-reportes', reports.size);
+      } catch(e) {
+        set('aStat-users', '—'); set('aStat-reportes', '—');
+      }
+    }
+    // Actividad reciente
+    const act = document.getElementById('adm-activity');
+    if (!act) return;
+    const recent = [...this.routes].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).slice(0,5);
+    act.innerHTML = recent.length === 0
+      ? `<div style="font-size:13px;color:var(--gr);text-align:center;padding:20px;">Sin actividad reciente</div>`
+      : recent.map(r => `
+        <div class="adm-activity-item">
+          <div class="adm-activity-dot" style="background:${r.color||'var(--or)'};"></div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}</div>
+            <div style="font-size:11px;color:var(--gr);">${r.authorName||'Anónimo'} · ${r.ciudad||r.cityId||'—'} · ${r.type||''}</div>
+          </div>
+          <div style="font-size:10px;color:var(--gr);">${r.createdAt ? new Date(r.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'short'}) : ''}</div>
+        </div>`).join('');
+  },
+
+  // ── Loops ──
+  _admRenderLoops() {
+    const q    = (document.getElementById('adm-loops-q')?.value||'').toLowerCase();
+    const city = document.getElementById('adm-loops-city')?.value||'';
+    const list = this.routes.filter(r =>
+      r.type !== 'fotostop' &&
+      (!q    || r.name?.toLowerCase().includes(q)) &&
+      (!city || r.cityId === city || r.ciudad === city)
+    );
+    const el = document.getElementById('adm-loops-list');
+    if (!el) return;
+    if (list.length === 0) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin loops</div>`; return; }
+    el.innerHTML = list.map(r => {
+      const hasImg = r.img && r.img.startsWith('data:');
+      return `<div class="adm-item">
+        <div class="adm-item-row">
+          ${hasImg ? `<img class="adm-item-thumb" src="${r.img}">` : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${r.emoji||'🔄'}</div>`}
+          <div class="adm-item-info">
+            <div class="adm-item-name">${r.name}</div>
+            <div class="adm-item-meta">${r.ciudad||r.cityId||'—'} · ${r.type} · ${r.dist||'—'} · ❤️${r.likes||0}</div>
+            <div class="adm-item-meta">Por: ${r.authorName||'Anónimo'}</div>
+          </div>
+        </div>
+        <div class="adm-item-actions">
+          <button class="adm-btn adm-btn-blue" onclick="App._admEditLoop('${r.id}')">✏️ Editar</button>
+          <button class="adm-btn adm-btn-orange" onclick="App.selectRoute('${r.id}');App.go('explore')">🗺️ Ver mapa</button>
+          <button class="adm-btn adm-btn-red" onclick="App._admDeleteLoop('${r.id}','${r.name.replace(/'/g,'')}')">🗑️ Eliminar</button>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  async _admDeleteLoop(id, name) {
+    if (!confirm(`¿Eliminar el loop "${name}"? Esta acción no se puede deshacer.`)) return;
+    this.routes = this.routes.filter(r => r.id !== id);
+    if (this._db) {
+      try { await this._db.collection('loops').doc(id).delete(); } catch(e){}
+      try { await this._db.collection('loop_imgs').doc(id).delete(); } catch(e){}
+    }
+    await this._saveData();
+    this._admRenderLoops();
+    this._renderCards('', this._activeFilter||'all');
+    this.toast(`🗑️ Loop "${name}" eliminado`);
+  },
+
+  _admEditLoop(id) {
+    const r = this.routes.find(x=>x.id===id);
+    if (!r) return;
+    // Ir a crear-loop con datos precargados
+    this._admTab('crear-loop', null);
+    setTimeout(() => {
+      const n = document.getElementById('adm-name'); if(n) n.value = r.name||'';
+      const d = document.getElementById('adm-desc'); if(d) d.value = r.desc||'';
+      const t = document.getElementById('adm-type'); if(t) t.value = r.type||'trad';
+      const c = document.getElementById('adm-city'); if(c) c.value = r.ciudad||r.cityId||'La Paz';
+      // Marcar que estamos editando
+      this._admEditingId = id;
+      const btn = document.getElementById('adm-save-btn');
+      if(btn) btn.textContent = '💾 Actualizar Loop';
+    }, 150);
+  },
+
+  // ── FotoLoops ──
+  async _admRenderFotoloops() {
+    const filter = document.getElementById('adm-fl-filter')?.value||'all';
+    const el = document.getElementById('adm-fl-list');
+    const cntEl = document.getElementById('adm-fl-count');
+    if (!el) return;
+
+    let list = this._fotoPosts || [];
+    // Cargar de Firebase si está disponible
+    if (this._db && list.length === 0) {
+      try {
+        const snap = await this._db.collection('fotoloops').orderBy('ts','desc').limit(50).get();
+        list = snap.docs.map(d=>({id:d.id,...d.data()}));
+        this._fotoPosts = list;
+      } catch(e){}
+    }
+    const filtered = filter === 'all' ? list : list.filter(p=>(p.status||'pending')===filter);
+    if(cntEl) cntEl.textContent = `${filtered.length} foto${filtered.length!==1?'s':''}`;
+
+    if (filtered.length === 0) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin foto loops ${filter==='all'?'':'con estado '+filter}</div>`; return; }
+    el.innerHTML = filtered.map(p => {
+      const st = p.status||'pending';
+      const stColor = {approved:'#D1FAE5',rejected:'#FEE2E2',pending:'#FEF3C7'}[st]||'#FEF3C7';
+      const stTxt   = {approved:'✅ Aprobado',rejected:'❌ Rechazado',pending:'⏳ Pendiente'}[st]||st;
+      return `<div class="adm-item">
+        <div class="adm-item-row">
+          ${p.img ? `<img class="adm-item-thumb" src="${p.img}" onerror="this.style.display='none'">` : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${p.emoji||'📸'}</div>`}
+          <div class="adm-item-info">
+            <div class="adm-item-name">${p.name||'Foto Loop'}</div>
+            <div class="adm-item-meta">${p.cat||''} · ${p.authorName||'Anónimo'} · ${p.ciudad||p.cityId||'—'}</div>
+            <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:${stColor};display:inline-block;margin-top:2px;">${stTxt}</span>
+          </div>
+        </div>
+        ${p.desc ? `<div style="font-size:12px;color:var(--md);line-height:1.4;">${p.desc}</div>` : ''}
+        <div class="adm-item-actions">
+          ${st!=='approved'  ? `<button class="adm-btn adm-btn-green" onclick="App._admFLStatus('${p.id}','approved')">✅ Aprobar</button>` : ''}
+          ${st!=='rejected'  ? `<button class="adm-btn adm-btn-red"   onclick="App._admFLStatus('${p.id}','rejected')">❌ Rechazar</button>` : ''}
+          <button class="adm-btn adm-btn-red" onclick="App._admDeleteFL('${p.id}')">🗑️ Eliminar</button>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  async _admFLStatus(id, status) {
+    if (this._fotoPosts) {
+      const p = this._fotoPosts.find(x=>x.id===id);
+      if(p) p.status = status;
+    }
+    if (this._db) {
+      try { await this._db.collection('fotoloops').doc(id).update({status}); } catch(e){}
+    }
+    this._admRenderFotoloops();
+    this.toast(status==='approved' ? '✅ Foto loop aprobado' : '❌ Foto loop rechazado');
+  },
+
+  async _admDeleteFL(id) {
+    if (!confirm('¿Eliminar esta foto loop?')) return;
+    if (this._fotoPosts) this._fotoPosts = this._fotoPosts.filter(p=>p.id!==id);
+    if (this._db) { try { await this._db.collection('fotoloops').doc(id).delete(); } catch(e){} }
+    this._admRenderFotoloops();
+    this.toast('🗑️ Foto loop eliminado');
+  },
+
+  // ── Eventos ──
+  async _admRenderEventos() {
+    const el = document.getElementById('adm-ev-list');
+    if (!el) return;
+    let list = this._eventos || [];
+    if (this._db && list.length === 0) {
+      try {
+        const snap = await this._db.collection('eventos').orderBy('ts','desc').limit(50).get();
+        list = snap.docs.map(d=>({id:d.id,...d.data()}));
+        this._eventos = list;
+      } catch(e){}
+    }
+    if (list.length === 0) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin eventos</div>`; return; }
+    const now = new Date().toISOString().split('T')[0];
+    el.innerHTML = list.map(ev => {
+      const past = ev.fecha < now;
+      return `<div class="adm-item">
+        <div class="adm-item-row">
+          <div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:${ev.color||'var(--or)'}22;">${ev.emoji||'📅'}</div>
+          <div class="adm-item-info">
+            <div class="adm-item-name">${ev.name}</div>
+            <div class="adm-item-meta">📅 ${ev.fecha} ${ev.hora} · ${ev.city||'—'} · ${ev.authorName||'Anónimo'}</div>
+            <div class="adm-item-meta">👥 ${(ev.attendees||[]).length}${ev.cupo?'/'+ev.cupo:''} · ${past?'<span style="color:var(--gr)">Finalizado</span>':'<span style="color:#10B981">Activo</span>'}</div>
+          </div>
+        </div>
+        ${ev.desc ? `<div style="font-size:12px;color:var(--md);">${ev.desc}</div>` : ''}
+        <div class="adm-item-actions">
+          <button class="adm-btn adm-btn-red" onclick="App._admDeleteEvento('${ev.id}','${(ev.name||'').replace(/'/g,'')}')">🗑️ Cancelar evento</button>
+        </div>
+      </div>`;
+    }).join('');
+  },
+
+  async _admDeleteEvento(id, name) {
+    if (!confirm(`¿Cancelar y eliminar el evento "${name}"?`)) return;
+    if (this._eventos) this._eventos = this._eventos.filter(e=>e.id!==id);
+    if (this._db) { try { await this._db.collection('eventos').doc(id).delete(); } catch(e){} }
+    this._admRenderEventos();
+    this._renderEventos();
+    this.toast(`🗑️ Evento "${name}" eliminado`);
+  },
+
+  // ── Usuarios ──
+  async _admRenderUsuarios() {
+    const el = document.getElementById('adm-users-list');
+    if (!el) return;
+    if (!this._db) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Firebase no disponible</div>`; return; }
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--gr);font-size:13px;">Cargando usuarios...</div>`;
+    try {
+      const snap = await this._db.collection('users').orderBy('createdAt','desc').limit(50).get();
+      if (snap.empty) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin usuarios registrados</div>`; return; }
+      el.innerHTML = snap.docs.map(doc => {
+        const u = {id:doc.id,...doc.data()};
+        const banned = u.banned || false;
+        return `<div class="adm-item">
+          <div class="adm-item-row">
+            <div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;font-family:var(--fH);font-weight:700;color:var(--or);">${(u.displayName||u.email||'?')[0].toUpperCase()}</div>
+            <div class="adm-item-info">
+              <div class="adm-item-name">${u.displayName||u.email||u.id}</div>
+              <div class="adm-item-meta">${u.email||''} · ${u.pts||0} pts</div>
+              <div class="adm-item-meta">Registrado: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-AR') : '—'}</div>
+              ${banned ? `<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:#FEE2E2;color:#991B1B;display:inline-block;margin-top:2px;">🚫 Baneado</span>` : ''}
+            </div>
+          </div>
+          <div class="adm-item-actions">
+            ${!banned
+              ? `<button class="adm-btn adm-btn-red" onclick="App._admBanUser('${u.id}','${(u.displayName||u.email||'Usuario').replace(/'/g,'')}')">🚫 Banear</button>`
+              : `<button class="adm-btn adm-btn-green" onclick="App._admUnbanUser('${u.id}')">✅ Desbanear</button>`
+            }
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      el.innerHTML = `<div style="text-align:center;padding:32px;color:#EF4444;font-size:13px;">Error: ${e.message}</div>`;
+    }
+  },
+
+  async _admBanUser(uid, name) {
+    if (!confirm(`¿Banear a "${name}"? No podrá acceder a la app.`)) return;
+    if (this._db) {
+      try { await this._db.collection('users').doc(uid).update({banned:true,bannedAt:Date.now()}); } catch(e){}
+    }
+    this._admRenderUsuarios();
+    this.toast(`🚫 Usuario baneado`);
+  },
+
+  async _admUnbanUser(uid) {
+    if (this._db) {
+      try { await this._db.collection('users').doc(uid).update({banned:false,bannedAt:null}); } catch(e){}
+    }
+    this._admRenderUsuarios();
+    this.toast('✅ Usuario desbaneado');
+  },
+
+  // ── Reportes ──
+  async _admRenderReportes() {
+    const el    = document.getElementById('adm-rep-list');
+    const empty = document.getElementById('adm-rep-empty');
+    if (!el) return;
+    if (!this._db) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Firebase no disponible</div>`; return; }
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--gr);font-size:13px;">Cargando reportes...</div>`;
+    try {
+      const snap = await this._db.collection('reports').where('status','==','pending').orderBy('ts','desc').get();
+      if (snap.empty) {
+        el.innerHTML = '';
+        if(empty) empty.style.display = 'block';
+        document.getElementById('aStat-reportes') && (document.getElementById('aStat-reportes').textContent = '0');
+        return;
+      }
+      if(empty) empty.style.display = 'none';
+      el.innerHTML = snap.docs.map(doc => {
+        const r = {id:doc.id,...doc.data()};
+        return `<div class="adm-item">
+          <div class="adm-item-row">
+            <div style="font-size:24px;margin-right:4px;">🚩</div>
+            <div class="adm-item-info">
+              <div class="adm-item-name">${r.reason||'Sin motivo'}</div>
+              <div class="adm-item-meta">Reportado por: ${r.reporterName||'Anónimo'} · ${new Date(r.ts||0).toLocaleDateString('es-AR')}</div>
+              <div class="adm-item-meta">Contenido ID: <code>${r.targetId||'—'}</code> · Tipo: ${r.targetType||'—'}</div>
+            </div>
+          </div>
+          <div class="adm-item-actions">
+            <button class="adm-btn adm-btn-red"   onclick="App._admResolveReport('${doc.id}','delete','${r.targetId}','${r.targetType}')">🗑️ Eliminar contenido</button>
+            <button class="adm-btn adm-btn-green"  onclick="App._admResolveReport('${doc.id}','ignore')">✅ Ignorar</button>
+          </div>
+        </div>`;
+      }).join('');
+    } catch(e) {
+      el.innerHTML = `<div style="text-align:center;padding:32px;color:#EF4444;font-size:13px;">Error: ${e.message}</div>`;
+    }
+  },
+
+  async _admResolveReport(reportId, action, targetId, targetType) {
+    if (this._db) {
+      try { await this._db.collection('reports').doc(reportId).update({status:'resolved',resolvedAt:Date.now(),action}); } catch(e){}
+      if (action === 'delete' && targetId) {
+        const col = {loop:'loops',fotoloop:'fotoloops',evento:'eventos',post:'feed_posts'}[targetType];
+        if (col) try { await this._db.collection(col).doc(targetId).delete(); } catch(e){}
+        if (targetType === 'loop') {
+          this.routes = this.routes.filter(r=>r.id!==targetId);
+          this._renderCards('',this._activeFilter||'all');
+        }
+      }
+    }
+    this._admRenderReportes();
+    this.toast(action==='delete' ? '🗑️ Contenido eliminado' : '✅ Reporte ignorado');
+  },
+
+  // ── Notificaciones masivas ──
+  async _admSendNotif() {
+    const title = (document.getElementById('adm-notif-title')?.value||'').trim();
+    const body  = (document.getElementById('adm-notif-body')?.value||'').trim();
+    if (!title) { this.toast('Escribí un título'); return; }
+    if (!body)  { this.toast('Escribí el mensaje'); return; }
+    // Guardar en Firestore para que los listeners la reciban
+    const notif = { id:'notif_'+Date.now(), title, body, ts:Date.now(), authorId:this._uid };
+    if (this._db) {
+      try {
+        await this._db.collection('admin_notifs').doc(notif.id).set(notif);
+        this.toast('🔔 Notificación enviada a todos los usuarios');
+      } catch(e) { this.toast('Error: '+e.message); return; }
+    }
+    // Mostrar en pantalla propia también
+    if (this._notifPerm === 'granted') {
+      new Notification(title, {
+        body,
+        icon: 'https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/imagendeinicio.png'
+      });
+    }
+    // Limpiar inputs
+    document.getElementById('adm-notif-title').value = '';
+    document.getElementById('adm-notif-body').value  = '';
+    this._admRenderNotifHistory();
+  },
+
+  async _admRenderNotifHistory() {
+    const el = document.getElementById('adm-notif-history');
+    if (!el || !this._db) return;
+    try {
+      const snap = await this._db.collection('admin_notifs').orderBy('ts','desc').limit(10).get();
+      if (snap.empty) { el.innerHTML = `<div style="font-size:12px;color:var(--gr);">Sin envíos anteriores</div>`; return; }
+      el.innerHTML = snap.docs.map(doc => {
+        const n = doc.data();
+        return `<div class="adm-notif-item">
+          <div style="font-size:13px;font-weight:600;color:var(--dk);">${n.title}</div>
+          <div style="font-size:12px;color:var(--gr);margin-top:2px;">${n.body}</div>
+          <div style="font-size:10px;color:var(--gr);margin-top:4px;">${new Date(n.ts).toLocaleString('es-AR')}</div>
+        </div>`;
+      }).join('');
+    } catch(e) { el.innerHTML = ''; }
+  },
   _notifPerm: 'default',
   _notifLastCheck: 0,
 
