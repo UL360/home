@@ -662,8 +662,22 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 /* ═══════════════════════
    ADMIN
 ═══════════════════════ */
-.adm-tab { padding:10px 14px;border:none;background:none;font-size:13px;font-weight:600;color:var(--gr);cursor:pointer;white-space:nowrap;border-bottom:2.5px solid transparent;font-family:var(--fH);transition:all .15s; }
-.adm-tab.on { color:var(--or);border-bottom-color:var(--or); }
+.adm-tab {
+  display:flex; align-items:center; gap:10px;
+  padding:11px 14px; border:none; background:transparent;
+  font-size:13px; font-weight:500; color:var(--md);
+  cursor:pointer; border-radius:10px; width:100%;
+  text-align:left; font-family:var(--fH); transition:all .15s;
+}
+.adm-tab:hover { background:var(--bg2); }
+.adm-tab.on { background:var(--orL); color:var(--or); font-weight:700; }
+.adm-tab .adm-tab-ic {
+  width:32px; height:32px; border-radius:9px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; background:var(--bg2); border:0.5px solid var(--bd);
+  transition:all .15s;
+}
+.adm-tab.on .adm-tab-ic { background:var(--orL); border-color:var(--or); }
 .adm-panel { padding:14px 14px calc(var(--navH) + 16px); }
 .adm-stat { background:var(--bg2);border-radius:12px;padding:14px;text-align:center; }
 .adm-stat-n { font-family:var(--fH);font-size:26px;font-weight:800;color:var(--dk); }
@@ -1500,16 +1514,32 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   <!-- ─── CONTENIDO ADMIN ─── -->
   <div id="adm-content" style="display:none;flex:1;overflow-y:auto;">
 
-    <!-- NAV TABS -->
-    <div style="display:flex;overflow-x:auto;padding:0 14px;border-bottom:0.5px solid var(--bd);background:var(--wh);gap:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;" id="adm-tabs">
-      <button class="adm-tab on" data-tab="dashboard" onclick="App._admTab('dashboard',this)">📊 Dashboard</button>
-      <button class="adm-tab" data-tab="crear-loop" onclick="App._admTab('crear-loop',this)">➕ Crear loop</button>
-      <button class="adm-tab" data-tab="loops" onclick="App._admTab('loops',this)">🔄 Loops</button>
-      <button class="adm-tab" data-tab="fotoloops" onclick="App._admTab('fotoloops',this)">📸 FotoLoops</button>
-      <button class="adm-tab" data-tab="eventos" onclick="App._admTab('eventos',this)">📅 Eventos</button>
-      <button class="adm-tab" data-tab="usuarios" onclick="App._admTab('usuarios',this)">👥 Usuarios</button>
-      <button class="adm-tab" data-tab="reportes" onclick="App._admTab('reportes',this)">🚩 Reportes</button>
-      <button class="adm-tab" data-tab="notifs" onclick="App._admTab('notifs',this)">🔔 Notif.</button>
+    <!-- NAV VERTICAL -->
+    <div id="adm-tabs" style="padding:10px 10px 4px;display:flex;flex-direction:column;gap:2px;border-bottom:0.5px solid var(--bd);background:var(--wh);">
+      <button class="adm-tab on" data-tab="dashboard" onclick="App._admTab('dashboard',this)">
+        <span class="adm-tab-ic">📊</span>Dashboard
+      </button>
+      <button class="adm-tab" data-tab="crear-loop" onclick="App._admTab('crear-loop',this)">
+        <span class="adm-tab-ic">➕</span>Crear loop
+      </button>
+      <button class="adm-tab" data-tab="loops" onclick="App._admTab('loops',this)">
+        <span class="adm-tab-ic">🔄</span>Loops
+      </button>
+      <button class="adm-tab" data-tab="fotoloops" onclick="App._admTab('fotoloops',this)">
+        <span class="adm-tab-ic">📸</span>FotoLoops
+      </button>
+      <button class="adm-tab" data-tab="eventos" onclick="App._admTab('eventos',this)">
+        <span class="adm-tab-ic">📅</span>Eventos
+      </button>
+      <button class="adm-tab" data-tab="usuarios" onclick="App._admTab('usuarios',this)">
+        <span class="adm-tab-ic">👥</span>Usuarios
+      </button>
+      <button class="adm-tab" data-tab="reportes" onclick="App._admTab('reportes',this)">
+        <span class="adm-tab-ic">🚩</span>Reportes
+      </button>
+      <button class="adm-tab" data-tab="notifs" onclick="App._admTab('notifs',this)">
+        <span class="adm-tab-ic">🔔</span>Notificaciones
+      </button>
     </div>
 
     <!-- ── DASHBOARD ── -->
