@@ -6338,23 +6338,54 @@ const App = {
     // Recargar siempre desde Firestore (no usar cache viejo)
     if (this._db) {
       try {
+        // Intentar con orderBy primero
         const snap = await this._db.collection('eventos').orderBy('ts','desc').limit(100).get();
         this._eventos = [];
         snap.forEach(d => this._eventos.push({...d.data(), id:d.id}));
+        console.log(`[eventos] Cargados ${this._eventos.length} eventos`);
       } catch(e) {
-        console.warn('Eventos load:', e);
-        // Si falla red, usar lo que hay en memoria
-        this._eventos = this._eventos || [];
+        console.warn('[eventos] orderBy falló, intentando sin orderBy:', e.message);
+        try {
+          // Fallback sin orderBy (no necesita índice)
+          const snap2 = await this._db.collection('eventos').get();
+          this._eventos = [];
+          snap2.forEach(d => this._eventos.push({...d.data(), id:d.id}));
+          console.log(`[eventos] Fallback: ${this._eventos.length} eventos`);
+        } catch(e2) {
+          console.error('[eventos] Error total:', e2.message);
+          this._eventos = this._eventos || [];
+          // Mostrar mensaje claro si es error de permisos
+          if (e2.code === 'permission-denied' || e2.message?.includes('permissions')) {
+            body.innerHTML = `<div style="text-align:center;padding:40px 20px;">
+              <div style="font-size:36px;margin-bottom:12px;">🔒</div>
+              <div style="font-family:var(--fH);font-size:15px;font-weight:700;color:var(--dk);margin-bottom:8px;">Permiso denegado</div>
+              <div style="font-size:12px;color:var(--gr);line-height:1.6;margin-bottom:16px;">
+                La colección <code style="background:var(--bg2);padding:2px 6px;border-radius:4px;">eventos</code> en Firestore necesita una regla de lectura.<br><br>
+                Agregar en <strong>Firestore → Rules</strong>:<br>
+                <code style="display:block;background:var(--bg2);padding:8px 10px;border-radius:8px;margin-top:8px;text-align:left;font-size:11px;line-height:1.8;">match /eventos/{id} {<br>&nbsp;&nbsp;allow read: if true;<br>&nbsp;&nbsp;allow write: if request.auth != null;<br>}</code>
+              </div>
+              ${this._uid ? `<button onclick="App._renderEventos()" style="background:var(--or);border:none;border-radius:10px;padding:10px 20px;color:white;font-size:13px;font-weight:700;cursor:pointer;">🔄 Reintentar</button>` : `<button onclick="App.go('profile')" style="background:var(--or);border:none;border-radius:10px;padding:10px 20px;color:white;font-size:13px;font-weight:700;cursor:pointer;">Iniciar sesión</button>`}
+            </div>`;
+            return;
+          }
+        }
       }
     } else {
       this._eventos = this._eventos || [];
     }
 
     let list = this._eventos || [];
+    console.log(`[eventos] Total en memoria: ${list.length}`, list.map(e => `${e.id} fecha=${e.fecha} tipo=${e.type}`));
     if (filter !== 'all') list = list.filter(e => e.type === filter);
-    // Ordenar: próximos primero
+    // Ordenar: próximos primero, pasados al final
     const now = new Date().toISOString().split('T')[0];
-    list = list.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+    list = [...list].sort((a,b) => {
+      const aFuture = (a.fecha||'') >= now;
+      const bFuture = (b.fecha||'') >= now;
+      if (aFuture && !bFuture) return -1;
+      if (!aFuture && bFuture) return 1;
+      return (a.fecha||'').localeCompare(b.fecha||'');
+    });
 
     if (list.length === 0) {
       body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
