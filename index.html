@@ -6329,15 +6329,25 @@ const App = {
     if (!body) return;
     const filter = this._evFilter || 'all';
 
-    // Cargar eventos si no están en memoria
-    if (!this._eventos) {
-      this._eventos = [];
-      if (this._db) {
-        try {
-          const snap = await this._db.collection('eventos').orderBy('ts','desc').limit(50).get();
-          snap.forEach(d => this._eventos.push({...d.data(), id:d.id}));
-        } catch(e) { console.warn('Eventos load:', e); }
+    // Mostrar spinner mientras carga
+    body.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--gr);">
+      <div style="font-size:28px;margin-bottom:10px;animation:spin 1s linear infinite;display:inline-block;">⟳</div>
+      <div style="font-size:13px;">Cargando eventos...</div>
+    </div>`;
+
+    // Recargar siempre desde Firestore (no usar cache viejo)
+    if (this._db) {
+      try {
+        const snap = await this._db.collection('eventos').orderBy('ts','desc').limit(100).get();
+        this._eventos = [];
+        snap.forEach(d => this._eventos.push({...d.data(), id:d.id}));
+      } catch(e) {
+        console.warn('Eventos load:', e);
+        // Si falla red, usar lo que hay en memoria
+        this._eventos = this._eventos || [];
       }
+    } else {
+      this._eventos = this._eventos || [];
     }
 
     let list = this._eventos || [];
@@ -7289,13 +7299,18 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   async _admRenderEventos() {
     const el = document.getElementById('adm-ev-list');
     if (!el) return;
-    let list = this._eventos || [];
-    if (this._db && list.length === 0) {
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--gr);font-size:13px;">Cargando eventos...</div>`;
+    let list = [];
+    if (this._db) {
       try {
-        const snap = await this._db.collection('eventos').orderBy('ts','desc').limit(50).get();
+        const snap = await this._db.collection('eventos').orderBy('ts','desc').limit(100).get();
         list = snap.docs.map(d=>({id:d.id,...d.data()}));
-        this._eventos = list;
-      } catch(e){}
+        this._eventos = list; // sincronizar cache
+      } catch(e) {
+        list = this._eventos || [];
+      }
+    } else {
+      list = this._eventos || [];
     }
     if (list.length === 0) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin eventos</div>`; return; }
     const now = new Date().toISOString().split('T')[0];
