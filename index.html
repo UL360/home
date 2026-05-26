@@ -1560,8 +1560,22 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
         <div class="act">📝 Información del loop</div>
         <div class="fg"><label class="fl">Nombre *</label><input type="text" class="fi" id="adm-name" placeholder="ej. Loop del Arroyo Las Tunas…"></div>
         <div class="fg"><label class="fl">Descripción</label><textarea class="fi" id="adm-desc" placeholder="Describí la experiencia de este loop..."></textarea></div>
-        <div class="fg"><label class="fl">Ciudad</label>
-          <select class="fi" id="adm-city">
+        <!-- Ubicación: País / Provincia / Ciudad — auto-detectado por GPS o editable -->
+        <div class="fg">
+          <label class="fl">📍 Ubicación</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
+            <div>
+              <label style="font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:3px;">PAÍS</label>
+              <input type="text" class="fi" id="adm-pais" placeholder="Argentina" value="Argentina" style="font-size:12px;padding:8px 10px;">
+            </div>
+            <div>
+              <label style="font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:3px;">PROVINCIA</label>
+              <input type="text" class="fi" id="adm-provincia" placeholder="Entre Ríos" value="Entre Ríos" style="font-size:12px;padding:8px 10px;">
+            </div>
+          </div>
+          <label style="font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:3px;">CIUDAD</label>
+          <select class="fi" id="adm-city" style="font-size:13px;">
+            <option value="">🔍 Auto-detectando...</option>
             <option value="La Paz">📍 La Paz</option>
             <option value="Santa Elena">📍 Santa Elena</option>
             <option value="Paraná">Paraná</option>
@@ -1571,10 +1585,16 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
             <option value="Victoria">Victoria</option>
             <option value="Diamante">Diamante</option>
             <option value="Nogoyá">Nogoyá</option>
+            <option value="Villaguay">Villaguay</option>
+            <option value="Federación">Federación</option>
             <option value="Rosario">Rosario</option>
             <option value="Buenos Aires">Buenos Aires</option>
             <option value="Córdoba">Córdoba</option>
           </select>
+          <div style="font-size:10px;color:var(--gr);margin-top:4px;display:flex;align-items:center;gap:4px;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Se auto-detecta al hacer click en el mapa o al abrir el panel
+          </div>
         </div>
         <div class="fg"><label class="fl">Tipo de loop</label>
           <select class="fi" id="adm-type">
@@ -4549,9 +4569,10 @@ const App = {
 
     if (!lat || !lng) return this.toast('⚠️ Marcá la ubicación en el mapa');
 
-    // ── Detectar ciudad por las coordenadas del punto marcado en el mapa (no del GPS del usuario) ──
-    this.toast('📍 Detectando ciudad...');
-    const cityId = await this._cityFromMapPoint(lat, lng);
+    // ── Detectar Pais/Provincia/Ciudad por las coords del punto marcado en el mapa ──
+    this.toast('📍 Detectando ubicación...');
+    const _flLoc = await this._detectLocation(lat, lng);
+    const cityId = _flLoc.ciudad || this._luCity || 'La Paz';
 
     const catEmojis = {
       lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', playa:'🏖️', parque:'🌳',
@@ -4577,8 +4598,10 @@ const App = {
       img: this._fotoLoopImg ? '[[base64]]' : '',
       emoji, color, badge: 'ba',
       lat, lng,
-      cityId,                   // ← ciudad detectada por GPS
-      ciudad: cityId,           // ← alias para compatibilidad con filtros
+      cityId,                   // ← ciudad detectada
+      ciudad:    cityId,
+      provincia: _flLoc.provincia || this._luProv || 'Entre Ríos',
+      pais:      _flLoc.pais      || this._luPais || 'Argentina',
       authorId: this._uid,
       authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Anónimo',
       ts: Date.now(),
@@ -4610,7 +4633,10 @@ const App = {
           img: this._fotoLoopImg ? '[[base64]]' : '',
           pts: [{ lat, lng }],
           pois: [{ name, lat, lng }],
-          cityId,               // ← ciudad detectada por GPS
+          cityId,
+          ciudad:    cityId,
+          provincia: _flLoc.provincia || this._luProv || 'Entre Ríos',
+          pais:      _flLoc.pais      || this._luPais || 'Argentina',
           authorId: this._uid,
           authorName: this._user?.displayName || 'Anónimo',
           createdAt: Date.now()
@@ -4935,44 +4961,42 @@ const App = {
   },
 
   // Centra el mapa admin en la posición GPS real y auto-llena la ciudad
+  // Centra el mapa admin en GPS real y auto-llena Pais/Provincia/Ciudad
   _admCenterOnGPS() {
     if (!navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(async pos => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
-      if (this.admMap) {
-        this.admMap.flyTo({ center: [lng, lat], zoom: 14, duration: 1200 });
+      const lat = pos.coords.latitude, lng = pos.coords.longitude;
+      if (this.admMap) this.admMap.flyTo({ center: [lng, lat], zoom: 14, duration: 1200 });
+      const loc = await this._detectLocation(lat, lng);
+      this._admSetLocation(loc);
+    }, () => {}, { timeout: 8000 });
+  },
+
+  // Aplica Pais/Provincia/Ciudad a los campos del formulario admin
+  _admSetLocation(loc) {
+    if (!loc) return;
+    this._admLoc = loc;
+    // Select ciudad
+    const selCity = document.getElementById('adm-city');
+    if (selCity && loc.ciudad) {
+      const norm = s => (s||'').toLowerCase().trim();
+      const match = Array.from(selCity.options).find(o =>
+        norm(o.value) === norm(loc.ciudad) ||
+        norm(loc.ciudad).includes(norm(o.value)) ||
+        norm(o.value).includes(norm(loc.ciudad)));
+      if (match) { selCity.value = match.value; }
+      else {
+        const opt = document.createElement('option');
+        opt.value = loc.ciudad; opt.textContent = '\u{1F4CD} ' + loc.ciudad;
+        selCity.appendChild(opt); selCity.value = loc.ciudad;
       }
-      // Detectar ciudad real via Nominatim
-      try {
-        const r = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
-          { headers: { 'Accept-Language': 'es' } }
-        );
-        const data = await r.json();
-        const detectedCity = data.address?.city || data.address?.town || data.address?.village || '';
-        if (detectedCity) {
-          const sel = document.getElementById('adm-city');
-          if (sel) {
-            // Buscar opción que coincida (exacto o parcial)
-            const opts = Array.from(sel.options);
-            const match = opts.find(o => detectedCity.toLowerCase().includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(detectedCity.toLowerCase()));
-            if (match) {
-              sel.value = match.value;
-              this.toast(`📍 Ciudad detectada: ${match.value}`);
-            } else {
-              // Agregar opción dinámica si no existe
-              const newOpt = document.createElement('option');
-              newOpt.value = detectedCity;
-              newOpt.textContent = `📍 ${detectedCity}`;
-              sel.appendChild(newOpt);
-              sel.value = detectedCity;
-              this.toast(`📍 Ciudad detectada: ${detectedCity}`);
-            }
-          }
-        }
-      } catch(e) { /* silencioso */ }
-    }, () => { /* sin permiso GPS — queda en La Paz */ }, { timeout: 8000 });
+    }
+    const inProv = document.getElementById('adm-provincia');
+    if (inProv && loc.provincia) inProv.value = loc.provincia;
+    const inPais = document.getElementById('adm-pais');
+    if (inPais && loc.pais) inPais.value = loc.pais;
+    const parts = [loc.ciudad, loc.provincia, loc.pais].filter(Boolean);
+    if (parts.length) this.toast('\u{1F4CD} ' + parts.join(', '));
   },
 
   /* _addPt legacy removed */
@@ -5023,30 +5047,9 @@ const App = {
     this._redrawAdmLine();
     this._renderPts(); this._updatePtBadge();
     this.toast(`Punto ${n} agregado`);
-    // Al colocar el primer punto: auto-detectar ciudad real via Nominatim
+    // Al colocar el primer punto: detectar Pais/Provincia/Ciudad via BigDataCloud
     if (n === 1) {
-      fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
-        { headers: { 'Accept-Language': 'es' } }
-      ).then(r => r.json()).then(data => {
-        const city = data.address?.city || data.address?.town || data.address?.village || '';
-        if (!city) return;
-        const sel = document.getElementById('adm-city');
-        if (!sel) return;
-        const opts = Array.from(sel.options);
-        const match = opts.find(o => city.toLowerCase().includes(o.value.toLowerCase()) || o.value.toLowerCase().includes(city.toLowerCase()));
-        if (match) {
-          sel.value = match.value;
-          this.toast(`📍 Ciudad actualizada: ${match.value}`);
-        } else {
-          const newOpt = document.createElement('option');
-          newOpt.value = city;
-          newOpt.textContent = `📍 ${city}`;
-          sel.appendChild(newOpt);
-          sel.value = city;
-          this.toast(`📍 Ciudad: ${city}`);
-        }
-      }).catch(()=>{});
+      this._detectLocation(lat, lng).then(loc => this._admSetLocation(loc)).catch(()=>{});
     }
   },
   _updatePtBadge() {
@@ -5177,12 +5180,15 @@ const App = {
           dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
           img: this._imgBase64 || '', pts:[...this.aPts],
           pois:this.aPois.filter(p=>p.name).map(p=>({...p})),
-          cityId,                   // ← ciudad detectada por GPS
+          cityId,                   // ← ciudad detectada
+          ciudad:    cityId,
+          provincia: (document.getElementById('adm-provincia')?.value || this._admLoc?.provincia || 'Entre Ríos').trim(),
+          pais:      (document.getElementById('adm-pais')?.value      || this._admLoc?.pais      || 'Argentina').trim(),
           authorId: this._uid,
           authorName: this._user ? (this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo') : 'Anónimo',
           createdAt: Date.now()
         };
-        console.log(`[saveRoute] Creando loop "${name}" cityId=${cityId} authorId=${r.authorId}`);
+        console.log(`[saveRoute] "${name}" → ${r.ciudad}, ${r.provincia}, ${r.pais} (author=${r.authorId})`);
         this.routes.push(r);
         await this._saveData();
         if (this.mainMap) this._drawRoute(r);
@@ -5252,8 +5258,9 @@ const App = {
 
   _renderLoopsUrbanos() {
     const city = this._luCity || 'La Paz';
+    const prov = this._luProv || 'Entre Ríos';
     const lbl  = document.getElementById('lu-city-label');
-    if (lbl) lbl.textContent = city + ', Entre Ríos';
+    if (lbl) lbl.textContent = city + ', ' + prov;
     const tab = this._luTab || 'loops';
     if (tab === 'foto') return this._renderLuFoto();
     this._renderLuLoops();
@@ -5270,10 +5277,20 @@ const App = {
       .replace(/partido de /i,'')
       .trim().toLowerCase();
 
+    const uCity = normCity(city);
+    const uProv = normCity(this._luProv || '');
     const loops = this.routes.filter(r => {
       if (r.type === 'fotostop') return false;
-      const c = normCity(r.cityId || r.ciudad || '');
-      return c === normCity(city);
+      const rCity = normCity(r.cityId || r.ciudad || '');
+      const rProv = normCity(r.provincia || '');
+      if (!rCity) return false;
+      // Match exacto o si uno contiene al otro (cubre "La Paz" vs "La Paz de Gualeguay")
+      const cityMatch = rCity === uCity ||
+        (rCity.length > 3 && uCity.includes(rCity)) ||
+        (uCity.length > 3 && rCity.includes(uCity));
+      // Fallback: misma provincia (muestra loops provinciales si ciudad no matchea)
+      const provMatch = uProv && rProv && rProv === uProv;
+      return cityMatch || provMatch;
     });
 
     const scored = loops.map(r => ({
@@ -5405,9 +5422,17 @@ const App = {
       .replace(/partido de /i,'')
       .trim().toLowerCase();
 
+    const uCityLu = normCity(city);
+    const uProvLu = normCity(this._luProv || '');
     const posts = (this._fotoPosts||[]).filter(p => {
-      const c = normCity(p.cityId || p.ciudad || '');
-      return c === normCity(city);
+      const pCity = normCity(p.cityId || p.ciudad || '');
+      const pProv = normCity(p.provincia || '');
+      const cityMatch = pCity === uCityLu ||
+        (pCity.length > 3 && uCityLu.includes(pCity)) ||
+        (uCityLu.length > 3 && pCity.includes(uCityLu));
+      const provMatch = uProvLu && pProv && pProv === uProvLu &&
+        this._isNearCity(p.cityId || p.ciudad || city, 15);
+      return cityMatch || provMatch;
     });
 
     if (posts.length === 0) {
@@ -5507,75 +5532,136 @@ const App = {
   },
 
   // Detecta la ciudad real del usuario desde GPS y actualiza _luCity + filtros
-  async _updateCityFromGPS(lat, lng) {
-    if (this._cityDetected) return; // solo la primera vez
-    this._cityDetected = true;
+  // ══════════════════════════════════════════
+  // 🌍 DETECCIÓN DE UBICACIÓN — País / Provincia / Ciudad
+  // Usa BigDataCloud (gratis, sin API key, rápido)
+  // con cache inteligente + tabla local de fallback
+  // ══════════════════════════════════════════
+  _geoCache: null,   // { lat, lng, pais, provincia, ciudad, ts }
+
+  // Tabla de fallback local (País / Provincia / Ciudad)
+  _GEO_KNOWN: [
+    { lat:-30.749, lng:-59.645, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'La Paz' },
+    { lat:-30.953, lng:-60.078, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Santa Elena' },
+    { lat:-31.730, lng:-60.530, radio:35, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Paraná' },
+    { lat:-31.390, lng:-57.950, radio:25, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Concordia' },
+    { lat:-33.011, lng:-58.522, radio:25, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Gualeguaychú' },
+    { lat:-32.227, lng:-58.140, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Colón' },
+    { lat:-32.615, lng:-60.155, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Victoria' },
+    { lat:-32.067, lng:-60.641, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Diamante' },
+    { lat:-32.393, lng:-59.793, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Nogoyá' },
+    { lat:-32.946, lng:-60.639, radio:40, pais:'Argentina', provincia:'Santa Fe',    ciudad:'Rosario' },
+    { lat:-27.468, lng:-58.834, radio:35, pais:'Argentina', provincia:'Corrientes',  ciudad:'Corrientes' },
+    { lat:-34.603, lng:-58.381, radio:60, pais:'Argentina', provincia:'Buenos Aires',ciudad:'Buenos Aires' },
+    { lat:-38.000, lng:-57.558, radio:35, pais:'Argentina', provincia:'Buenos Aires',ciudad:'Mar del Plata' },
+    { lat:-32.890, lng:-68.845, radio:40, pais:'Argentina', provincia:'Mendoza',     ciudad:'Mendoza' },
+    { lat:-31.417, lng:-64.183, radio:40, pais:'Argentina', provincia:'Córdoba',     ciudad:'Córdoba' },
+    { lat:-27.480, lng:-55.765, radio:40, pais:'Argentina', provincia:'Misiones',    ciudad:'Posadas' },
+  ],
+
+  // Fallback tabla local sincrónico — devuelve {pais, provincia, ciudad}
+  _geoFromCoordsSync(lat, lng) {
+    if (!lat || !lng) return { pais:'Argentina', provincia:'Entre Ríos', ciudad: this._luCity || 'La Paz' };
+    const hav = (a,b,c,e) => {
+      const R=6371, dL=(c-a)*Math.PI/180, dG=(e-b)*Math.PI/180;
+      const x = Math.sin(dL/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;
+      return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+    };
+    let best = null, min = Infinity;
+    for (const row of this._GEO_KNOWN) {
+      const d = hav(lat, lng, row.lat, row.lng);
+      if (d < row.radio && d < min) { min = d; best = row; }
+    }
+    if (best) return { pais: best.pais, provincia: best.provincia, ciudad: best.ciudad };
+    return { pais:'Argentina', provincia:'', ciudad: this._luCity || 'La Paz' };
+  },
+
+  // Compatibilidad: devuelve solo la ciudad (string) para código legacy
+  _cityFromCoordsSync(lat, lng) {
+    return this._geoFromCoordsSync(lat, lng).ciudad;
+  },
+
+  // ── Función principal: detectar País/Provincia/Ciudad desde coordenadas ──
+  // Usa BigDataCloud → fallback tabla local
+  // Cache 30min / 500m para no spamear la API
+  async _detectLocation(lat, lng) {
+    // 1. Cache: si está a menos de 500m y tiene menos de 30min, reusar
+    if (this._geoCache) {
+      const distM = this._haversineKm(lat, lng, this._geoCache.lat, this._geoCache.lng) * 1000;
+      const age   = Date.now() - (this._geoCache.ts || 0);
+      if (distM < 500 && age < 30 * 60 * 1000) {
+        return this._geoCache;
+      }
+    }
+    // 2. BigDataCloud (gratis, sin key, retorna país/provincia/ciudad en es)
     try {
-      const r = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
-        { headers: { 'Accept-Language': 'es' } }
+      const res  = await fetch(
+        `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=es`,
+        { signal: AbortSignal.timeout(5000) }
       );
-      const data = await r.json();
-      const city = data.address?.city || data.address?.town || data.address?.village || '';
-      if (city && city !== this._luCity) {
-        this._luCity = city;
-        this._comCity = city;
-        // Actualizar label si la pantalla está visible
-        const lbl = document.getElementById('lu-city-label');
-        if (lbl) lbl.textContent = city + ', Entre Ríos';
-        // Actualizar también el label de Comunidad
-        const comLbl = document.getElementById('com-city-label');
-        if (comLbl) comLbl.textContent = city + ', Entre Ríos';
-        console.log(`[GPS] Ciudad detectada: ${city}`);
+      const data = await res.json();
+      const rawCiudad = data.city || data.locality || '';
+      let rawProv = data.principalSubdivision || data.principalSubdivisionCode || '';
+      rawProv = rawProv.replace(/^Provincia de /i,'').replace(/^Province of /i,'').trim();
+      const result = {
+        lat, lng,
+        pais:      data.countryName || 'Argentina',
+        provincia: rawProv,
+        ciudad:    rawCiudad,
+        ts: Date.now()
+      };
+      // ── Normalizar ciudad contra la tabla _GEO_KNOWN para garantizar consistencia ──
+      // Si hay una ciudad conocida a menos de 8km, usar su nombre canónico
+      let bestKnown = null, bestDist = Infinity;
+      for (const row of this._GEO_KNOWN) {
+        const d = this._haversineKm(lat, lng, row.lat, row.lng);
+        if (d < row.radio && d < bestDist) { bestDist = d; bestKnown = row; }
+      }
+      if (bestKnown) {
+        result.ciudad    = bestKnown.ciudad;
+        result.provincia = bestKnown.provincia;
+        result.pais      = bestKnown.pais;
+      }
+      if (result.ciudad) {
+        this._geoCache = result;
+        console.log(`[geo] BigDataCloud (${rawCiudad}) → normalizado: ${result.ciudad}, ${result.provincia}, ${result.pais}`);
+        return result;
       }
     } catch(e) {
-      // Fallback a tabla local
-      const city = this._cityFromCoordsSync(lat, lng);
-      if (city && city !== this._luCity) {
-        this._luCity = city;
-        this._comCity = city;
-      }
+      console.warn('[geo] BigDataCloud falló, usando tabla local:', e.message);
+    }
+    // 3. Fallback tabla local
+    const sync = this._geoFromCoordsSync(lat, lng);
+    const result = { lat, lng, ...sync, ts: Date.now() };
+    this._geoCache = result;
+    console.log(`[geo] Fallback local → ${result.ciudad}, ${result.provincia}, ${result.pais}`);
+    return result;
+  },
+
+  // ── Actualizar ciudad del usuario desde GPS (se llama al mover el marcador) ──
+  async _updateCityFromGPS(lat, lng) {
+    if (this._cityDetected) return; // solo la primera vez por sesión
+    this._cityDetected = true;
+    const loc = await this._detectLocation(lat, lng);
+    if (loc.ciudad && loc.ciudad !== this._luCity) {
+      this._luCity    = loc.ciudad;
+      this._luProv    = loc.provincia;
+      this._luPais    = loc.pais;
+      this._comCity   = loc.ciudad;
+      // Actualizar labels visibles
+      const suffix = loc.provincia ? `, ${loc.provincia}` : '';
+      const lbl    = document.getElementById('lu-city-label');
+      if (lbl) lbl.textContent = loc.ciudad + suffix;
+      const comLbl = document.getElementById('com-city-label');
+      if (comLbl) comLbl.textContent = loc.ciudad + suffix;
+      console.log(`[GPS] Ubicación actualizada: ${loc.ciudad}, ${loc.provincia}, ${loc.pais}`);
     }
   },
 
-  // Detecta la ciudad de un punto del mapa via Nominatim (async)
+  // Compat: devuelve solo la ciudad (string) — usado en código legacy
   async _cityFromMapPoint(lat, lng) {
-    try {
-      const r = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
-        { headers: { 'Accept-Language': 'es' } }
-      );
-      const data = await r.json();
-      const city = data.address?.city || data.address?.town || data.address?.village || '';
-      if (city) return city;
-    } catch(e) {}
-    // Fallback a tabla local
-    return this._cityFromCoordsSync(lat, lng);
-  },
-  _cityFromCoordsSync(lat, lng) {
-    if (!lat || !lng) return this._luCity || 'La Paz';
-    const KNOWN = [
-      [-30.749,-59.645,20,'La Paz'],
-      [-30.953,-60.078,20,'Santa Elena'],
-      [-31.730,-60.530,35,'Paraná'],
-      [-31.390,-57.950,25,'Concordia'],
-      [-33.011,-58.522,25,'Gualeguaychú'],
-      [-32.227,-58.140,20,'Colón'],
-      [-32.615,-60.155,20,'Victoria'],
-      [-32.067,-60.641,20,'Diamante'],
-      [-32.393,-59.793,20,'Nogoyá'],
-      [-32.946,-60.639,40,'Rosario'],
-      [-27.468,-58.834,35,'Corrientes'],
-      [-34.603,-58.381,60,'Buenos Aires'],
-      [-38.000,-57.558,35,'Mar del Plata'],
-      [-32.890,-68.845,40,'Mendoza'],
-      [-31.417,-64.183,40,'Córdoba'],
-      [-27.480,-55.765,40,'Misiones'],
-    ];
-    const d=(a,b,c,e)=>{const R=6371,dL=(c-a)*Math.PI/180,dG=(e-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));};
-    let best=null,min=Infinity;
-    for(const[clat,clng,radio,cid] of KNOWN){const dd=d(lat,lng,clat,clng);if(dd<radio&&dd<min){min=dd;best=cid;}}
-    return best || this._luCity || 'La Paz';
+    const loc = await this._detectLocation(lat, lng);
+    return loc.ciudad || this._luCity || 'La Paz';
   },
 
   // Tiempo relativo legible
@@ -5648,7 +5734,7 @@ const App = {
     body.innerHTML = '';
     // Actualizar label de ciudad en la UI
     const lbl = document.getElementById('com-city-label');
-    if (lbl) lbl.textContent = city + ', Entre Ríos';
+    if (lbl) lbl.textContent = city + (this._luProv ? ', ' + this._luProv : '');
 
     if (tab === 'feed')  return this._renderFeed(body, city);
     if (tab === 'loops') return this._renderComLoops(body, city);
@@ -5728,11 +5814,23 @@ const App = {
   // ─── Tab: LOOPS de la ciudad ───
   _renderComLoops(body, city) {
     const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
-    const list = this.routes.filter(r =>
-      r.type !== 'fotostop' &&
-      (city === 'all' || normCity(r.cityId || r.ciudad) === normCity(city)) &&
-      this._isNearCity(r.cityId || r.ciudad || city, 15)
-    );
+    const uCity = normCity(city);
+    const uProv = normCity(this._luProv || '');
+    const list = this.routes.filter(r => {
+      if (r.type === 'fotostop') return false;
+      const rCity = normCity(r.cityId || r.ciudad || '');
+      const rProv = normCity(r.provincia || '');
+      if (!rCity) return false;
+      if (city === 'all') return true;
+      // Match flexible: exacto o contiene (cubre "La Paz" vs "La Paz de Gualeguay")
+      const cityMatch = rCity === uCity ||
+        (rCity.length > 3 && uCity.includes(rCity)) ||
+        (uCity.length > 3 && rCity.includes(uCity));
+      // Fallback provincia: si misma provincia y dentro de 15km
+      const provMatch = uProv && rProv && rProv === uProv &&
+        this._isNearCity(r.cityId || r.ciudad || city, 15);
+      return cityMatch || provMatch;
+    });
     if (list.length === 0) {
       body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
         <div style="font-size:40px;margin-bottom:12px;">🔄</div>
@@ -5803,11 +5901,20 @@ const App = {
     const FL_CATS = {lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
     const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
     // Solo aprobados, dentro de la ciudad del usuario y en radio de 15km
-    const posts = (this._fotoPosts||[]).filter(p =>
-      p.status === 'approved' &&
-      (city === 'all' || normCity(p.cityId || p.ciudad) === normCity(city)) &&
-      this._isNearCity(p.cityId || p.ciudad || city, 15)
-    );
+    const uCity2 = normCity(city);
+    const uProv2 = normCity(this._luProv || '');
+    const posts = (this._fotoPosts||[]).filter(p => {
+      if (p.status !== 'approved') return false;
+      if (city === 'all') return true;
+      const pCity = normCity(p.cityId || p.ciudad || '');
+      const pProv = normCity(p.provincia || '');
+      const cityMatch = pCity === uCity2 ||
+        (pCity.length > 3 && uCity2.includes(pCity)) ||
+        (uCity2.length > 3 && pCity.includes(uCity2));
+      const provMatch = uProv2 && pProv && pProv === uProv2 &&
+        this._isNearCity(p.cityId || p.ciudad || city, 15);
+      return cityMatch || provMatch;
+    });
     if (posts.length === 0) {
       body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
         <div style="font-size:40px;margin-bottom:12px;">📸</div>
@@ -6726,19 +6833,36 @@ const App = {
           <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">DESCRIPCIÓN (opcional)</label>
           <textarea id="gsm-desc" rows="2" placeholder="¿Por dónde pasa? ¿Qué se ve? ¿Es técnico o tranquilo?" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1.5px solid var(--bd);border-radius:11px;font-size:13px;background:var(--bg0);color:var(--dk);resize:none;font-family:var(--fB);"></textarea>
         </div>
-        <!-- Ciudad -->
+        <!-- Ubicación: auto-detectada desde GPS del recorrido grabado -->
         <div style="margin-bottom:18px;">
-          <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">CIUDAD</label>
-          <select id="gsm-city" style="width:100%;padding:11px 13px;border:1.5px solid var(--bd);border-radius:11px;font-size:13px;background:var(--bg0);color:var(--dk);">
-            <option value="La Paz" ${(this._luCity||'La Paz')==='La Paz'?'selected':''}>📍 La Paz</option>
-            <option value="Paraná" ${this._luCity==='Paraná'?'selected':''}>Paraná</option>
-            <option value="Concordia" ${this._luCity==='Concordia'?'selected':''}>Concordia</option>
-            <option value="Gualeguaychú" ${this._luCity==='Gualeguaychú'?'selected':''}>Gualeguaychú</option>
-            <option value="Colón" ${this._luCity==='Colón'?'selected':''}>Colón</option>
+          <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">UBICACIÓN</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+            <div>
+              <label style="font-size:10px;color:var(--gr);display:block;margin-bottom:3px;">PAÍS</label>
+              <input id="gsm-pais" type="text" value="${this._luPais||'Argentina'}" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1.5px solid var(--bd);border-radius:10px;font-size:12px;background:var(--bg0);color:var(--dk);">
+            </div>
+            <div>
+              <label style="font-size:10px;color:var(--gr);display:block;margin-bottom:3px;">PROVINCIA</label>
+              <input id="gsm-prov" type="text" value="${this._luProv||'Entre Ríos'}" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1.5px solid var(--bd);border-radius:10px;font-size:12px;background:var(--bg0);color:var(--dk);">
+            </div>
+          </div>
+          <label style="font-size:10px;color:var(--gr);display:block;margin-bottom:3px;">CIUDAD</label>
+          <select id="gsm-city" style="width:100%;padding:9px 11px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;background:var(--bg0);color:var(--dk);">
+            <option value="${this._luCity||'La Paz'}" selected>📍 ${this._luCity||'La Paz'}</option>
+            <option value="La Paz">La Paz</option>
+            <option value="Santa Elena">Santa Elena</option>
+            <option value="Paraná">Paraná</option>
+            <option value="Concordia">Concordia</option>
+            <option value="Gualeguaychú">Gualeguaychú</option>
+            <option value="Colón">Colón</option>
+            <option value="Victoria">Victoria</option>
             <option value="Rosario">Rosario</option>
             <option value="Buenos Aires">Buenos Aires</option>
             <option value="Córdoba">Córdoba</option>
           </select>
+          <div style="font-size:10px;color:var(--gr);margin-top:4px;">
+            📡 Auto-detectado del recorrido GPS — podés corregirlo
+          </div>
         </div>
         <!-- Foto portada -->
         <div style="margin-bottom:18px;">
@@ -6792,9 +6916,24 @@ const App = {
   async _confirmGrabSave() {
     const name  = (document.getElementById('gsm-name')?.value||'').trim() || 'Mi Loop';
     const desc  = (document.getElementById('gsm-desc')?.value||'').trim();
-    const city  = document.getElementById('gsm-city')?.value || this._luCity || 'La Paz';
     const btn   = document.getElementById('gsm-save-btn');
     if(btn){ btn.textContent='☁️ Guardando...'; btn.disabled=true; }
+
+    // Detectar Pais/Provincia/Ciudad desde el primer punto GPS grabado
+    let loc = this._geoCache;
+    if (!loc && this.grabPts && this.grabPts.length > 0) {
+      const fp = this.grabPts[0];
+      const fpLat = Array.isArray(fp) ? fp[0] : fp?.lat;
+      const fpLng = Array.isArray(fp) ? fp[1] : fp?.lng;
+      if (fpLat && fpLng) loc = await this._detectLocation(fpLat, fpLng);
+    }
+    if (!loc) loc = { pais:'Argentina', provincia: this._luProv||'Entre Ríos', ciudad: this._luCity||'La Paz' };
+    const city = document.getElementById('gsm-city')?.value || loc.ciudad;
+    // Leer provincia/pais del modal (puede haber sido editado manualmente)
+    const grabProv = (document.getElementById('gsm-prov')?.value || loc.provincia || 'Entre Ríos').trim();
+    const grabPais = (document.getElementById('gsm-pais')?.value || loc.pais      || 'Argentina').trim();
+    // Sobreescribir loc con lo que el usuario eligió
+    loc.ciudad = city; loc.provincia = grabProv; loc.pais = grabPais;
 
     const t = this.grabType||'running';
     const types={running:{emoji:'🏃',color:'#7C3AED',badge:'bsport'},mtb:{emoji:'🚵',color:'#16A34A',badge:'bmtb'},ciclismo:{emoji:'🚴',color:'#0891B2',badge:'brelax'},caminata:{emoji:'🥾',color:'#D97706',badge:'btrab'},paseo:{emoji:'🌳',color:'#059669',badge:'bg'},perro:{emoji:'🐕',color:'#D97706',badge:'btrab'},pesca:{emoji:'🎣',color:'#0E7490',badge:'btrab'},atardecer:{emoji:'🌅',color:'#7C3AED',badge:'ba'},gastro:{emoji:'🍽️',color:'#B45309',badge:'bg'},trad:{emoji:'☕',color:'#92400E',badge:'bg'},relax:{emoji:'🧘',color:'#0891B2',badge:'brelax'},salidas:{emoji:'🎉',color:'#7C3AED',badge:'bsport'},trabajo:{emoji:'💼',color:'#D97706',badge:'btrab'},vacaciones:{emoji:'🏖️',color:'#DB2777',badge:'ba'}};
@@ -6811,6 +6950,8 @@ const App = {
       pois: [...(this._grabStopPois||[])],
       img: this._grabCoverB64 || '',
       cityId: city, ciudad: city,
+      provincia: grabProv,
+      pais:      grabPais,
       likes: 0, paseos: 0,
       authorId:   this._uid,
       authorName: this._user ? (this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo') : 'Anónimo',
