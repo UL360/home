@@ -1941,6 +1941,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
       <button id="com-tab-feed" onclick="App.comSetTab('feed',this)" class="com-tab on">💬 Feed</button>
       <button id="com-tab-loops" onclick="App.comSetTab('loops',this)" class="com-tab">🔄 Loops</button>
       <button id="com-tab-foto" onclick="App.comSetTab('foto',this)" class="com-tab">📸 Foto Loops</button>
+      <button id="com-tab-mundo" onclick="App.comSetTab('mundo',this)" class="com-tab">🌍 Mundo</button>
     </div>
   </div>
 
@@ -3022,14 +3023,20 @@ const App = {
           allLoops.push(loop);
         });
 
-        // Restaurar imágenes
-        for (const r of allLoops) {
-          if (r.img === '[[base64]]') {
+        // Restaurar imágenes en paralelo (mucho más rápido que secuencial)
+        const imgLoops = allLoops.filter(r => r.img === '[[base64]]');
+        if (imgLoops.length > 0) {
+          await Promise.all(imgLoops.map(async r => {
             try {
               const imgSnap = await this._db.collection('loop_imgs').doc(r.id).get();
               r.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
             } catch(e) { r.img = ''; }
-          }
+          }));
+          // Re-renderizar pantallas visibles si hay imágenes nuevas
+          const cur = this._currentScreen;
+          if (cur === 'loops-urbanos') this._renderLoopsUrbanos();
+          if (cur === 'comunidad') this._renderComunidad();
+          if (cur === 'explore') this._renderCards('', this._activeFilter || 'all');
         }
 
         this.routes = [...DEFAULTS, ...allLoops.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
@@ -3067,18 +3074,17 @@ const App = {
           this._fotoPosts = [];
           flSnap.forEach(d => {
             const p = { ...d.data(), id: d.id };
-            if (p.img === '[[base64]]') p.img = '';
             this._fotoPosts.push(p);
           });
-          // Cargar imágenes de fotoposts
-          for (const p of this._fotoPosts) {
-            if (!p.img) {
+          // Cargar imágenes en paralelo
+          await Promise.all(this._fotoPosts.map(async p => {
+            if (!p.img || p.img === '[[base64]]') {
               try {
                 const imgSnap = await this._db.collection('loop_imgs').doc(p.id).get();
-                if (imgSnap.exists) p.img = imgSnap.data().img || '';
-              } catch(e) {}
+                p.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
+              } catch(e) { p.img = ''; }
             }
-          }
+          }));
         } catch(e) { console.warn('FotoLoops load:', e); this._fotoPosts = this._fotoPosts || []; }
 
         // Cargar feed posts
@@ -3089,15 +3095,15 @@ const App = {
             const p = {...d.data(), id: d.id};
             this._feedPosts.push(p);
           });
-          // Cargar imágenes de posts con img base64
-          for (const p of this._feedPosts) {
+          // Cargar imágenes en paralelo
+          await Promise.all(this._feedPosts.map(async p => {
             if (p.img === '[[base64]]') {
               try {
                 const imgSnap = await this._db.collection('feed_imgs').doc(p.id).get();
-                if (imgSnap.exists) p.img = imgSnap.data().img || '';
-              } catch(e) {}
+                p.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
+              } catch(e) { p.img = ''; }
             }
-          }
+          }));
         } catch(e) { console.warn('Feed posts load:', e); this._feedPosts = this._feedPosts || []; }
 
         return;
@@ -6081,6 +6087,7 @@ const App = {
     if (tab === 'feed')  return this._renderFeed(body, city);
     if (tab === 'loops') return this._renderComLoops(body, city);
     if (tab === 'foto')  return this._renderComFoto(body, city);
+    if (tab === 'mundo') return this._renderMundo(body);
   },
 
   // ─── Tab: FEED ───
@@ -6288,7 +6295,132 @@ const App = {
     </div>`;
   },
 
-  // ── LIKE en post de feed ──
+  // ─── Tab: TODOS LOS LOOPS — MUNDO ───
+  _renderMundo(body) {
+    const TYPE_LBL  = {trad:'☕',pesca:'🎣',gastro:'🍽️',atardecer:'🌅',running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',relax:'🧘',trabajo:'💼',vacaciones:'🏖️',salidas:'🎉',otra:'🗺️'};
+    const TYPE_NAME = {trad:'Tradicional',pesca:'Pesca',gastro:'Gastro',atardecer:'Atardecer',running:'Running',mtb:'MTB',ciclismo:'Ciclismo',caminata:'Trekking',paseo:'Paseo',relax:'Relax',trabajo:'Trabajo',vacaciones:'Vacaciones',salidas:'Social',otra:'Otra'};
+
+    // Skeleton loader mientras carga
+    body.innerHTML = `
+      <div style="padding:14px;display:flex;flex-direction:column;gap:10px;" id="mundo-list">
+        ${[1,2,3,4,5].map(()=>`
+          <div style="background:var(--wh);border-radius:14px;padding:14px;border:0.5px solid var(--bd);display:flex;flex-direction:column;gap:8px;overflow:hidden;position:relative;">
+            <div style="height:13px;width:55%;background:var(--bd);border-radius:6px;overflow:hidden;position:relative;">
+              <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--bg3),transparent);animation:shimmer 1.4s infinite;"></div>
+            </div>
+            <div style="height:11px;width:38%;background:var(--bd);border-radius:6px;overflow:hidden;position:relative;">
+              <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--bg3),transparent);animation:shimmer 1.4s infinite;animation-delay:.2s;"></div>
+            </div>
+            <div style="height:11px;width:70%;background:var(--bd);border-radius:6px;overflow:hidden;position:relative;">
+              <div style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,var(--bg3),transparent);animation:shimmer 1.4s infinite;animation-delay:.1s;"></div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+
+    const renderList = (loops) => {
+      const list = [...loops].sort((a,b) => (b.ts||0) - (a.ts||0));
+      if (!list.length) {
+        body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
+          <div style="font-size:40px;margin-bottom:12px;">🌍</div>
+          <div style="font-size:14px;font-weight:600;">Todavía no hay loops en el mundo</div>
+          <div style="font-size:12px;margin-top:6px;">¡Sé el primero en crear uno!</div>
+        </div>`;
+        return;
+      }
+      body.innerHTML = `
+        <div style="padding:10px 14px 6px;display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:12px;font-weight:700;color:var(--gr);letter-spacing:.5px;text-transform:uppercase;">
+            🔴 EN VIVO — ${list.length} loop${list.length!==1?'s':''} creado${list.length!==1?'s':''}
+          </div>
+          <div id="mundo-pulse" style="width:8px;height:8px;border-radius:50%;background:var(--or);animation:pulsePt .9s ease-in-out infinite;"></div>
+        </div>
+        <div style="padding:0 14px 20px;display:flex;flex-direction:column;gap:9px;" id="mundo-list">
+          ${list.map((r,i) => {
+            const typeTxt = (TYPE_LBL[r.type]||'🔄') + ' ' + (TYPE_NAME[r.type]||r.type||'Loop');
+            const ciudad   = r.ciudad   || r.cityId  || '—';
+            const provincia= r.provincia|| '—';
+            const pais     = r.pais     || 'Argentina';
+            const color    = r.color    || '#FF5F00';
+            const hasImg   = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
+            const timeAgo  = this._timeAgo(r.ts||0);
+            const isNew    = i < 3 && (Date.now() - (r.ts||0)) < 3600000; // primer hora
+            return `
+            <div onclick="App.showDetail('${r.id}')"
+              style="background:var(--wh);border-radius:14px;border:0.5px solid ${isNew?'var(--or)':'var(--bd)'};box-shadow:${isNew?'0 2px 16px rgba(255,95,0,.18)':'var(--sh)'};overflow:hidden;cursor:pointer;display:flex;transition:box-shadow .2s,transform .15s;"
+              onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shL)'"
+              onmouseout="this.style.transform='';this.style.boxShadow='${isNew?'0 2px 16px rgba(255,95,0,.18)':'var(--sh)'}'">
+
+              <!-- Imagen / emoji izq -->
+              <div style="width:70px;flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(135deg,${color}28,${color}55);">
+                ${hasImg
+                  ? `<img src="${r.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+                  : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:30px;">${r.emoji||'🔄'}</div>`
+                }
+              </div>
+
+              <!-- Detalle derecha -->
+              <div style="flex:1;padding:10px 12px;min-width:0;display:flex;flex-direction:column;gap:3px;">
+                <!-- Nombre + badge nuevo -->
+                <div style="display:flex;align-items:center;gap:6px;">
+                  <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${r.name||'Loop'}</div>
+                  ${isNew ? `<span style="font-size:9px;font-weight:800;background:var(--or);color:white;border-radius:20px;padding:2px 7px;flex-shrink:0;">NUEVO</span>` : ''}
+                </div>
+
+                <!-- Tipo de loop -->
+                <div style="font-size:10px;color:var(--or);font-weight:600;">${typeTxt}</div>
+
+                <!-- 📍 Ubicación: País > Provincia > Ciudad -->
+                <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;margin-top:2px;">
+                  <span style="font-size:10px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:20px;padding:2px 8px;color:var(--md);font-weight:600;white-space:nowrap;">
+                    🌎 ${pais}
+                  </span>
+                  <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                  <span style="font-size:10px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:20px;padding:2px 8px;color:var(--md);font-weight:600;white-space:nowrap;">
+                    📍 ${provincia}
+                  </span>
+                  <svg width="7" height="7" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2.5"><path d="M9 18l6-6-6-6"/></svg>
+                  <span style="font-size:10px;background:var(--orL);border:0.5px solid var(--or);border-radius:20px;padding:2px 8px;color:var(--or);font-weight:700;white-space:nowrap;">
+                    🏙️ ${ciudad}
+                  </span>
+                </div>
+
+                <!-- Tiempo + distancia -->
+                <div style="display:flex;align-items:center;gap:8px;margin-top:3px;">
+                  <span style="font-size:10px;color:var(--gr);">${r.dist||'—'} · ${r.dur||'—'}</span>
+                  <span style="font-size:10px;color:var(--gr);margin-left:auto;">${timeAgo}</span>
+                </div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>`;
+    };
+
+    // Render inicial con loops ya cargados (filtrar solo los que no son defaults: los creados por usuarios)
+    const userLoops = (this.routes||[]).filter(r => r.type !== 'fotostop' && r.ts);
+    renderList(userLoops);
+
+    // Suscripción en tiempo real a Firestore — actualiza sin recargar
+    if (this._db && !this._mundoListener) {
+      try {
+        this._mundoListener = this._db.collection('loops')
+          .orderBy('ts','desc').limit(120)
+          .onSnapshot(snap => {
+            const liveLoops = [];
+            snap.forEach(d => liveLoops.push({...d.data(), id: d.id}));
+            // Fusionar con defaults evitando duplicados
+            const DEFAULTS = (this.routes||[]).filter(r => !r.ts);
+            const merged = [...liveLoops, ...DEFAULTS.filter(d => !liveLoops.find(l=>l.id===d.id))];
+            this.routes = merged;
+            // Solo re-render si la tab mundo está activa
+            if (this._comTab === 'mundo') {
+              renderList(liveLoops.filter(r => r.type !== 'fotostop'));
+            }
+          }, err => console.warn('[mundo] onSnapshot error:', err));
+      } catch(e) { console.warn('[mundo] listener:', e); }
+    }
+  },
+
+  
   _likePost(postId) {
     this.likes = this.likes || [];
     const key = 'post_' + postId;
