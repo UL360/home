@@ -1809,7 +1809,15 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 
   <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
 
-    <!-- Nombre -->
+    <!-- Banner de login (visible si no está autenticado) -->
+    <div id="cm-login-banner" style="display:none;background:#FEF3C7;border-radius:12px;padding:12px 14px;align-items:center;gap:10px;">
+      <span style="font-size:20px;">🔒</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:#92400E;">Iniciá sesión para guardar</div>
+        <div style="font-size:11px;color:#B45309;margin-top:2px;">Podés dibujar el recorrido pero necesitás cuenta para publicarlo</div>
+      </div>
+      <button onclick="App.go('profile')" style="background:#FF5F00;color:white;border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;">Ingresar</button>
+    </div>
     <div>
       <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">NOMBRE DEL LOOP *</label>
       <input type="text" id="cm-name" class="fi" placeholder="ej. Loop del Arroyo Las Tunas…" style="font-size:14px;">
@@ -5660,6 +5668,12 @@ const App = {
     const hint = document.getElementById('cm-city-detected');
     if (hint) hint.textContent = 'Tocá el mapa para detectar la ciudad';
 
+    // Mostrar aviso si no está logueado
+    const loginBanner = document.getElementById('cm-login-banner');
+    if (loginBanner) {
+      loginBanner.style.display = (!this._user || this._uid === 'public') ? 'flex' : 'none';
+    }
+
     if (this._cmMap) {
       this._cmMap.resize();
       this._cmRedraw();
@@ -5780,7 +5794,8 @@ const App = {
 
     if (!name)            return this.toast('⚠️ Ponele un nombre al loop');
     if (this._cmPts.length < 2) return this.toast('⚠️ Dibujá al menos 2 puntos en el mapa');
-    if (!this._uid)       return this.toast('⚠️ Iniciá sesión para guardar');
+    if (!this._user || this._uid === 'public')
+      return this.toast('⚠️ Iniciá sesión para guardar tu loop');
 
     const btn = document.getElementById('cm-save-btn');
     if (btn) { btn.textContent = '⏳ Guardando...'; btn.disabled = true; }
