@@ -5843,7 +5843,7 @@ const App = {
         name,
         desc,
         type,
-        pts:    this._cmPts,
+        pts:    this._cmPts.map(p => ({ lat: p[0], lng: p[1] })),  // Firestore no acepta arrays anidados
         dist:   Math.round(dist * 10) / 10,
         dur:    '',
         emoji:  '🔄',
