@@ -1793,8 +1793,111 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   </div>
 </div>
 
-<!-- ════════════ COMUNIDAD — Módulo 2 ════════════ -->
-<div id="comunidad" class="screen" style="background:var(--bg0);">
+<!-- ════════════ CREAR LOOP MANUAL (usuarios) ════════════ -->
+<div id="crear-manual" class="screen" style="background:var(--bg0);overflow-y:auto;">
+
+  <!-- Header -->
+  <div style="position:sticky;top:0;z-index:10;background:var(--wh);border-bottom:0.5px solid var(--bd);display:flex;align-items:center;gap:12px;padding:14px 16px;">
+    <button onclick="App.go(App._prevScreen||'explore')" style="width:36px;height:36px;border-radius:10px;border:0.5px solid var(--bd);background:var(--lt);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
+    </button>
+    <div>
+      <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:var(--dk);">Crear Loop Manual</div>
+      <div style="font-size:11px;color:var(--gr);">Dibujá el recorrido en el mapa</div>
+    </div>
+  </div>
+
+  <div style="padding:16px;display:flex;flex-direction:column;gap:14px;">
+
+    <!-- Nombre -->
+    <div>
+      <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">NOMBRE DEL LOOP *</label>
+      <input type="text" id="cm-name" class="fi" placeholder="ej. Loop del Arroyo Las Tunas…" style="font-size:14px;">
+    </div>
+
+    <!-- Descripción -->
+    <div>
+      <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">DESCRIPCIÓN</label>
+      <textarea id="cm-desc" class="fi" rows="2" placeholder="Describí la experiencia de este loop..." style="font-size:13px;resize:none;"></textarea>
+    </div>
+
+    <!-- Tipo -->
+    <div>
+      <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">TIPO</label>
+      <select id="cm-type" class="fi" style="font-size:13px;">
+        <option value="trad">☕ Tradicional</option>
+        <option value="running">🏃 Running</option>
+        <option value="mtb">🚵 MTB</option>
+        <option value="ciclismo">🚴 Ciclismo / Ruta</option>
+        <option value="caminata">🥾 Caminata / Trekking</option>
+        <option value="paseo">🌳 Paseo</option>
+        <option value="pesca">🎣 Pesca</option>
+        <option value="gastro">🍽️ Gastronómica</option>
+        <option value="atardecer">🌅 Atardecer</option>
+        <option value="relax">🧘 Relax / Meditación</option>
+        <option value="salidas">🎉 Salidas / Social</option>
+        <option value="perro">🐕 Vuelta al perro</option>
+        <option value="otra">🗺️ Otra</option>
+      </select>
+    </div>
+
+    <!-- Mapa para dibujar -->
+    <div>
+      <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">TRAZADO DEL RECORRIDO</label>
+      <div style="border-radius:14px;overflow:hidden;border:1.5px solid var(--bd);position:relative;">
+        <div id="cm-map" style="width:100%;height:300px;"></div>
+        <!-- Info overlay -->
+        <div style="position:absolute;top:10px;left:10px;right:10px;pointer-events:none;">
+          <div id="cm-map-hint" style="background:rgba(0,0,0,.6);color:white;font-size:11px;font-weight:600;padding:6px 10px;border-radius:8px;text-align:center;backdrop-filter:blur(4px);">
+            💡 Tocá el mapa para agregar puntos al recorrido
+          </div>
+        </div>
+        <!-- Contador puntos -->
+        <div id="cm-pts-badge" style="position:absolute;bottom:10px;left:10px;background:var(--or);color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;">
+          0 puntos
+        </div>
+        <!-- Botón limpiar -->
+        <button onclick="App._cmClearPts()" style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.6);color:white;border:none;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;backdrop-filter:blur(4px);">
+          🗑 Limpiar
+        </button>
+      </div>
+      <div id="cm-city-hint" style="font-size:11px;color:var(--or);margin-top:5px;display:flex;align-items:center;gap:5px;">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span id="cm-city-detected">Tocá el mapa para detectar la ciudad</span>
+      </div>
+    </div>
+
+    <!-- Foto de portada -->
+    <div>
+      <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">FOTO DE PORTADA (opcional)</label>
+      <div id="cm-img-preview" style="display:none;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:var(--bg0);margin-bottom:8px;">
+        <img id="cm-img-thumb" style="width:100%;height:100%;object-fit:cover;" src="" alt="">
+        <button onclick="App._cmClearImg()" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:white;font-size:18px;cursor:pointer;">×</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--lt);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span style="font-size:12px;color:var(--or);font-weight:600;">Cámara</span>
+          <input type="file" accept="image/*" capture="environment" style="display:none" onchange="App._cmHandleImg(this)">
+        </label>
+        <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--bd);border-radius:12px;cursor:pointer;background:var(--lt);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <span style="font-size:12px;color:var(--or);font-weight:600;">Galería</span>
+          <input type="file" accept="image/*" style="display:none" onchange="App._cmHandleImg(this)">
+        </label>
+      </div>
+    </div>
+
+    <!-- Guardar -->
+    <button id="cm-save-btn" onclick="App._cmSave()"
+      style="width:100%;padding:15px;background:var(--or);color:white;border:none;border-radius:14px;font-family:var(--fH);font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(255,95,0,.4);margin-bottom:24px;">
+      💾 Guardar Loop
+    </button>
+
+  </div>
+</div>
+
+
 
   <!-- Header fijo -->
   <div style="flex-shrink:0;background:var(--wh);border-bottom:0.5px solid var(--bd);">
@@ -3152,7 +3255,7 @@ const App = {
     const target = document.getElementById(sid);
     if (target) target.classList.add('active');
 
-    const navScreens = ['explore','loops','loops-urbanos','saved','profile','comunidad','eventos','ranking','grabar','detail','admin','explorar-ciudades','ciudad-remota'];
+    const navScreens = ['explore','loops','loops-urbanos','saved','profile','comunidad','eventos','ranking','grabar','detail','admin','explorar-ciudades','ciudad-remota','crear-manual'];
     const fab = document.getElementById('fab-loop');
     const showFab = ['explore','loops','loops-urbanos','comunidad','ranking','profile'].includes(sid);
     if (fab) fab.style.display = showFab ? 'flex' : 'none';
@@ -3173,6 +3276,7 @@ const App = {
     if (sid==='ranking')         { this._renderRanking(); }
     if (sid==='explorar-ciudades') { this._renderExplorar(); }
     if (sid==='grabar')          { setTimeout(()=>this._initGrabMap(),100); }
+    if (sid==='crear-manual')    { setTimeout(()=>this._cmInit(),100); }
     if (sid==='profile')         { this._updateProfileUI(); }
 
     // Update active sidebar button
@@ -5533,7 +5637,215 @@ const App = {
 
   // Detecta la ciudad real del usuario desde GPS y actualiza _luCity + filtros
   // ══════════════════════════════════════════
-  // 🌍 DETECCIÓN DE UBICACIÓN — País / Provincia / Ciudad
+  // 🗺️ CREAR LOOP MANUAL — pantalla para usuarios comunes
+  // ══════════════════════════════════════════
+  _cmMap:    null,
+  _cmPts:    [],
+  _cmImgB64: null,
+  _cmLoc:    null,
+
+  _cmInit() {
+    // Resetear estado
+    this._cmPts = [];
+    this._cmImgB64 = null;
+    this._cmLoc = null;
+    // Resetear UI
+    const nm = document.getElementById('cm-name');
+    const ds = document.getElementById('cm-desc');
+    if (nm) nm.value = '';
+    if (ds) ds.value = '';
+    this._cmUpdateBadge();
+    const prev = document.getElementById('cm-img-preview');
+    if (prev) prev.style.display = 'none';
+    const hint = document.getElementById('cm-city-detected');
+    if (hint) hint.textContent = 'Tocá el mapa para detectar la ciudad';
+
+    if (this._cmMap) {
+      this._cmMap.resize();
+      this._cmRedraw();
+      return;
+    }
+    const isDark = !document.body.classList.contains('day');
+    this._cmMap = new maplibregl.Map({
+      container: 'cm-map',
+      style: isDark
+        ? 'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=kS5YiQh2kB23jvnE6cpy'
+        : 'https://api.maptiler.com/maps/streets-v2/style.json?key=kS5YiQh2kB23jvnE6cpy',
+      center: [this._lastLng || -59.645, this._lastLat || -30.749],
+      zoom: 14,
+      dragRotate: false
+    });
+    this._cmMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+    this._cmMap.on('load', () => {
+      // Fuente y capa para el trazado
+      this._cmMap.addSource('cm-route', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
+      this._cmMap.addLayer({ id:'cm-line', type:'line', source:'cm-route',
+        paint:{ 'line-color':'#FF5F00', 'line-width':4, 'line-opacity':0.85 } });
+      this._cmMap.addLayer({ id:'cm-dots', type:'circle', source:'cm-route',
+        filter:['==','$type','Point'],
+        paint:{ 'circle-radius':5, 'circle-color':'#FF5F00', 'circle-stroke-width':2, 'circle-stroke-color':'white' } });
+      // Centrar en GPS si disponible
+      if (this._lastLat) {
+        this._cmMap.flyTo({ center:[this._lastLng, this._lastLat], zoom:14 });
+      } else if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(p => {
+          this._cmMap.flyTo({ center:[p.coords.longitude, p.coords.latitude], zoom:14 });
+        });
+      }
+    });
+    // Click para agregar punto
+    this._cmMap.on('click', e => this._cmAddPt(e.lngLat.lat, e.lngLat.lng));
+  },
+
+  _cmAddPt(lat, lng) {
+    this._cmPts.push([lat, lng]);
+    this._cmRedraw();
+    this._cmUpdateBadge();
+    // Detectar ciudad al primer punto
+    if (this._cmPts.length === 1) {
+      const hint = document.getElementById('cm-city-detected');
+      if (hint) hint.textContent = '📍 Detectando ciudad...';
+      this._detectLocation(lat, lng).then(loc => {
+        this._cmLoc = loc;
+        if (hint) hint.textContent = `📍 ${loc.ciudad}, ${loc.provincia}`;
+      });
+    }
+  },
+
+  _cmRedraw() {
+    const src = this._cmMap?.getSource('cm-route');
+    if (!src) return;
+    const features = [];
+    // Línea
+    if (this._cmPts.length >= 2) {
+      features.push({ type:'Feature', geometry:{ type:'LineString',
+        coordinates: this._cmPts.map(p=>[p[1],p[0]]) } });
+    }
+    // Puntos
+    this._cmPts.forEach(p => {
+      features.push({ type:'Feature', geometry:{ type:'Point', coordinates:[p[1],p[0]] } });
+    });
+    src.setData({ type:'FeatureCollection', features });
+  },
+
+  _cmUpdateBadge() {
+    const b = document.getElementById('cm-pts-badge');
+    if (b) b.textContent = `${this._cmPts.length} punto${this._cmPts.length!==1?'s':''}`;
+  },
+
+  _cmClearPts() {
+    this._cmPts = [];
+    this._cmLoc = null;
+    this._cmRedraw();
+    this._cmUpdateBadge();
+    const hint = document.getElementById('cm-city-detected');
+    if (hint) hint.textContent = 'Tocá el mapa para detectar la ciudad';
+  },
+
+  _cmHandleImg(input) {
+    const file = input?.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      // Comprimir a ~75KB
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX = 900;
+        let w = img.width, h = img.height;
+        if (w > MAX) { h = Math.round(h*MAX/w); w = MAX; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        this._cmImgB64 = canvas.toDataURL('image/jpeg', 0.72).split(',')[1];
+        const thumb = document.getElementById('cm-img-thumb');
+        const prev  = document.getElementById('cm-img-preview');
+        if (thumb) thumb.src = 'data:image/jpeg;base64,' + this._cmImgB64;
+        if (prev)  prev.style.display = 'block';
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  },
+
+  _cmClearImg() {
+    this._cmImgB64 = null;
+    const prev = document.getElementById('cm-img-preview');
+    if (prev) prev.style.display = 'none';
+  },
+
+  async _cmSave() {
+    const name = (document.getElementById('cm-name')?.value||'').trim();
+    const desc = (document.getElementById('cm-desc')?.value||'').trim();
+    const type = document.getElementById('cm-type')?.value || 'otra';
+
+    if (!name)            return this.toast('⚠️ Ponele un nombre al loop');
+    if (this._cmPts.length < 2) return this.toast('⚠️ Dibujá al menos 2 puntos en el mapa');
+    if (!this._uid)       return this.toast('⚠️ Iniciá sesión para guardar');
+
+    const btn = document.getElementById('cm-save-btn');
+    if (btn) { btn.textContent = '⏳ Guardando...'; btn.disabled = true; }
+
+    try {
+      // Ubicación — usar la detectada o el GPS del usuario
+      const loc = this._cmLoc || await this._detectLocation(
+        this._cmPts[0][0], this._cmPts[0][1]
+      );
+      // Calcular distancia total
+      let dist = 0;
+      for (let i = 1; i < this._cmPts.length; i++) {
+        dist += this._haversineKm(
+          this._cmPts[i-1][0], this._cmPts[i-1][1],
+          this._cmPts[i][0],   this._cmPts[i][1]
+        );
+      }
+      // Subir imagen si hay
+      let imgUrl = '';
+      if (this._cmImgB64 && this._db) {
+        try {
+          const imgDoc = await this._db.collection('loop_imgs').add({
+            data: this._cmImgB64, uid: this._uid, ts: Date.now()
+          });
+          imgUrl = imgDoc.id;
+        } catch(e) { console.warn('img upload:', e); }
+      }
+
+      const id = 'loop_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+      const route = {
+        id,
+        name,
+        desc,
+        type,
+        pts:    this._cmPts,
+        dist:   Math.round(dist * 10) / 10,
+        dur:    '',
+        emoji:  '🔄',
+        color:  '#FF5F00',
+        imgUrl,
+        cityId:    loc.ciudad,
+        ciudad:    loc.ciudad,
+        provincia: loc.provincia,
+        pais:      loc.pais,
+        likes: 0, paseos: 0,
+        authorId:   this._uid,
+        authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Anónimo',
+        createdAt:  Date.now(),
+        source: 'manual'
+      };
+
+      if (this._db) {
+        await this._db.collection('loops').doc(id).set(route);
+      }
+      this.routes.push(route);
+
+      this.toast(`✅ Loop "${name}" guardado en ${loc.ciudad}`);
+      this.go('loops-urbanos');
+    } catch(e) {
+      console.error('_cmSave:', e);
+      this.toast('❌ Error al guardar: ' + e.message);
+    } finally {
+      if (btn) { btn.textContent = '💾 Guardar Loop'; btn.disabled = false; }
+    }
+  },
   // Usa BigDataCloud (gratis, sin API key, rápido)
   // con cache inteligente + tabla local de fallback
   // ══════════════════════════════════════════
@@ -7861,7 +8173,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
               <div style="font-size:11px;font-weight:400;opacity:.85;margin-top:1px;">Grabá tu recorrido en tiempo real</div>
             </div>
           </button>
-          <button onclick="App.closeLoopModal();App.go('admin');"
+          <button onclick="App.closeLoopModal();App.go('crear-manual');"
             style="width:100%;height:62px;background:var(--lt);color:var(--dk);border:1.5px solid var(--bd);border-radius:14px;font-family:var(--fH);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:14px;padding:0 18px;transition:all .2s;">
             <div style="width:38px;height:38px;background:var(--orL);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
