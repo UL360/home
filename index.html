@@ -5827,13 +5827,12 @@ const App = {
         );
       }
       // Subir imagen si hay
-      let imgUrl = '';
+      let imgB64 = '';
       if (this._cmImgB64 && this._db) {
         try {
-          const imgDoc = await this._db.collection('loop_imgs').add({
-            data: this._cmImgB64, uid: this._uid, ts: Date.now()
-          });
-          imgUrl = imgDoc.id;
+          // Guardar imagen en loop_imgs con el mismo id del loop
+          await this._db.collection('loop_imgs').doc(id).set({ img: this._cmImgB64 });
+          imgB64 = '[[base64]]'; // marcador para que _loadData la restaure
         } catch(e) { console.warn('img upload:', e); }
       }
 
@@ -5848,7 +5847,8 @@ const App = {
         dur:    '',
         emoji:  '🔄',
         color:  '#FF5F00',
-        imgUrl,
+        imgUrl: '',
+        img:    imgB64,  // '[[base64]]' si hay imagen, '' si no
         cityId:    loc.ciudad,
         ciudad:    loc.ciudad,
         provincia: loc.provincia,
@@ -5863,6 +5863,8 @@ const App = {
       if (this._db) {
         await this._db.collection('loops').doc(id).set(route);
       }
+      // Restaurar imagen en memoria para mostrarla de inmediato (sin recargar)
+      if (this._cmImgB64) route.img = this._cmImgB64;
       this.routes.push(route);
 
       this.toast(`✅ Loop "${name}" guardado en ${loc.ciudad}`);
