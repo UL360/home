@@ -1420,7 +1420,12 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 
 <!-- ════════════ PROFILE ════════════ -->
 <div id="profile" class="screen" style="background:var(--bg0);">
-  <div class="scr-hdr"><h1>Perfil</h1></div>
+  <div class="scr-hdr" style="display:flex;align-items:center;gap:10px;">
+    <button onclick="App.go(App._prevScreen||'explore')" class="scr-back-btn" title="Volver">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
+    </button>
+    <h1 style="margin:0;">Perfil</h1>
+  </div>
   <div class="scr-body">
 
     <!-- Panel LOGIN (cuando no hay sesión) -->
@@ -2719,15 +2724,20 @@ const App = {
           } catch(e) { /* silencioso */ }
         }
 
-        // Si ya arrancó la app (no el init), recargar datos y navegar a perfil
+        // Si ya arrancó la app (no el init), recargar datos
         if (this._appReady) {
           await this._loadData();
           this._renderCards('', this._activeFilter || 'all');
           if (this.mainMap) this._refreshMain();
-          // Navegar a perfil cuando hace login (no en logout)
-          if (user && !wasLoggedIn) {
+          // Navegar a perfil SOLO cuando hace login activo (no al refrescar la página)
+          // _userJustLoggedIn se setea en true cuando el usuario toca el botón de login
+          if (user && !wasLoggedIn && this._userJustLoggedIn) {
+            this._userJustLoggedIn = false;
             setTimeout(() => this.go('profile'), 300);
-            this._initNotifications();  // ← activar notificaciones al loguear
+            this._initNotifications();
+          } else if (user && !wasLoggedIn) {
+            // Refresh de página con sesión existente: quedarse en explore
+            this._initNotifications();
           }
         }
       });
@@ -2783,6 +2793,7 @@ const App = {
 
       const result = await this._auth.signInWithPopup(provider);
       if (result.user) {
+        this._userJustLoggedIn = true;
         this.toast(`✅ Bienvenido, ${result.user.displayName || result.user.email}`);
       }
 
@@ -2885,8 +2896,8 @@ const App = {
     if (btn) { btn.textContent = 'Entrando...'; btn.disabled = true; }
     try {
       const cred = await this._auth.signInWithEmailAndPassword(email, pass);
+      this._userJustLoggedIn = true;
       this.toast(`✅ Bienvenido, ${cred.user.displayName || cred.user.email.split('@')[0]}`);
-      // onAuthStateChanged navegará al perfil automáticamente
     } catch(e) {
       const msg = {
         'auth/invalid-credential':    'Email o contraseña incorrectos',
