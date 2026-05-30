@@ -3024,6 +3024,9 @@ const App = {
           allLoops.push(loop);
         });
 
+        // Actualizar routes primero (sin imágenes aún) para que estén disponibles al renderizar
+        this.routes = [...DEFAULTS, ...allLoops.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
+
         // Restaurar imágenes en paralelo (mucho más rápido que secuencial)
         const imgLoops = allLoops.filter(r => r.img === '[[base64]]');
         if (imgLoops.length > 0) {
@@ -3031,16 +3034,17 @@ const App = {
             try {
               const imgSnap = await this._db.collection('loop_imgs').doc(r.id).get();
               r.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
+              // Sincronizar la imagen restaurada también en this.routes
+              const routeRef = this.routes.find(rt => rt.id === r.id);
+              if (routeRef) routeRef.img = r.img;
             } catch(e) { r.img = ''; }
           }));
-          // Re-renderizar pantallas visibles si hay imágenes nuevas
+          // Re-renderizar pantallas visibles DESPUÉS de que this.routes tiene las imágenes
           const cur = this._currentScreen;
           if (cur === 'loops-urbanos') this._renderLoopsUrbanos();
           if (cur === 'comunidad') this._renderComunidad();
           if (cur === 'explore') this._renderCards('', this._activeFilter || 'all');
         }
-
-        this.routes = [...DEFAULTS, ...allLoops.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
 
         // Normalizar cityId en loops que no lo tengan
         this.routes = this.routes.map(r => {
@@ -4316,7 +4320,7 @@ const App = {
       <div class="rc ${r.id===this.selId?'sel':''}" data-id="${r.id}" onclick="App.selectRoute('${r.id}')">
         <div class="rc-img-wrap" style="background:linear-gradient(135deg,${r.color||'#FF5F00'}18,${r.color||'#FF5F00'}33)">
           <span class="rc-emoji">${r.emoji||'🔄'}</span>
-          <img src="${r.img||''}" alt="${r.name||''}" loading="lazy" onerror="this.style.display='none'">
+          ${r.img ? `<img src="${r.img}" alt="${r.name||''}" loading="lazy" onerror="this.style.display='none'">` : ''}
         </div>
         <div class="rc-body">
           <span class="rc-badge ${r.badge||''}">${r.emoji||'🔄'} ${this._typeLabel(r.type)}</span>
@@ -6399,19 +6403,51 @@ const App = {
     };
 
     // Render inicial con loops ya cargados (filtrar solo los que no son defaults: los creados por usuarios)
+    // this.routes ya tiene imágenes restauradas por _loadData — se usan directamente
     const userLoops = (this.routes||[]).filter(r => r.type !== 'fotostop' && (r.ts || r.createdAt));
     renderList(userLoops);
+
+    // Si algún loop todavía tiene el marcador [[base64]] (carga incompleta), restaurar y re-render
+    const stillPending = userLoops.filter(r => r.img === '[[base64]]');
+    if (stillPending.length > 0 && this._db) {
+      Promise.all(stillPending.map(async r => {
+        try {
+          const imgSnap = await this._db.collection('loop_imgs').doc(r.id).get();
+          r.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
+        } catch(e) { r.img = ''; }
+      })).then(() => {
+        if (this._comTab === 'mundo') renderList(userLoops);
+      });
+    }
 
     // Suscripción en tiempo real a Firestore — actualiza sin recargar
     if (this._db && !this._mundoListener) {
       try {
         this._mundoListener = this._db.collection('loops')
           .orderBy('createdAt','desc').limit(120)
-          .onSnapshot(snap => {
+          .onSnapshot(async snap => {
             const liveLoops = [];
             snap.forEach(d => liveLoops.push({...d.data(), id: d.id}));
+
+            // Restaurar imágenes que tienen el marcador [[base64]]
+            const pending = liveLoops.filter(r => r.img === '[[base64]]');
+            if (pending.length > 0) {
+              await Promise.all(pending.map(async r => {
+                // Primero revisar si ya la tenemos en this.routes (cache)
+                const cached = (this.routes||[]).find(rt => rt.id === r.id);
+                if (cached && cached.img && cached.img !== '[[base64]]') {
+                  r.img = cached.img;
+                } else {
+                  try {
+                    const imgSnap = await this._db.collection('loop_imgs').doc(r.id).get();
+                    r.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
+                  } catch(e) { r.img = ''; }
+                }
+              }));
+            }
+
             // Fusionar con defaults evitando duplicados
-            const DEFAULTS = (this.routes||[]).filter(r => !r.ts);
+            const DEFAULTS = (this.routes||[]).filter(r => !r.ts && !r.createdAt);
             const merged = [...liveLoops, ...DEFAULTS.filter(d => !liveLoops.find(l=>l.id===d.id))];
             this.routes = merged;
             // Solo re-render si la tab mundo está activa
