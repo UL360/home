@@ -6318,7 +6318,8 @@ const App = {
       </div>`;
 
     const renderList = (loops) => {
-      const list = [...loops].sort((a,b) => (b.ts||0) - (a.ts||0));
+      const getTs = r => r.ts || r.createdAt || 0;
+      const list = [...loops].sort((a,b) => getTs(b) - getTs(a));
       if (!list.length) {
         body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
           <div style="font-size:40px;margin-bottom:12px;">🌍</div>
@@ -6342,8 +6343,9 @@ const App = {
             const pais     = r.pais     || 'Argentina';
             const color    = r.color    || '#FF5F00';
             const hasImg   = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
-            const timeAgo  = this._timeAgo(r.ts||0);
-            const isNew    = i < 3 && (Date.now() - (r.ts||0)) < 3600000; // primer hora
+            const loopTs   = getTs(r);
+            const timeAgo  = this._timeAgo(loopTs);
+            const isNew    = i < 3 && (Date.now() - loopTs) < 3600000; // primer hora
             return `
             <div onclick="App.showDetail('${r.id}')"
               style="background:var(--wh);border-radius:14px;border:0.5px solid ${isNew?'var(--or)':'var(--bd)'};box-shadow:${isNew?'0 2px 16px rgba(255,95,0,.18)':'var(--sh)'};overflow:hidden;cursor:pointer;display:flex;transition:box-shadow .2s,transform .15s;"
@@ -6396,14 +6398,14 @@ const App = {
     };
 
     // Render inicial con loops ya cargados (filtrar solo los que no son defaults: los creados por usuarios)
-    const userLoops = (this.routes||[]).filter(r => r.type !== 'fotostop' && r.ts);
+    const userLoops = (this.routes||[]).filter(r => r.type !== 'fotostop' && (r.ts || r.createdAt));
     renderList(userLoops);
 
     // Suscripción en tiempo real a Firestore — actualiza sin recargar
     if (this._db && !this._mundoListener) {
       try {
         this._mundoListener = this._db.collection('loops')
-          .orderBy('ts','desc').limit(120)
+          .orderBy('createdAt','desc').limit(120)
           .onSnapshot(snap => {
             const liveLoops = [];
             snap.forEach(d => liveLoops.push({...d.data(), id: d.id}));
