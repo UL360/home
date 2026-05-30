@@ -1169,6 +1169,42 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 .explorar-city-sub { font-size:11px;color:var(--gr);margin-top:2px; }
 .explorar-prov-chip { padding:5px 13px;border-radius:20px;font-size:12px;color:var(--md);background:var(--wh);border:0.5px solid var(--bd);cursor:pointer;transition:all .2s; }
 .explorar-prov-chip:hover { border-color:var(--or);color:var(--or); }
+
+/* ═══ SELECTOR DE CAPAS ═══ */
+.layer-chip {
+  flex-shrink:0; height:32px; padding:0 13px; border-radius:20px;
+  border:1.5px solid var(--bd); background:var(--wh);
+  font-family:var(--fB); font-size:12px; font-weight:600; color:var(--md);
+  cursor:pointer; display:flex; align-items:center; gap:5px;
+  transition:all .2s; white-space:nowrap;
+  box-shadow:0 1px 6px rgba(0,0,0,.06);
+}
+.layer-chip.muni     { border-color:#0F6E56; color:#0F6E56; background:#E1F5EE; }
+.layer-chip.com      { border-color:#534AB7; color:#534AB7; background:#EEEDFE; }
+.layer-chip.all      { border-color:var(--or); color:var(--or); background:var(--orL); }
+body.day .layer-chip { background:#FFFFFF; border-color:#DCDCEC; color:#44445A; }
+body.day .layer-chip.muni { background:#E1F5EE; border-color:#0F6E56; color:#0F6E56; }
+body.day .layer-chip.com  { background:#EEEDFE; border-color:#534AB7; color:#534AB7; }
+body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color:var(--or); }
+
+/* Badge municipal sobre las rutas */
+.badge-muni {
+  display:inline-flex; align-items:center; gap:3px;
+  background:#E1F5EE; border:0.5px solid #0F6E56; color:#085041;
+  font-size:9px; font-weight:700; padding:2px 7px; border-radius:10px;
+  text-transform:uppercase; letter-spacing:.3px;
+}
+/* Selector de visibilidad al publicar loop */
+.vis-opt {
+  flex:1; padding:10px 8px; border-radius:11px; border:1.5px solid var(--bd);
+  background:var(--lt); cursor:pointer; display:flex; flex-direction:column;
+  align-items:center; gap:4px; font-family:var(--fB); font-size:11px;
+  font-weight:600; color:var(--md); transition:all .2s; text-align:center;
+}
+.vis-opt.on        { border-color:var(--or); background:var(--orL); color:var(--or); }
+.vis-opt.on.muni   { border-color:#0F6E56; background:#E1F5EE; color:#085041; }
+.vis-opt.on.privado{ border-color:#888; background:var(--bg3); color:var(--dk); }
+.vis-opt .vis-em   { font-size:20px; }
 </style>
 
 </head>
@@ -1248,6 +1284,21 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
     <div id="rt-dot" style="width:9px;height:9px;border-radius:50%;background:var(--or);flex-shrink:0;"></div>
     <span id="rt-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</span>
     <button onclick="App._clearSelection()" style="background:none;border:none;color:#9CA3AF;cursor:pointer;padding:0 0 0 4px;font-size:18px;line-height:1;display:flex;align-items:center;flex-shrink:0;" title="Cerrar">✕</button>
+  </div>
+
+  <!-- ── SELECTOR DE CAPAS — flota sobre el mapa ── -->
+  <div id="layer-selector"
+    style="position:absolute;bottom:88px;left:50%;transform:translateX(-50%);z-index:10;
+           display:flex;gap:7px;padding:7px 10px;
+           background:rgba(30,30,38,.82);backdrop-filter:blur(8px);
+           border-radius:24px;border:0.5px solid rgba(255,255,255,.1);
+           box-shadow:0 4px 20px rgba(0,0,0,.45);">
+    <button id="lbtn-all"  class="layer-chip all"
+      onclick="App._setLayer('all')"  title="Ver todos los loops">🔀 Todos</button>
+    <button id="lbtn-muni" class="layer-chip"
+      onclick="App._setLayer('muni')" title="Solo loops municipales">🏛 Municipio</button>
+    <button id="lbtn-com"  class="layer-chip"
+      onclick="App._setLayer('com')"  title="Solo loops de la comunidad">👥 Comunidad</button>
   </div>
 
   <!-- ── SEARCH BAR movida al menú lateral — se mantienen los ids para el JS ── -->
@@ -1547,7 +1598,13 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
       <button class="adm-tab" data-tab="notifs" onclick="App._admTab('notifs',this)">
         <span class="adm-tab-ic">🔔</span>Notificaciones
       </button>
+      <button class="adm-tab" data-tab="propuestas" onclick="App._admTab('propuestas',this)">
+        <span class="adm-tab-ic">🏛</span>Propuestas comunidad
+      </button>
     </div>
+
+    <!-- ── PROPUESTAS COMUNIDAD ── -->
+    <div id="adm-tab-propuestas" class="adm-panel" style="display:none;"></div>
 
     <!-- ── DASHBOARD ── -->
     <div id="adm-tab-dashboard" class="adm-panel">
@@ -1900,6 +1957,25 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
           <span style="font-size:12px;color:var(--or);font-weight:600;">Galería</span>
           <input type="file" accept="image/*" style="display:none" onchange="App._cmHandleImg(this)">
         </label>
+      </div>
+    </div>
+
+    <!-- Visibilidad del loop -->
+    <div>
+      <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:8px;">¿QUIÉN PUEDE VER ESTE LOOP?</label>
+      <div style="display:flex;gap:7px;">
+        <button class="vis-opt privado" id="vopt-private" onclick="App._cmSetVis('private',this)">
+          <span class="vis-em">🔒</span>Solo yo
+        </button>
+        <button class="vis-opt on" id="vopt-public" onclick="App._cmSetVis('public',this)">
+          <span class="vis-em">👥</span>Comunidad
+        </button>
+        <button class="vis-opt muni" id="vopt-pending" onclick="App._cmSetVis('pending',this)">
+          <span class="vis-em">🏛</span>Proponer al municipio
+        </button>
+      </div>
+      <div id="vopt-hint" style="font-size:10px;color:var(--gr);margin-top:6px;">
+        👥 Visible para todos los loopers de tu ciudad.
       </div>
     </div>
 
@@ -3009,44 +3085,66 @@ const App = {
 
     if (this._db) {
       try {
-        // Forzar lectura desde el servidor (no caché)
+        // ── Cargar loops comunitarios (colección 'loops') ──
         const snap = await this._db.collection('loops').get({ source: 'server' })
-          .catch(() => this._db.collection('loops').get()); // fallback a caché si no hay red
+          .catch(() => this._db.collection('loops').get());
         const allLoops = [];
         snap.forEach(d => {
           const loop = { ...d.data(), id: d.id };
-          // Reconvertir pts de objetos a arrays [lat, lng]
           if (Array.isArray(loop.pts)) {
             loop.pts = loop.pts.map(p =>
               (p && typeof p === 'object' && 'lat' in p) ? [p.lat, p.lng] : p
             );
           }
+          // Marcar como comunidad si no tiene source explícito
+          if (!loop.source) loop.source = 'comunidad';
+          // Solo loops públicos (visibility public o undefined) o del propio usuario
+          if (loop.visibility === 'private' && loop.authorId !== this._uid) return;
           allLoops.push(loop);
         });
+        this.routesCom = allLoops;
 
-        // Actualizar routes primero (sin imágenes aún) para que estén disponibles al renderizar
-        this.routes = [...DEFAULTS, ...allLoops.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
+        // ── Cargar loops municipales (colección 'loops_municipio') ──
+        let muniLoops = [];
+        try {
+          const muniSnap = await this._db.collection('loops_municipio')
+            .where('status', '==', 'published').get()
+            .catch(() => this._db.collection('loops_municipio').get());
+          muniSnap.forEach(d => {
+            const loop = { ...d.data(), id: d.id };
+            if (Array.isArray(loop.pts)) {
+              loop.pts = loop.pts.map(p =>
+                (p && typeof p === 'object' && 'lat' in p) ? [p.lat, p.lng] : p
+              );
+            }
+            loop.source = 'municipio';
+            muniLoops.push(loop);
+          });
+        } catch(e) { console.warn('loops_municipio no disponible:', e.message); }
+        this.routesMuni = muniLoops;
 
-        // Restaurar imágenes en paralelo (mucho más rápido que secuencial)
-        const imgLoops = allLoops.filter(r => r.img === '[[base64]]');
+        // ── Combinar: DEFAULTS + municipio + comunidad ──
+        const allCombined = [...muniLoops, ...allLoops];
+        this.routes = [...DEFAULTS, ...allCombined.filter(c => !DEFAULTS.find(d => d.id === c.id))];
+
+        // Restaurar imágenes en paralelo
+        const imgLoops = allCombined.filter(r => r.img === '[[base64]]');
         if (imgLoops.length > 0) {
           await Promise.all(imgLoops.map(async r => {
             try {
               const imgSnap = await this._db.collection('loop_imgs').doc(r.id).get();
               r.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
-              // Sincronizar la imagen restaurada también en this.routes
               const routeRef = this.routes.find(rt => rt.id === r.id);
               if (routeRef) routeRef.img = r.img;
             } catch(e) { r.img = ''; }
           }));
-          // Re-renderizar pantallas visibles DESPUÉS de que this.routes tiene las imágenes
           const cur = this._currentScreen;
           if (cur === 'loops-urbanos') this._renderLoopsUrbanos();
           if (cur === 'comunidad') this._renderComunidad();
           if (cur === 'explore') this._renderCards('', this._activeFilter || 'all');
         }
 
-        // Normalizar cityId en loops que no lo tengan
+        // Normalizar cityId
         this.routes = this.routes.map(r => {
           if (!r.cityId && !r.ciudad && r.pts && r.pts.length > 0) {
             const fp = r.pts[0];
@@ -3072,7 +3170,7 @@ const App = {
 
         this._updateProfileUI();
 
-        // Cargar FotoLoops (fotostops públicos) desde Firebase
+        // Cargar FotoLoops
         try {
           const flSnap = await this._db.collection('fotoloops').orderBy('ts', 'desc').limit(100)
             .get().catch(() => this._db.collection('fotoloops').get());
@@ -3081,7 +3179,6 @@ const App = {
             const p = { ...d.data(), id: d.id };
             this._fotoPosts.push(p);
           });
-          // Cargar imágenes en paralelo
           await Promise.all(this._fotoPosts.map(async p => {
             if (!p.img || p.img === '[[base64]]') {
               try {
@@ -3100,7 +3197,6 @@ const App = {
             const p = {...d.data(), id: d.id};
             this._feedPosts.push(p);
           });
-          // Cargar imágenes en paralelo
           await Promise.all(this._feedPosts.map(async p => {
             if (p.img === '[[base64]]') {
               try {
@@ -3122,7 +3218,6 @@ const App = {
       const raw = localStorage.getItem('ul360_routes');
       const custom = raw ? JSON.parse(raw) : [];
       const merged = [...DEFAULTS, ...custom.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
-      // Normalizar cityId
       this.routes = merged.map(r => {
         if (!r.cityId && !r.ciudad && r.pts && r.pts.length > 0) {
           const fp = r.pts[0];
@@ -3805,8 +3900,62 @@ const App = {
     }
   },
 
-  // ── MODO DE TRANSPORTE ──
-  _navMode: 'foot',  // foot | bike | car
+  // ══════════════════════════════════════════
+  // CAPAS: MUNICIPIO / COMUNIDAD / TODAS
+  // ══════════════════════════════════════════
+  _layerMode: 'all',     // 'all' | 'muni' | 'com'
+  routesMuni: [],        // loops cargados de loops_municipio
+  routesCom:  [],        // loops cargados de loops (comunidad)
+  _cmVisibility: 'public', // 'private' | 'public' | 'pending'
+
+  _setLayer(mode) {
+    this._layerMode = mode;
+    // Actualizar estilos de chips
+    ['all','muni','com'].forEach(m => {
+      const btn = document.getElementById('lbtn-' + m);
+      if (!btn) return;
+      btn.className = 'layer-chip' + (m === mode ? ' ' + m : '');
+    });
+    this._applyLayer();
+    const labels = { all:'🔀 Todos los loops', muni:'🏛 Loops municipales', com:'👥 Loops de la comunidad' };
+    this.toast(labels[mode] || '');
+  },
+
+  _applyLayer() {
+    const mode = this._layerMode;
+    let visible = [];
+    if (mode === 'muni') {
+      visible = this.routes.filter(r => r.source === 'municipio');
+    } else if (mode === 'com') {
+      visible = this.routes.filter(r => r.source !== 'municipio');
+    } else {
+      visible = [...this.routes];
+    }
+    // Mostrar u ocultar rutas en el mapa
+    if (this._layers) {
+      this.routes.forEach(r => {
+        const show = visible.find(v => v.id === r.id);
+        this._setRouteVisible(r.id, !!show);
+      });
+    }
+    // Refrescar cards con el subconjunto visible
+    this._renderCards('', this._activeFilter || 'all', visible);
+  },
+
+  _cmSetVis(vis, btn) {
+    this._cmVisibility = vis;
+    document.querySelectorAll('.vis-opt').forEach(b => b.classList.remove('on'));
+    if (btn) btn.classList.add('on');
+    const hints = {
+      private: '🔒 Solo vos podés ver este loop.',
+      public:  '👥 Visible para todos los loopers de tu ciudad.',
+      pending: '🏛 Se enviará al municipio para revisión y aprobación.'
+    };
+    const h = document.getElementById('vopt-hint');
+    if (h) h.textContent = hints[vis] || '';
+  },
+
+
 
   _navModes: {
     foot:      { label:'🚶 Caminando',   emoji:'🚶', osrm:'foot',    speed:5,  voz:'caminando' },
@@ -5805,6 +5954,89 @@ const App = {
     reader.readAsDataURL(file);
   },
 
+  async _cmSave() {
+    if (!this._user) return this.toast('⚠️ Iniciá sesión para publicar');
+    const name = document.getElementById('cm-name')?.value?.trim();
+    const desc = document.getElementById('cm-desc')?.value?.trim();
+    const type = document.getElementById('cm-type')?.value || 'trad';
+    if (!name) return this.toast('⚠️ Poné un nombre al loop');
+    if (this._cmPts.length < 2) return this.toast('⚠️ Agregá al menos 2 puntos en el mapa');
+
+    const btn = document.getElementById('cm-save-btn');
+    if (btn) { btn.textContent = '☁️ Guardando...'; btn.disabled = true; }
+
+    const dist = this._calcDist(this._cmPts);
+    const loc  = this._cmLoc || {};
+    const vis  = this._cmVisibility || 'public';
+
+    const EMOJI_MAP = {trad:'☕',running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',pesca:'🎣',gastro:'🍽️',atardecer:'🌅',relax:'🧘',salidas:'🎉',perro:'🐕',otra:'🗺️'};
+    const COLOR_MAP = {trad:'#FF5F00',running:'#EF4444',mtb:'#D97706',ciclismo:'#0891B2',caminata:'#059669',paseo:'#16A34A',pesca:'#0369A1',gastro:'#DB2777',atardecer:'#EA580C',relax:'#7C3AED',salidas:'#EC4899',perro:'#CA8A04',otra:'#6B7280'};
+
+    const loopId = 'cm_' + Date.now();
+    const loopData = {
+      id: loopId,
+      name, desc: desc || '',
+      type,
+      emoji: EMOJI_MAP[type] || '🔄',
+      color: COLOR_MAP[type] || '#FF5F00',
+      badge: 'ba',
+      dist: dist.toFixed(1) + ' km',
+      dur: Math.round(dist / 5 * 60) + ' min',
+      pts: this._cmPts.map(p => ({ lat: p[0], lng: p[1] })),
+      cityId:    loc.ciudad   || this._luCity || 'La Paz',
+      ciudad:    loc.ciudad   || this._luCity || 'La Paz',
+      provincia: loc.provincia || this._luProv || 'Entre Ríos',
+      pais:      loc.pais     || this._luPais || 'Argentina',
+      authorId:   this._uid,
+      authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Anónimo',
+      createdAt:  Date.now(),
+      likes: 0,
+      source:     'comunidad',
+      visibility: vis,   // 'public' | 'private' | 'pending'
+    };
+
+    if (this._cmImgB64) loopData.img = '[[base64]]';
+
+    try {
+      if (this._db) {
+        if (vis === 'pending') {
+          // Va a la colección de propuestas para que el municipio las revise
+          await this._db.collection('loops_municipio_pending').doc(loopId).set(loopData);
+          this.toast('🏛 Propuesta enviada al municipio para revisión');
+        } else if (vis === 'public') {
+          await this._db.collection('loops').doc(loopId).set(loopData);
+          if (this._cmImgB64) await this._db.collection('loop_imgs').doc(loopId).set({ img: 'data:image/jpeg;base64,' + this._cmImgB64 });
+          this.toast('✅ Loop publicado en la comunidad');
+        } else {
+          // privado: se guarda en loops pero no aparece para otros
+          await this._db.collection('loops').doc(loopId).set(loopData);
+          this.toast('🔒 Loop guardado como privado');
+        }
+      }
+
+      // Agregar a routes locales y dibujar en mapa (solo si no es pending)
+      if (vis !== 'pending') {
+        const loopForMap = {
+          ...loopData,
+          img: this._cmImgB64 ? 'data:image/jpeg;base64,' + this._cmImgB64 : '',
+          pts: this._cmPts
+        };
+        this.routes.push(loopForMap);
+        if (vis === 'public') this.routesCom.push(loopForMap);
+        if (this.mainMap) this._drawRoute(loopForMap);
+        this._renderCards('', this._activeFilter || 'all');
+      }
+
+      this._addPts(vis === 'pending' ? 15 : 10, vis === 'pending' ? 'Propuesta enviada' : 'Loop publicado');
+      this.go(this._prevScreen || 'explore');
+    } catch(e) {
+      console.error('_cmSave error:', e);
+      this.toast('❌ Error al guardar: ' + e.message);
+    } finally {
+      if (btn) { btn.textContent = '💾 Guardar Loop'; btn.disabled = false; }
+    }
+  },
+
   _cmClearImg() {
     this._cmImgB64 = null;
     const prev = document.getElementById('cm-img-preview');
@@ -7675,6 +7907,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (tab === 'usuarios')    this._admRenderUsuarios();
     if (tab === 'reportes')    this._admRenderReportes();
     if (tab === 'notifs')      this._admRenderNotifHistory();
+    if (tab === 'propuestas')  this._admRenderPropuestas();
   },
 
   // ── Dashboard ──
@@ -7772,6 +8005,71 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       const btn = document.getElementById('adm-save-btn');
       if(btn) btn.textContent = '💾 Actualizar Loop';
     }, 150);
+  },
+
+  // ── Propuestas de usuarios para capa municipal ──
+  async _admRenderPropuestas() {
+    const el = document.getElementById('adm-tab-propuestas');
+    if (!el) return;
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--gr);font-size:13px;">Cargando propuestas...</div>`;
+    let list = [];
+    if (this._db) {
+      try {
+        const snap = await this._db.collection('loops_municipio_pending').orderBy('createdAt','desc').limit(50).get();
+        list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch(e) { console.warn('propuestas:', e); }
+    }
+    if (list.length === 0) {
+      el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--gr);">
+        <div style="font-size:36px;margin-bottom:10px;">🏛</div>
+        <div style="font-size:14px;font-weight:600;">Sin propuestas pendientes</div>
+        <div style="font-size:12px;margin-top:6px;">Los loops que la comunidad proponga al municipio aparecerán acá.</div>
+      </div>`;
+      return;
+    }
+    el.innerHTML = `<div style="padding:14px;display:flex;flex-direction:column;gap:10px;">` +
+      list.map(r => `
+      <div class="adm-item">
+        <div class="adm-item-row">
+          <div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${r.emoji||'🔄'}</div>
+          <div class="adm-item-info">
+            <div class="adm-item-name">${r.name}</div>
+            <div class="adm-item-meta">${r.ciudad||'—'} · ${r.dist||'—'} · por ${r.authorName||'Anónimo'}</div>
+            ${r.desc ? `<div class="adm-item-meta" style="margin-top:2px;">${r.desc}</div>` : ''}
+          </div>
+        </div>
+        <div class="adm-item-actions">
+          <button class="adm-btn adm-btn-green" onclick="App._admApprovePropuesta('${r.id}')">✅ Aprobar → Capa Municipal</button>
+          <button class="adm-btn adm-btn-red"   onclick="App._admRejectPropuesta('${r.id}','${(r.authorId||'')}')">❌ Rechazar</button>
+        </div>
+      </div>`).join('') + `</div>`;
+  },
+
+  async _admApprovePropuesta(id) {
+    if (!this._db) return this.toast('Firebase no disponible');
+    try {
+      const snap = await this._db.collection('loops_municipio_pending').doc(id).get();
+      if (!snap.exists) return this.toast('⚠️ Propuesta no encontrada');
+      const data = { ...snap.data(), source: 'municipio', status: 'published', approvedAt: Date.now() };
+      await this._db.collection('loops_municipio').doc(id).set(data);
+      await this._db.collection('loops_municipio_pending').doc(id).delete();
+      // Agregar al array local
+      const loopForMap = { ...data, pts: (data.pts||[]).map(p => [p.lat, p.lng]) };
+      this.routesMuni.push(loopForMap);
+      this.routes.push(loopForMap);
+      if (this.mainMap) this._drawRoute(loopForMap);
+      this._admRenderPropuestas();
+      this.toast('✅ Loop aprobado y publicado en la capa municipal');
+    } catch(e) { this.toast('❌ Error: ' + e.message); }
+  },
+
+  async _admRejectPropuesta(id, authorId) {
+    if (!confirm('¿Rechazar esta propuesta?')) return;
+    if (this._db) {
+      try { await this._db.collection('loops_municipio_pending').doc(id).delete(); } catch(e) {}
+    }
+    this._admRenderPropuestas();
+    this.toast('Propuesta rechazada');
   },
 
   // ── FotoLoops ──
