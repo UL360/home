@@ -112,7 +112,6 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 
 /* ── ANIMATIONS ── */
 @keyframes fadeUp   { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
-@keyframes slideUp  { from { transform:translateY(100%); } to { transform:translateY(0); } }
 @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
 @keyframes pulsePt  { 0%,100%{transform:scale(1);} 50%{transform:scale(1.06);} }
 @keyframes spin     { to { transform:rotate(360deg); } }
@@ -1297,9 +1296,9 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <button id="lbtn-all"  class="layer-chip all"
       onclick="App._setLayer('all')"  title="Ver todos los loops">🔀 Todos</button>
     <button id="lbtn-muni" class="layer-chip"
-      onclick="App._setLayer('muni')" title="Solo loops municipales">🏛 Ciudad</button>
+      onclick="App._setLayer('muni')" title="Solo loops municipales">🏛 Municipio</button>
     <button id="lbtn-com"  class="layer-chip"
-      onclick="App._setLayer('com')"  title="Solo loops de la comunidad">👥 Loopers</button>
+      onclick="App._setLayer('com')"  title="Solo loops de la comunidad">👥 Comunidad</button>
   </div>
 
   <!-- ── SEARCH BAR movida al menú lateral — se mantienen los ids para el JS ── -->
@@ -1439,9 +1438,9 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <div class="stops" id="stops-list"></div>
   </div>
   <div class="cta-fixed">
-    <button class="btn-go" onclick="App.showLoopOnMap()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      Mostrar en Mapa
+    <button class="btn-go" onclick="App.startLoop()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Iniciar Loop
     </button>
   </div>
 </div>
@@ -1601,6 +1600,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       </button>
       <button class="adm-tab" data-tab="propuestas" onclick="App._admTab('propuestas',this)">
         <span class="adm-tab-ic">🏛</span>Propuestas comunidad
+        <span id="adm-propuestas-badge" style="display:none;background:#EF4444;color:white;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;"></span>
       </button>
     </div>
 
@@ -3918,7 +3918,7 @@ const App = {
       btn.className = 'layer-chip' + (m === mode ? ' ' + m : '');
     });
     this._applyLayer();
-    const labels = { all:'🔀 Todos los loops', muni:'🏛 Loops de la ciudad', com:'👥 Loops de Loopers' };
+    const labels = { all:'🔀 Todos los loops', muni:'🏛 Loops municipales', com:'👥 Loops de la comunidad' };
     this.toast(labels[mode] || '');
   },
 
@@ -4438,117 +4438,18 @@ const App = {
     this.showDetail(this.selId);
   },
 
-  showLoopOnMap() {
+  startLoop() {
     const r = this.routes.find(x => x.id === this.selId);
     if (!r) { this.toast('⚠️ Seleccioná un loop primero'); return; }
 
-    // Ir al mapa y mostrar solo este loop
+    // Cerrar el panel de detalle y volver al mapa
     this.go('explore');
 
-    setTimeout(() => {
-      // Seleccionar y enfocar el loop
-      this.selId = r.id;
-      this._showOnlyRoute(r.id);
-
-      // Badge superior
-      const b = document.getElementById('rt-badge');
-      if (b) {
-        b.style.display = 'flex';
-        document.getElementById('rt-name').textContent = r.name;
-        document.getElementById('rt-dot').style.background = r.color;
-      }
-
-      // Centrar mapa en el loop (fitBounds sobre sus puntos)
-      if (this.mainMap && r.pts && r.pts.length) {
-        const coords = r.pts.map(p => Array.isArray(p) ? [p[1], p[0]] : [p.lng, p.lat]);
-        const lngs = coords.map(c => c[0]), lats = coords.map(c => c[1]);
-        this.mainMap.fitBounds(
-          [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-          { padding: 80, maxZoom: 16, duration: 900 }
-        );
-      }
-
-      // Diálogo: ¿Iniciar navegación o volver a los loops?
-      this._showStartLoopDialog(r);
-    }, 350);
-  },
-
-  _showStartLoopDialog(r) {
-    // Quitar diálogo anterior si existe
-    const old = document.getElementById('start-loop-dialog');
-    if (old) old.remove();
-
-    const dlg = document.createElement('div');
-    dlg.id = 'start-loop-dialog';
-    dlg.style.cssText = [
-      'position:fixed',
-      'bottom:0',
-      'left:0',
-      'right:0',
-      'z-index:200',
-      'background:var(--wh,#1E1E26)',
-      'border-radius:20px 20px 0 0',
-      'padding:20px 20px 32px',
-      'box-shadow:0 -8px 40px rgba(0,0,0,.5)',
-      'border-top:1px solid var(--bd,#2C2C2E)',
-      'animation:slideUp .28s cubic-bezier(.4,0,.2,1)'
-    ].join(';');
-
-    dlg.innerHTML = `
-      <div style="width:40px;height:4px;background:var(--bd,#3A3A42);border-radius:4px;margin:0 auto 16px;"></div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
-        <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,${r.color}22,${r.color}44);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${r.emoji||'🔄'}</div>
-        <div>
-          <div style="font-family:var(--fH);font-size:16px;font-weight:800;color:var(--lt,#F5F5F5);">${r.name}</div>
-          <div style="font-size:12px;color:var(--gr,#8E8E99);margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'}</div>
-        </div>
-      </div>
-      <p style="font-size:13px;color:var(--gr,#8E8E99);margin:12px 0 18px;">¿Querés iniciar la navegación de este loop o volver a explorar?</p>
-      <button onclick="App._closeStartDialog();App._startNavFromDialog('${r.id}')"
-        style="width:100%;padding:14px;border-radius:14px;border:none;background:var(--or,#FF5F00);color:white;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        Iniciar Loop
-      </button>
-      <button onclick="App._closeStartDialog();App.go('explore')"
-        style="width:100%;padding:12px;border-radius:14px;border:none;background:var(--bg2,#2C2C34);color:var(--md,#C0C0C8);font-size:14px;font-weight:600;cursor:pointer;">
-        ← Volver a los loops
-      </button>
-    `;
-
-    document.body.appendChild(dlg);
-
-    // Cerrar tocando afuera
-    setTimeout(() => {
-      const overlay = document.createElement('div');
-      overlay.id = 'start-loop-overlay';
-      overlay.style.cssText = 'position:fixed;inset:0;z-index:199;background:rgba(0,0,0,.35);';
-      overlay.onclick = () => App._closeStartDialog();
-      document.body.insertBefore(overlay, dlg);
-    }, 10);
-  },
-
-  _closeStartDialog() {
-    const d = document.getElementById('start-loop-dialog');
-    const o = document.getElementById('start-loop-overlay');
-    if (d) d.remove();
-    if (o) o.remove();
-  },
-
-  _startNavFromDialog(id) {
-    const r = this.routes.find(x => x.id === id);
-    if (!r) return;
-    this.selId = id;
-    this._closeStartDialog();
-
+    // Pequeño delay para que el mapa esté visible antes de iniciar nav
     setTimeout(() => {
       this.toast(`🚀 Iniciando "${r.name}"…`);
-      this._drawNavToLoop(r);
-    }, 200);
-  },
-
-  startLoop() {
-    // Mantener compatibilidad con llamadas anteriores
-    this.showLoopOnMap();
+      this._startNav(r);
+    }, 350);
   },
 
   // ── CARDS ──
@@ -6143,82 +6044,7 @@ const App = {
     if (prev) prev.style.display = 'none';
   },
 
-  async _cmSave() {
-    const name = (document.getElementById('cm-name')?.value||'').trim();
-    const desc = (document.getElementById('cm-desc')?.value||'').trim();
-    const type = document.getElementById('cm-type')?.value || 'otra';
 
-    if (!name)            return this.toast('⚠️ Ponele un nombre al loop');
-    if (this._cmPts.length < 2) return this.toast('⚠️ Dibujá al menos 2 puntos en el mapa');
-    if (!this._user || this._uid === 'public')
-      return this.toast('⚠️ Iniciá sesión para guardar tu loop');
-
-    const btn = document.getElementById('cm-save-btn');
-    if (btn) { btn.textContent = '⏳ Guardando...'; btn.disabled = true; }
-
-    try {
-      // Ubicación — usar la detectada o el GPS del usuario
-      const loc = this._cmLoc || await this._detectLocation(
-        this._cmPts[0][0], this._cmPts[0][1]
-      );
-      // Calcular distancia total
-      let dist = 0;
-      for (let i = 1; i < this._cmPts.length; i++) {
-        dist += this._haversineKm(
-          this._cmPts[i-1][0], this._cmPts[i-1][1],
-          this._cmPts[i][0],   this._cmPts[i][1]
-        );
-      }
-      // Subir imagen si hay
-      let imgB64 = '';
-      if (this._cmImgB64 && this._db) {
-        try {
-          // Guardar imagen en loop_imgs con el mismo id del loop
-          await this._db.collection('loop_imgs').doc(id).set({ img: this._cmImgB64 });
-          imgB64 = '[[base64]]'; // marcador para que _loadData la restaure
-        } catch(e) { console.warn('img upload:', e); }
-      }
-
-      const id = 'loop_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-      const route = {
-        id,
-        name,
-        desc,
-        type,
-        pts:    this._cmPts.map(p => ({ lat: p[0], lng: p[1] })),  // Firestore no acepta arrays anidados
-        dist:   Math.round(dist * 10) / 10,
-        dur:    '',
-        emoji:  '🔄',
-        color:  '#FF5F00',
-        imgUrl: '',
-        img:    imgB64,  // '[[base64]]' si hay imagen, '' si no
-        cityId:    loc.ciudad,
-        ciudad:    loc.ciudad,
-        provincia: loc.provincia,
-        pais:      loc.pais,
-        likes: 0, paseos: 0,
-        authorId:   this._uid,
-        authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Anónimo',
-        createdAt:  Date.now(),
-        source: 'manual'
-      };
-
-      if (this._db) {
-        await this._db.collection('loops').doc(id).set(route);
-      }
-      // Restaurar imagen en memoria para mostrarla de inmediato (sin recargar)
-      if (this._cmImgB64) route.img = this._cmImgB64;
-      this.routes.push(route);
-
-      this.toast(`✅ Loop "${name}" guardado en ${loc.ciudad}`);
-      this.go('loops-urbanos');
-    } catch(e) {
-      console.error('_cmSave:', e);
-      this.toast('❌ Error al guardar: ' + e.message);
-    } finally {
-      if (btn) { btn.textContent = '💾 Guardar Loop'; btn.disabled = false; }
-    }
-  },
   // Usa BigDataCloud (gratis, sin API key, rápido)
   // con cache inteligente + tabla local de fallback
   // ══════════════════════════════════════════
@@ -7978,6 +7804,21 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     else setTimeout(()=>this.admMap && this.admMap.resize(), 120);
     // Cargar datos del tab activo
     this._admTab(this._admCurrentTab || 'dashboard');
+    // Actualizar badge de propuestas pendientes
+    this._admRefreshPropuestasBadge();
+  },
+
+  async _admRefreshPropuestasBadge() {
+    if (!this._db) return;
+    try {
+      const snap = await this._db.collection('loops_municipio_pending').get();
+      const count = snap.size || 0;
+      const badge = document.getElementById('adm-propuestas-badge');
+      if (badge) {
+        if (count > 0) { badge.textContent = count; badge.style.display = 'inline'; }
+        else { badge.style.display = 'none'; }
+      }
+    } catch(e) { /* silencioso */ }
   },
 
   _admBack() {
@@ -8119,6 +7960,14 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       } catch(e) { console.warn('propuestas:', e); }
     }
+
+    // Actualizar badge en el tab
+    const badge = document.getElementById('adm-propuestas-badge');
+    if (badge) {
+      if (list.length > 0) { badge.textContent = list.length; badge.style.display = 'inline'; }
+      else { badge.style.display = 'none'; }
+    }
+
     if (list.length === 0) {
       el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--gr);">
         <div style="font-size:36px;margin-bottom:10px;">🏛</div>
