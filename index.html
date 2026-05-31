@@ -2711,6 +2711,18 @@ const App = {
             this._user = user;
             this._uid  = user ? user.uid : 'public';
             this._updateProfileUI();
+            // Crear/actualizar documento del usuario en 'users' para que el admin pueda verlos
+            if (user && this._db) {
+              try {
+                await this._db.collection('users').doc(user.uid).set({
+                  displayName: user.displayName || user.email?.split('@')[0] || 'Anónimo',
+                  email: user.email || '',
+                  photoURL: user.photoURL || '',
+                  lastSeen: Date.now(),
+                  createdAt: Date.now(), // solo se aplica si el doc no existe (merge)
+                }, { merge: true });
+              } catch(e) { console.warn('[users doc]', e.message); }
+            }
             try { await this._loadData(); } catch(e) { console.warn('loadData:', e); }
             try { this._renderCards('', this._activeFilter || 'all'); } catch(e) {}
             if (this.mainMap) try { this._refreshMain(); } catch(e) {}
@@ -3755,14 +3767,20 @@ const App = {
     (this._fotoMarkers || []).forEach(m => { try { m.remove(); } catch(e){} });
     this._fotoMarkers = [];
     if (!this.mainMap) return;
-    // Mostrar solo fotoloops APROBADOS, con lat/lng válido
-    const approved = (this._fotoPosts || []).filter(p => p.status === 'approved' && p.lat && p.lng);
+    // Mostrar fotoloops aprobados + los del propio usuario (para preview inmediato tras publicar)
+    const visible = (this._fotoPosts || []).filter(p => {
+      if (!p.lat || !p.lng) return false;
+      const isApproved = p.status === 'approved';
+      const isOwn = p.authorId && this._uid && p.authorId === this._uid;
+      const isPending = !p.status || p.status === 'pending'; // sin status = recién creado
+      return isApproved || (isOwn && isPending);
+    });
     const FL_CATS = {
       lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',
       plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',
       ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'
     };
-    approved.forEach(p => {
+    visible.forEach(p => {
       const emoji = FL_CATS[p.cat] || p.emoji || '📍';
       const label = p.cat || 'lugar';
       const el = document.createElement('div');
@@ -4962,9 +4980,9 @@ const App = {
       }
 
       this.closeFotoLoop();
-      // Guardar en lista local para preview inmediato
+      // Guardar en lista local para preview inmediato (usar URL de Storage, no base64 local)
       if (!this._fotoPosts) this._fotoPosts = [];
-      this._fotoPosts.unshift({ ...stopData, img: this._fotoLoopImg || '' });
+      this._fotoPosts.unshift({ ...stopData });
       this._drawFotoStopsOnMap();   // ← actualizar mapa
       this._addPts(30, 'Parada publicada');
       this._showSaveSuccess(name, `🌐 Publicado en ${cityId}`);
@@ -5437,13 +5455,25 @@ const App = {
         const idx = this.routes.findIndex(x=>x.id===this._editingId);
         if (idx > -1) {
           const existing = this.routes[idx];
+          // Determinar imagen final: subir a Storage si hay nueva imagen base64
+          let finalImg = existing.img || '';
+          if (this._imgBase64 && this._imgBase64.startsWith('data:') && this._storage) {
+            try {
+              finalImg = await this._uploadImg(this._imgBase64, `loops/${this._editingId}.jpg`);
+            } catch(e) {
+              console.warn('[saveRoute edit] Storage upload error:', e.message);
+              finalImg = existing.img || ''; // preservar imagen anterior si falla
+            }
+          } else if (this._imgBase64 && this._imgBase64.startsWith('http')) {
+            finalImg = this._imgBase64; // ya es URL Storage
+          }
           this.routes[idx] = {
             ...existing, name, type, desc:desc||existing.desc,
             emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
             dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
             pts:[...this.aPts],
             pois:this.aPois.filter(p=>p.name).map(p=>({...p})),
-            img: this._imgBase64 || existing.img || '',
+            img: finalImg,
             authorId: existing.authorId || this._uid,  // preservar autor original
             authorName: existing.authorName || (this._user?.displayName || 'Anónimo'),
             updatedAt: Date.now()
@@ -5969,10 +5999,10 @@ const App = {
         if (w > MAX) { h = Math.round(h*MAX/w); w = MAX; }
         canvas.width = w; canvas.height = h;
         canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        this._cmImgB64 = canvas.toDataURL('image/jpeg', 0.72).split(',')[1];
+        this._cmImgB64 = canvas.toDataURL('image/jpeg', 0.72);
         const thumb = document.getElementById('cm-img-thumb');
         const prev  = document.getElementById('cm-img-preview');
-        if (thumb) thumb.src = 'data:image/jpeg;base64,' + this._cmImgB64;
+        if (thumb) thumb.src = this._cmImgB64;
         if (prev)  prev.style.display = 'block';
       };
       img.src = e.target.result;
@@ -6614,9 +6644,10 @@ const App = {
               liveLoops.push(r);
             });
 
-            // Fusionar con defaults evitando duplicados
-            const DEFAULTS = (this.routes||[]).filter(r => !r.ts && !r.createdAt);
-            const merged = [...liveLoops, ...DEFAULTS.filter(d => !liveLoops.find(l=>l.id===d.id))];
+            // Fusionar: preservar loops municipales + defaults, actualizar comunidad con datos en vivo
+            const nonComunidad = (this.routes||[]).filter(r => r.source === 'municipio' || (!r.ts && !r.createdAt));
+            const liveIds = new Set(liveLoops.map(l => l.id));
+            const merged = [...liveLoops, ...nonComunidad.filter(d => !liveIds.has(d.id))];
             this.routes = merged;
             if (this._comTab === 'mundo') {
               renderList(liveLoops.filter(r => r.type !== 'fotostop'));
@@ -7692,6 +7723,22 @@ const App = {
       } catch(e) { console.warn('[Storage] grab cover:', e.message); }
     }
 
+    // Subir imágenes de paradas fotográficas a Storage (quitar base64 del doc Firestore)
+    if (this._storage && r.pois && r.pois.length > 0) {
+      r.pois = await Promise.all(r.pois.map(async (poi, idx) => {
+        if (poi.img && poi.img.startsWith('data:')) {
+          try {
+            const stopImgUrl = await this._uploadImg(poi.img, `loops/${grabId}_stop${idx}.jpg`);
+            return { ...poi, img: stopImgUrl };
+          } catch(e) {
+            console.warn(`[Storage] stop ${idx} img:`, e.message);
+            return { ...poi, img: '' }; // no bloquear el guardado
+          }
+        }
+        return poi;
+      }));
+    }
+
     this.routes.push(r);
     if(this.mainMap) this._drawRoute(r);
     this._addPts(25,'Loop grabado con GPS');
@@ -8036,8 +8083,29 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       const d = document.getElementById('adm-desc'); if(d) d.value = r.desc||'';
       const t = document.getElementById('adm-type'); if(t) t.value = r.type||'trad';
       const c = document.getElementById('adm-city'); if(c) c.value = r.ciudad||r.cityId||'La Paz';
-      // Marcar que estamos editando
-      this._admEditingId = id;
+      // Cargar puntos del loop en el mapa admin
+      this.aPts = r.pts ? r.pts.map(p => Array.isArray(p) ? p : [p.lat, p.lng]) : [];
+      this._renderPts();
+      this._updatePtBadge();
+      if (this.admMap) {
+        this._admMarkers = this._admMarkers||[];
+        this._admMarkers.forEach(m=>m.remove()); this._admMarkers=[];
+        this.aPts.forEach((pt,i) => {
+          const el2 = document.createElement('div');
+          el2.style.cssText='width:26px;height:26px;border-radius:50%;background:#FF5F00;border:2px solid white;display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:700;';
+          el2.textContent = i+1;
+          const mkr = new maplibregl.Marker({element:el2,anchor:'center'}).setLngLat([pt[1],pt[0]]).addTo(this.admMap);
+          this._admMarkers.push(mkr);
+        });
+        this._redrawAdmLine();
+        if (this.aPts.length>0) {
+          const fp=this.aPts[0]; this.admMap.flyTo({center:[fp[1],fp[0]],zoom:14});
+        }
+      }
+      // Cargar imagen previa
+      this._loadAdmImgPreview(r);
+      // Usar _editingId (nombre correcto que lee saveRoute)
+      this._editingId = id;
       const btn = document.getElementById('adm-save-btn');
       if(btn) btn.textContent = '💾 Actualizar Loop';
     }, 150);
@@ -8115,15 +8183,23 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const cntEl = document.getElementById('adm-fl-count');
     if (!el) return;
 
-    let list = this._fotoPosts || [];
-    // Cargar de Firebase si está disponible
-    if (this._db && list.length === 0) {
+    // Siempre recargar desde Firebase cuando el admin abre la pestaña
+    if (this._db) {
       try {
-        const snap = await this._db.collection('fotoloops').orderBy('ts','desc').limit(50).get();
-        list = snap.docs.map(d=>({id:d.id,...d.data()}));
-        this._fotoPosts = list;
-      } catch(e){}
+        el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--gr);font-size:13px;">Cargando foto loops...</div>`;
+        let snap;
+        try {
+          snap = await this._db.collection('fotoloops').orderBy('ts','desc').limit(50).get();
+        } catch(e) {
+          snap = await this._db.collection('fotoloops').limit(50).get();
+        }
+        this._fotoPosts = snap.docs.map(d=>({id:d.id,...d.data()}));
+      } catch(e) {
+        console.warn('admRenderFotoloops load:', e);
+      }
     }
+
+    let list = this._fotoPosts || [];
     const filtered = filter === 'all' ? list : list.filter(p=>(p.status||'pending')===filter);
     if(cntEl) cntEl.textContent = `${filtered.length} foto${filtered.length!==1?'s':''}`;
 
@@ -8181,8 +8257,16 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     let list = [];
     if (this._db) {
       try {
-        const snap = await this._db.collection('eventos').orderBy('ts','desc').limit(100).get();
+        let snap;
+        try {
+          snap = await this._db.collection('eventos').orderBy('ts','desc').limit(100).get();
+        } catch(e) {
+          // Fallback sin orderBy si hay docs sin campo ts o falta índice
+          snap = await this._db.collection('eventos').limit(100).get();
+        }
         list = snap.docs.map(d=>({id:d.id,...d.data()}));
+        // Ordenar localmente como fallback
+        list.sort((a,b)=>(b.ts||0)-(a.ts||0));
         this._eventos = list; // sincronizar cache
       } catch(e) {
         list = this._eventos || [];
@@ -8234,7 +8318,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         // Fallback sin orderBy si falta el índice o el campo
         snap = await this._db.collection('users').limit(50).get();
       }
-      if (snap.empty) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin usuarios registrados</div>`; return; }
+      if (snap.empty) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin usuarios registrados en la colección "users".<br><small>Nota: los usuarios se crean en la colección al iniciar sesión por primera vez.</small></div>`; return; }
       el.innerHTML = snap.docs.map(doc => {
         const u = {id:doc.id,...doc.data()};
         const banned = u.banned || false;
@@ -8257,7 +8341,16 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         </div>`;
       }).join('');
     } catch(e) {
-      el.innerHTML = `<div style="text-align:center;padding:32px;color:#EF4444;font-size:13px;">Error: ${e.message}</div>`;
+      // Probablemente falta la regla de Firestore para leer la colección 'users' como admin
+      el.innerHTML = `<div style="text-align:center;padding:32px;color:#EF4444;font-size:13px;">
+        Error al leer usuarios: ${e.message}<br><br>
+        <div style="background:var(--bg2);border-radius:10px;padding:12px;text-align:left;font-size:11px;color:var(--md);line-height:1.7;">
+          <b>Probablemente falta esta regla en Firestore:</b><br>
+          <code style="color:var(--or);">match /users/{uid} {<br>
+          &nbsp;&nbsp;allow read: if request.auth.uid == '${this.ADMIN_UID}';<br>
+          }</code>
+        </div>
+      </div>`;
     }
   },
 
@@ -8286,7 +8379,14 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (!this._db) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Firebase no disponible</div>`; return; }
     el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--gr);font-size:13px;">Cargando reportes...</div>`;
     try {
-      const snap = await this._db.collection('reports').where('status','==','pending').orderBy('ts','desc').get();
+      let snap;
+      try {
+        // Intento con orderBy (requiere índice compuesto en Firestore)
+        snap = await this._db.collection('reports').where('status','==','pending').orderBy('ts','desc').get();
+      } catch(e) {
+        // Fallback sin orderBy (no requiere índice)
+        snap = await this._db.collection('reports').where('status','==','pending').get();
+      }
       if (snap.empty) {
         el.innerHTML = '';
         if(empty) empty.style.display = 'block';
@@ -8312,7 +8412,14 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         </div>`;
       }).join('');
     } catch(e) {
-      el.innerHTML = `<div style="text-align:center;padding:32px;color:#EF4444;font-size:13px;">Error: ${e.message}</div>`;
+      el.innerHTML = `<div style="text-align:center;padding:32px;color:#EF4444;font-size:13px;">
+        Error al leer reportes: ${e.message}<br><br>
+        <div style="background:var(--bg2);border-radius:10px;padding:12px;text-align:left;font-size:11px;color:var(--md);line-height:1.7;">
+          <b>Si el error dice "requires an index":</b><br>
+          Creá el índice compuesto en Firebase Console →<br>
+          Firestore → Indexes → Agregar: colección <code style="color:var(--or);">reports</code>, campos <code style="color:var(--or);">status ASC</code> + <code style="color:var(--or);">ts DESC</code>
+        </div>
+      </div>`;
     }
   },
 
