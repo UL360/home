@@ -52,6 +52,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <!-- MapLibre GL JS — reemplaza Leaflet -->
 <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -1600,7 +1601,6 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       </button>
       <button class="adm-tab" data-tab="propuestas" onclick="App._admTab('propuestas',this)">
         <span class="adm-tab-ic">🏛</span>Propuestas comunidad
-        <span id="adm-propuestas-badge" style="display:none;background:#EF4444;color:white;border-radius:10px;font-size:10px;font-weight:700;padding:1px 6px;margin-left:4px;"></span>
       </button>
     </div>
 
@@ -1617,6 +1617,24 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       </div>
       <div style="font-size:12px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:10px;">ACTIVIDAD RECIENTE</div>
       <div id="adm-activity" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <!-- MIGRACIÓN DE IMÁGENES -->
+      <div style="margin-top:18px;background:var(--lt);border:1px solid var(--bd);border-radius:12px;padding:14px;">
+        <div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:4px;">🖼️ Migración de imágenes</div>
+        <div style="font-size:12px;color:var(--gr);margin-bottom:10px;line-height:1.5;">
+          Recupera imágenes de loops que quedaron sin foto tras el cambio a Firebase Storage.<br>
+          Busca en <code>loop_imgs</code> (base64 viejo), sube a Storage y actualiza el loop.
+        </div>
+        <div id="adm-migrate-status" style="display:none;font-size:12px;color:var(--or);margin-bottom:8px;padding:8px;background:var(--orL);border-radius:8px;"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="adm-btn adm-btn-green" onclick="App._migrateLoopImages(false)" style="flex:1;min-width:140px;">
+            🔍 Buscar sin imagen
+          </button>
+          <button class="adm-btn" onclick="App._migrateLoopImages(true)" style="flex:1;min-width:140px;background:var(--or);color:white;">
+            ⬆️ Migrar ahora
+          </button>
+        </div>
+      </div>
     </div>
 
     <!-- ── CREAR LOOP ── -->
@@ -2766,8 +2784,9 @@ const App = {
       // Inicializar solo si no está ya inicializado
       if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-      this._db   = firebase.firestore();
-      this._auth = firebase.auth();
+      this._db      = firebase.firestore();
+      this._auth    = firebase.auth();
+      this._storage = firebase.storage();
 
       // Long-polling: usar autoDetect (no mezclar con ForceLongPolling)
       this._db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
@@ -3128,22 +3147,8 @@ const App = {
         const allCombined = [...muniLoops, ...allLoops];
         this.routes = [...DEFAULTS, ...allCombined.filter(c => !DEFAULTS.find(d => d.id === c.id))];
 
-        // Restaurar imágenes en paralelo
-        const imgLoops = allCombined.filter(r => r.img === '[[base64]]');
-        if (imgLoops.length > 0) {
-          await Promise.all(imgLoops.map(async r => {
-            try {
-              const imgSnap = await this._db.collection('loop_imgs').doc(r.id).get();
-              r.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
-              const routeRef = this.routes.find(rt => rt.id === r.id);
-              if (routeRef) routeRef.img = r.img;
-            } catch(e) { r.img = ''; }
-          }));
-          const cur = this._currentScreen;
-          if (cur === 'loops-urbanos') this._renderLoopsUrbanos();
-          if (cur === 'comunidad') this._renderComunidad();
-          if (cur === 'explore') this._renderCards('', this._activeFilter || 'all');
-        }
+        // Compatibilidad: limpiar marcadores [[base64]] de datos viejos
+        this.routes.forEach(r => { if (r.img === '[[base64]]') r.img = ''; });
 
         // Normalizar cityId
         this.routes = this.routes.map(r => {
@@ -3178,16 +3183,9 @@ const App = {
           this._fotoPosts = [];
           flSnap.forEach(d => {
             const p = { ...d.data(), id: d.id };
+            if (p.img === '[[base64]]') p.img = ''; // compatibilidad datos viejos
             this._fotoPosts.push(p);
           });
-          await Promise.all(this._fotoPosts.map(async p => {
-            if (!p.img || p.img === '[[base64]]') {
-              try {
-                const imgSnap = await this._db.collection('loop_imgs').doc(p.id).get();
-                p.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
-              } catch(e) { p.img = ''; }
-            }
-          }));
         } catch(e) { console.warn('FotoLoops load:', e); this._fotoPosts = this._fotoPosts || []; }
 
         // Cargar feed posts
@@ -3199,12 +3197,7 @@ const App = {
             this._feedPosts.push(p);
           });
           await Promise.all(this._feedPosts.map(async p => {
-            if (p.img === '[[base64]]') {
-              try {
-                const imgSnap = await this._db.collection('feed_imgs').doc(p.id).get();
-                p.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
-              } catch(e) { p.img = ''; }
-            }
+            if (p.img === '[[base64]]') p.img = ''; // compatibilidad datos viejos
           }));
         } catch(e) { console.warn('Feed posts load:', e); this._feedPosts = this._feedPosts || []; }
 
@@ -3262,7 +3255,9 @@ const App = {
 
     for (const r of mine) {
       const imgData = r.img && r.img.startsWith('data:') ? r.img : null;
-      const rClean = { ...r, img: imgData ? '[[base64]]' : (r.img || '') };
+      // Si la imagen ya es una URL de Storage/http, la dejamos tal cual
+      const isStorageUrl = r.img && (r.img.startsWith('http://') || r.img.startsWith('https://'));
+      const rClean = { ...r, img: isStorageUrl ? r.img : (imgData ? '' : (r.img || '')) };
       Object.keys(rClean).forEach(k => { if (rClean[k] === undefined) delete rClean[k]; });
       rClean.authorId   = this._uid;
       rClean.authorName = this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo';
@@ -3271,7 +3266,6 @@ const App = {
       if (Array.isArray(rClean.pts)) {
         rClean.pts = rClean.pts.map(p => Array.isArray(p) ? {lat:p[0],lng:p[1]} : p);
       }
-      // Convertir pois que puedan tener arrays internos
       if (Array.isArray(rClean.pois)) {
         rClean.pois = rClean.pois.map(poi => {
           const p = {...poi};
@@ -3280,9 +3274,21 @@ const App = {
         });
       }
 
-      console.log(`[_saveData] → set loops/${r.id} nombre="${r.name}"`);
+      // Subir imagen a Storage si es base64 local (aún no subida)
+      if (imgData && this._storage && !isStorageUrl) {
+        try {
+          console.log(`[_saveData] → Storage upload loops/${r.id}.jpg`);
+          rClean.img = await this._uploadImg(imgData, `loops/${r.id}.jpg`);
+          console.log(`[_saveData] ✓ Storage ${r.id} → ${rClean.img.slice(0,60)}...`);
+          // Actualizar en memoria también
+          r.img = rClean.img;
+        } catch(e) {
+          console.warn(`[_saveData] Storage error ${r.id}:`, e.message);
+          rClean.img = ''; // no romper el guardado por una imagen
+        }
+      }
 
-      // Timeout de 10s — si tarda más, probablemente AdBlock está bloqueando
+      console.log(`[_saveData] → set loops/${r.id} nombre="${r.name}"`);
       const setPromise = this._db.collection('loops').doc(r.id).set(rClean);
       const timeoutPromise = new Promise((_, rej) =>
         setTimeout(() => rej(new Error(
@@ -3299,18 +3305,9 @@ const App = {
         await Promise.race([setPromise, timeoutPromise]);
       } catch(writeErr) {
         console.error('[_saveData] Error escribiendo en Firestore:', writeErr);
-        console.error('[_saveData] Código de error:', writeErr.code);
-        console.error('[_saveData] Stack:', writeErr.stack);
         throw writeErr;
       }
       console.log(`[_saveData] ✓ loops/${r.id} OK`);
-
-      if (imgData) {
-        console.log(`[_saveData] → set loop_imgs/${r.id}`);
-        const imgPromise = this._db.collection('loop_imgs').doc(r.id).set({ img: imgData });
-        await Promise.race([imgPromise, new Promise((_,rej) => setTimeout(() => rej(new Error('TIMEOUT imagen')), 10000))]);
-        console.log(`[_saveData] ✓ loop_imgs/${r.id} OK`);
-      }
     }
 
     // Esperar que los writes lleguen al servidor (timeout 8s)
@@ -4507,6 +4504,29 @@ const App = {
   _imgBase64:    null,   // loop manual (admin)
   _grabCoverB64: null,   // loop grabado GPS
 
+  // ══════════════════════════════════════════
+  // 🗂️ FIREBASE STORAGE — SUBIDA DE IMÁGENES
+  // ══════════════════════════════════════════
+  // Recibe base64 puro (sin prefijo data:) o con prefijo, sube a Storage
+  // y devuelve la URL pública. path ej: 'loops/cm_123.jpg'
+  async _uploadImg(b64OrDataUrl, path) {
+    if (!this._storage) throw new Error('Storage no inicializado');
+    // Normalizar: asegurar que tenemos el prefijo data:
+    const dataUrl = b64OrDataUrl.startsWith('data:')
+      ? b64OrDataUrl
+      : 'data:image/jpeg;base64,' + b64OrDataUrl;
+
+    const ref = this._storage.ref(path);
+    const snap = await ref.putString(dataUrl, 'data_url');
+    return await snap.ref.getDownloadURL();
+  },
+
+  // Eliminar imagen de Storage (para cuando se borra un loop)
+  async _deleteImg(path) {
+    if (!this._storage) return;
+    try { await this._storage.ref(path).delete(); } catch(e) { /* no existe, OK */ }
+  },
+
   _compressImg(file, cb) {
     const reader = new FileReader();
     reader.onload = e => {
@@ -4573,16 +4593,19 @@ const App = {
     if (input) input.value = '';
   },
   _loadAdmImgPreview(r) {
+    // Soporte para base64 (data:) y URLs de Storage (http/https)
+    const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
     this._imgBase64 = r.img && r.img.startsWith('data:') ? r.img : null;
+    const imgSrc = hasImg ? r.img : null;
     const prev  = document.getElementById('adm-img-preview');
     const thumb = document.getElementById('adm-img-thumb');
     const label = document.getElementById('adm-img-label');
     const sizeEl= document.getElementById('adm-img-size');
-    if (this._imgBase64) {
+    if (imgSrc) {
       if (prev)  prev.style.display  = 'block';
       if (label) label.style.display = 'none';
-      if (thumb) thumb.src = this._imgBase64;
-      if (sizeEl) sizeEl.textContent = `${Math.round(this._imgBase64.length*0.75/1024)} KB · guardada`;
+      if (thumb) thumb.src = imgSrc;
+      if (sizeEl) sizeEl.textContent = r.img.startsWith('http') ? '☁️ Imagen en Storage' : `${Math.round(r.img.length*0.75/1024)} KB · guardada`;
     } else {
       if (prev)  prev.style.display  = 'none';
       if (label) label.style.display = 'flex';
@@ -4881,10 +4904,10 @@ const App = {
     const stopData = {
       id: stopId, type: 'fotostop', cat,
       name, desc: desc || '',
-      img: this._fotoLoopImg ? '[[base64]]' : '',
+      img: '',   // se llena abajo con la URL de Storage
       emoji, color, badge: 'ba',
       lat, lng,
-      cityId,                   // ← ciudad detectada
+      cityId,
       ciudad:    cityId,
       provincia: _flLoc.provincia || this._luProv || 'Entre Ríos',
       pais:      _flLoc.pais      || this._luPais || 'Argentina',
@@ -4902,10 +4925,15 @@ const App = {
           this.toast('⚠️ Iniciá sesión primero');
           this.closeFotoLoop(); this.go('profile'); return;
         }
-        await this._db.collection('fotoloops').doc(stopId).set(stopData);
-        if (this._fotoLoopImg) {
-          await this._db.collection('loop_imgs').doc(stopId).set({ img: this._fotoLoopImg });
+
+        // Subir imagen a Storage
+        if (this._fotoLoopImg && this._storage) {
+          try {
+            stopData.img = await this._uploadImg(this._fotoLoopImg, `fotoloops/${stopId}.jpg`);
+          } catch(e) { console.warn('[Storage] fotoloop img:', e.message); }
         }
+
+        await this._db.collection('fotoloops').doc(stopId).set(stopData);
       }
 
       // Mini-loop (sin arrays anidados)
@@ -4916,7 +4944,7 @@ const App = {
           desc: desc || `Punto de interés: ${name}`,
           emoji, color, badge: 'ba',
           dist: '0 km', dur: '—',
-          img: this._fotoLoopImg ? '[[base64]]' : '',
+          img: stopData.img,   // misma URL del Storage
           pts: [{ lat, lng }],
           pois: [{ name, lat, lng }],
           cityId,
@@ -4927,12 +4955,9 @@ const App = {
           authorName: this._user?.displayName || 'Anónimo',
           createdAt: Date.now()
         };
-        const loopForMap = { ...loopData, img: this._fotoLoopImg || '', pts: [[lat, lng]] };
+        const loopForMap = { ...loopData, pts: [[lat, lng]] };
         this.routes.push(loopForMap);
-        if (this._db) {
-          await this._db.collection('loops').doc(loopData.id).set(loopData);
-          if (this._fotoLoopImg) await this._db.collection('loop_imgs').doc(loopData.id).set({ img: this._fotoLoopImg });
-        }
+        if (this._db) await this._db.collection('loops').doc(loopData.id).set(loopData);
         if (this.mainMap) this._drawRoute(loopForMap);
       }
 
@@ -5148,7 +5173,7 @@ const App = {
            || this.routes.find(x=>x.id===id);
     if (!r) return;
 
-    const img  = r.img && r.img.startsWith('data:') ? r.img : null;
+    const img  = r.img && (r.img.startsWith('data:') || r.img.startsWith('http')) ? r.img : null;
     const city = r.cityId || r.ciudad || 'La Paz';
     const FL_CATS = { lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️' };
     const catIcon = FL_CATS[r.cat||r.type] || r.emoji || '🔄';
@@ -5993,35 +6018,34 @@ const App = {
       createdAt:  Date.now(),
       likes: 0,
       source:     'comunidad',
-      visibility: vis,   // 'public' | 'private' | 'pending'
+      visibility: vis,
     };
 
-    if (this._cmImgB64) loopData.img = '[[base64]]';
-
     try {
-      if (this._db) {
-        if (vis === 'pending') {
-          // Va a la colección de propuestas para que el municipio las revise
-          await this._db.collection('loops_municipio_pending').doc(loopId).set(loopData);
-          this.toast('🏛 Propuesta enviada al municipio para revisión');
-        } else if (vis === 'public') {
-          await this._db.collection('loops').doc(loopId).set(loopData);
-          if (this._cmImgB64) await this._db.collection('loop_imgs').doc(loopId).set({ img: 'data:image/jpeg;base64,' + this._cmImgB64 });
-          this.toast('✅ Loop publicado en la comunidad');
-        } else {
-          // privado: se guarda en loops pero no aparece para otros
-          await this._db.collection('loops').doc(loopId).set(loopData);
-          this.toast('🔒 Loop guardado como privado');
+      // Subir imagen a Firebase Storage primero (si hay)
+      if (this._cmImgB64 && this._storage) {
+        if (btn) btn.textContent = '🖼️ Subiendo imagen...';
+        try {
+          loopData.img = await this._uploadImg(this._cmImgB64, `loops/${loopId}.jpg`);
+        } catch(e) {
+          console.warn('[Storage] fallo al subir imagen:', e.message);
+          loopData.img = ''; // continúa sin imagen antes de fallar todo
         }
       }
 
-      // Agregar a routes locales y dibujar en mapa (solo si no es pending)
+      if (this._db) {
+        if (vis === 'pending') {
+          await this._db.collection('loops_municipio_pending').doc(loopId).set(loopData);
+          this.toast('🏛 Propuesta enviada al municipio para revisión');
+        } else {
+          await this._db.collection('loops').doc(loopId).set(loopData);
+          this.toast(vis === 'public' ? '✅ Loop publicado en la comunidad' : '🔒 Loop guardado como privado');
+        }
+      }
+
+      // Agregar a routes locales con la URL ya resuelta
       if (vis !== 'pending') {
-        const loopForMap = {
-          ...loopData,
-          img: this._cmImgB64 ? 'data:image/jpeg;base64,' + this._cmImgB64 : '',
-          pts: this._cmPts
-        };
+        const loopForMap = { ...loopData, pts: this._cmPts };
         this.routes.push(loopForMap);
         if (vis === 'public') this.routesCom.push(loopForMap);
         if (this.mainMap) this._drawRoute(loopForMap);
@@ -6043,7 +6067,6 @@ const App = {
     const prev = document.getElementById('cm-img-preview');
     if (prev) prev.style.display = 'none';
   },
-
 
   // Usa BigDataCloud (gratis, sin API key, rápido)
   // con cache inteligente + tabla local de fallback
@@ -6583,32 +6606,18 @@ const App = {
       try {
         this._mundoListener = this._db.collection('loops')
           .orderBy('createdAt','desc').limit(120)
-          .onSnapshot(async snap => {
+          .onSnapshot(snap => {
             const liveLoops = [];
-            snap.forEach(d => liveLoops.push({...d.data(), id: d.id}));
-
-            // Restaurar imágenes que tienen el marcador [[base64]]
-            const pending = liveLoops.filter(r => r.img === '[[base64]]');
-            if (pending.length > 0) {
-              await Promise.all(pending.map(async r => {
-                // Primero revisar si ya la tenemos en this.routes (cache)
-                const cached = (this.routes||[]).find(rt => rt.id === r.id);
-                if (cached && cached.img && cached.img !== '[[base64]]') {
-                  r.img = cached.img;
-                } else {
-                  try {
-                    const imgSnap = await this._db.collection('loop_imgs').doc(r.id).get();
-                    r.img = imgSnap.exists ? (imgSnap.data().img || '') : '';
-                  } catch(e) { r.img = ''; }
-                }
-              }));
-            }
+            snap.forEach(d => {
+              const r = {...d.data(), id: d.id};
+              if (r.img === '[[base64]]') r.img = ''; // compat datos viejos
+              liveLoops.push(r);
+            });
 
             // Fusionar con defaults evitando duplicados
             const DEFAULTS = (this.routes||[]).filter(r => !r.ts && !r.createdAt);
             const merged = [...liveLoops, ...DEFAULTS.filter(d => !liveLoops.find(l=>l.id===d.id))];
             this.routes = merged;
-            // Solo re-render si la tab mundo está activa
             if (this._comTab === 'mundo') {
               renderList(liveLoops.filter(r => r.type !== 'fotostop'));
             }
@@ -6757,11 +6766,16 @@ const App = {
       ts: Date.now(), likes: 0, replies: []
     };
 
-    // Guardar imagen separada si es foto
+    // Guardar imagen en Storage si es foto
     const postForDB = { ...post };
-    if (postForDB.img && postForDB.img.length > 100) {
-      if (this._db) await this._db.collection('feed_imgs').doc(post.id).set({ img: postForDB.img }).catch(()=>{});
-      postForDB.img = '[[base64]]';
+    if (postForDB.img && postForDB.img.length > 100 && this._storage) {
+      try {
+        postForDB.img = await this._uploadImg(postForDB.img, `feed/${post.id}.jpg`);
+        post.img = postForDB.img; // actualizar en memoria también
+      } catch(e) {
+        console.warn('[Storage] feed img:', e.message);
+        postForDB.img = ''; // publicar sin imagen antes de fallar
+      }
     }
 
     if (this._db) await this._db.collection('feed_posts').doc(post.id).set(postForDB).catch(e => console.warn(e));
@@ -7653,14 +7667,15 @@ const App = {
     const dist = this._calcDist(this.grabPts);
     const m = Math.floor(this.grabSecs/60), s = this.grabSecs%60;
 
+    const grabId = 'grab-' + Date.now();
     const r = {
-      id: 'grab-' + Date.now(),
+      id: grabId,
       name, desc,
       type: t, emoji: c.emoji, badge: c.badge, color: c.color,
       dist: dist.toFixed(1)+' km', dur: `${m}m ${s}s`,
       pts: [...this.grabPts],
       pois: [...(this._grabStopPois||[])],
-      img: this._grabCoverB64 || '',
+      img: '',   // se llena abajo con URL de Storage
       cityId: city, ciudad: city,
       provincia: grabProv,
       pais:      grabPais,
@@ -7669,6 +7684,13 @@ const App = {
       authorName: this._user ? (this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo') : 'Anónimo',
       createdAt:  Date.now()
     };
+
+    // Subir portada a Storage antes de guardar
+    if (this._grabCoverB64 && this._storage) {
+      try {
+        r.img = await this._uploadImg(this._grabCoverB64, `loops/${grabId}.jpg`);
+      } catch(e) { console.warn('[Storage] grab cover:', e.message); }
+    }
 
     this.routes.push(r);
     if(this.mainMap) this._drawRoute(r);
@@ -7804,21 +7826,6 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     else setTimeout(()=>this.admMap && this.admMap.resize(), 120);
     // Cargar datos del tab activo
     this._admTab(this._admCurrentTab || 'dashboard');
-    // Actualizar badge de propuestas pendientes
-    this._admRefreshPropuestasBadge();
-  },
-
-  async _admRefreshPropuestasBadge() {
-    if (!this._db) return;
-    try {
-      const snap = await this._db.collection('loops_municipio_pending').get();
-      const count = snap.size || 0;
-      const badge = document.getElementById('adm-propuestas-badge');
-      if (badge) {
-        if (count > 0) { badge.textContent = count; badge.style.display = 'inline'; }
-        else { badge.style.display = 'none'; }
-      }
-    } catch(e) { /* silencioso */ }
   },
 
   _admBack() {
@@ -7886,6 +7893,89 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         </div>`).join('');
   },
 
+  // ══════════════════════════════════════════
+  // 🖼️ MIGRACIÓN DE IMÁGENES — loop_imgs → Firebase Storage
+  // ══════════════════════════════════════════
+  async _migrateLoopImages(doUpload = false) {
+    const statusEl = document.getElementById('adm-migrate-status');
+    const showStatus = msg => { if (statusEl) { statusEl.style.display = 'block'; statusEl.textContent = msg; } };
+
+    if (!this._db) { showStatus('❌ Firebase no disponible'); return; }
+
+    showStatus('🔍 Buscando loops sin imagen...');
+
+    // 1. Colectar loops sin URL de imagen
+    const noImg = this.routes.filter(r =>
+      r.type !== 'fotostop' &&
+      (!r.img || (!r.img.startsWith('http://') && !r.img.startsWith('https://')))
+    );
+
+    if (noImg.length === 0) {
+      showStatus('✅ Todos los loops ya tienen imagen en Storage. ¡Nada que migrar!');
+      this.toast('✅ Todas las imágenes ya están migradas');
+      return;
+    }
+
+    showStatus(`📋 ${noImg.length} loop${noImg.length !== 1 ? 's' : ''} sin imagen detectado${noImg.length !== 1 ? 's' : ''}.${doUpload ? ' Iniciando migración...' : ' Tocá "Migrar ahora" para recuperarlas.'}`);
+
+    if (!doUpload) {
+      // Solo diagnóstico
+      const names = noImg.slice(0, 8).map(r => `• ${r.name} (${r.ciudad || r.cityId || '—'})`).join('\n');
+      const extra = noImg.length > 8 ? `\n...y ${noImg.length - 8} más.` : '';
+      alert(`Loops sin imagen (${noImg.length}):\n\n${names}${extra}\n\nUsá "Migrar ahora" para intentar recuperar sus fotos desde loop_imgs.`);
+      return;
+    }
+
+    if (!this._storage) { showStatus('❌ Firebase Storage no disponible'); return; }
+
+    let migrated = 0, notFound = 0, errors = 0;
+
+    for (let i = 0; i < noImg.length; i++) {
+      const r = noImg[i];
+      showStatus(`⬆️ Procesando ${i + 1}/${noImg.length}: "${r.name}"...`);
+
+      try {
+        // Intentar recuperar base64 de loop_imgs
+        const imgSnap = await this._db.collection('loop_imgs').doc(r.id).get();
+
+        if (!imgSnap.exists || !imgSnap.data()?.img) {
+          notFound++;
+          console.log(`[migrate] Sin imagen en loop_imgs para: ${r.id} (${r.name})`);
+          continue;
+        }
+
+        const b64 = imgSnap.data().img;
+        if (!b64 || b64.length < 100) { notFound++; continue; }
+
+        // Subir a Storage
+        const storageUrl = await this._uploadImg(b64, `loops/${r.id}.jpg`);
+
+        // Actualizar en Firestore
+        await this._db.collection('loops').doc(r.id).update({ img: storageUrl });
+
+        // Actualizar en memoria
+        r.img = storageUrl;
+        const inRoutes = this.routes.find(x => x.id === r.id);
+        if (inRoutes) inRoutes.img = storageUrl;
+
+        migrated++;
+        console.log(`[migrate] ✓ ${r.name} → ${storageUrl.slice(0, 60)}...`);
+      } catch(e) {
+        errors++;
+        console.warn(`[migrate] Error en ${r.id} (${r.name}):`, e.message);
+      }
+    }
+
+    const msg = `✅ Migración completa: ${migrated} recuperadas, ${notFound} sin foto original, ${errors} errores.`;
+    showStatus(msg);
+    this.toast(msg);
+
+    // Refrescar la vista de loops del admin
+    this._admRenderLoops();
+    // Refrescar cards del mapa
+    this._renderCards('', this._activeFilter || 'all');
+  },
+
   // ── Loops ──
   _admRenderLoops() {
     const q    = (document.getElementById('adm-loops-q')?.value||'').toLowerCase();
@@ -7899,12 +7989,16 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (!el) return;
     if (list.length === 0) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin loops</div>`; return; }
     el.innerHTML = list.map(r => {
-      const hasImg = r.img && r.img.startsWith('data:');
+      const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
+      const noImgBadge = !hasImg ? `<span style="font-size:9px;background:#FEE2E2;color:#991B1B;border-radius:6px;padding:1px 6px;font-weight:700;">SIN FOTO</span> ` : '';
       return `<div class="adm-item">
         <div class="adm-item-row">
-          ${hasImg ? `<img class="adm-item-thumb" src="${r.img}">` : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${r.emoji||'🔄'}</div>`}
+          ${hasImg
+            ? `<img class="adm-item-thumb" src="${r.img}" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+               <div class="adm-item-thumb" style="display:none;align-items:center;justify-content:center;font-size:22px;">${r.emoji||'🔄'}</div>`
+            : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--bg2);">${r.emoji||'🔄'}</div>`}
           <div class="adm-item-info">
-            <div class="adm-item-name">${r.name}</div>
+            <div class="adm-item-name">${noImgBadge}${r.name}</div>
             <div class="adm-item-meta">${r.ciudad||r.cityId||'—'} · ${r.type} · ${r.dist||'—'} · ❤️${r.likes||0}</div>
             <div class="adm-item-meta">Por: ${r.authorName||'Anónimo'}</div>
           </div>
@@ -7923,8 +8017,9 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     this.routes = this.routes.filter(r => r.id !== id);
     if (this._db) {
       try { await this._db.collection('loops').doc(id).delete(); } catch(e){}
-      try { await this._db.collection('loop_imgs').doc(id).delete(); } catch(e){}
     }
+    // Borrar imagen de Storage (si existe)
+    await this._deleteImg(`loops/${id}.jpg`);
     await this._saveData();
     this._admRenderLoops();
     this._renderCards('', this._activeFilter||'all');
@@ -7960,14 +8055,6 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       } catch(e) { console.warn('propuestas:', e); }
     }
-
-    // Actualizar badge en el tab
-    const badge = document.getElementById('adm-propuestas-badge');
-    if (badge) {
-      if (list.length > 0) { badge.textContent = list.length; badge.style.display = 'inline'; }
-      else { badge.style.display = 'none'; }
-    }
-
     if (list.length === 0) {
       el.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--gr);">
         <div style="font-size:36px;margin-bottom:10px;">🏛</div>
