@@ -1622,8 +1622,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       <div style="margin-top:18px;background:var(--lt);border:1px solid var(--bd);border-radius:12px;padding:14px;">
         <div style="font-size:13px;font-weight:700;color:var(--dk);margin-bottom:4px;">🖼️ Migración de imágenes</div>
         <div style="font-size:12px;color:var(--gr);margin-bottom:10px;line-height:1.5;">
-          Recupera imágenes de loops que quedaron sin foto tras el cambio a Firebase Storage.<br>
-          Busca en <code>loop_imgs</code> (base64 viejo), sube a Storage y actualiza el loop.
+          Recupera imágenes de loops que quedaron sin foto. Busca en <code>loop_imgs</code> y vincula la imagen al loop automáticamente.
         </div>
         <div id="adm-migrate-status" style="display:none;font-size:12px;color:var(--or);margin-bottom:8px;padding:8px;background:var(--orL);border-radius:8px;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -8004,38 +8003,39 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
 
     showStatus('🔍 Buscando loops sin imagen...');
 
-    // 1. Colectar loops sin URL de imagen
+    // Colectar loops sin imagen válida (ni http ni firestore: ni data:)
     const noImg = this.routes.filter(r =>
       r.type !== 'fotostop' &&
-      (!r.img || (!r.img.startsWith('http://') && !r.img.startsWith('https://')))
+      (!r.img || (
+        !r.img.startsWith('http') &&
+        !r.img.startsWith('firestore:') &&
+        !r.img.startsWith('data:')
+      ))
     );
 
     if (noImg.length === 0) {
-      showStatus('✅ Todos los loops ya tienen imagen en Storage. ¡Nada que migrar!');
+      showStatus('✅ Todos los loops ya tienen imagen. ¡Nada que migrar!');
       this.toast('✅ Todas las imágenes ya están migradas');
       return;
     }
 
-    showStatus(`📋 ${noImg.length} loop${noImg.length !== 1 ? 's' : ''} sin imagen detectado${noImg.length !== 1 ? 's' : ''}.${doUpload ? ' Iniciando migración...' : ' Tocá "Migrar ahora" para recuperarlas.'}`);
+    showStatus(`📋 ${noImg.length} loop${noImg.length !== 1 ? 's' : ''} sin imagen.${doUpload ? ' Iniciando migración...' : ' Tocá "Migrar ahora" para recuperarlas.'}`);
 
     if (!doUpload) {
-      // Solo diagnóstico
       const names = noImg.slice(0, 8).map(r => `• ${r.name} (${r.ciudad || r.cityId || '—'})`).join('\n');
       const extra = noImg.length > 8 ? `\n...y ${noImg.length - 8} más.` : '';
-      alert(`Loops sin imagen (${noImg.length}):\n\n${names}${extra}\n\nUsá "Migrar ahora" para intentar recuperar sus fotos desde loop_imgs.`);
+      alert(`Loops sin imagen (${noImg.length}):\n\n${names}${extra}\n\nUsá "Migrar ahora" para recuperarlas desde loop_imgs.`);
       return;
     }
-
-    if (!this._storage) { showStatus('❌ Firebase Storage no disponible'); return; }
 
     let migrated = 0, notFound = 0, errors = 0;
 
     for (let i = 0; i < noImg.length; i++) {
       const r = noImg[i];
-      showStatus(`⬆️ Procesando ${i + 1}/${noImg.length}: "${r.name}"...`);
+      showStatus(`🔍 Procesando ${i + 1}/${noImg.length}: "${r.name}"...`);
 
       try {
-        // Intentar recuperar base64 de loop_imgs
+        // Buscar imagen en loop_imgs
         const imgSnap = await this._db.collection('loop_imgs').doc(r.id).get();
 
         if (!imgSnap.exists || !imgSnap.data()?.img) {
@@ -8047,19 +8047,17 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         const b64 = imgSnap.data().img;
         if (!b64 || b64.length < 100) { notFound++; continue; }
 
-        // Subir a Storage
-        const storageUrl = await this._uploadImg(b64, `loops/${r.id}.jpg`);
+        // Guardar marcador firestore: en el loop (no subir a Storage)
+        const marker = `firestore:loop_imgs/${r.id}`;
+        await this._db.collection('loops').doc(r.id).update({ img: marker });
 
-        // Actualizar en Firestore
-        await this._db.collection('loops').doc(r.id).update({ img: storageUrl });
-
-        // Actualizar en memoria
-        r.img = storageUrl;
+        // Actualizar en memoria con el base64 para mostrar inmediatamente
+        r.img = b64;
         const inRoutes = this.routes.find(x => x.id === r.id);
-        if (inRoutes) inRoutes.img = storageUrl;
+        if (inRoutes) inRoutes.img = b64;
 
         migrated++;
-        console.log(`[migrate] ✓ ${r.name} → ${storageUrl.slice(0, 60)}...`);
+        console.log(`[migrate] ✓ ${r.name}`);
       } catch(e) {
         errors++;
         console.warn(`[migrate] Error en ${r.id} (${r.name}):`, e.message);
@@ -8069,11 +8067,9 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const msg = `✅ Migración completa: ${migrated} recuperadas, ${notFound} sin foto original, ${errors} errores.`;
     showStatus(msg);
     this.toast(msg);
-
-    // Refrescar la vista de loops del admin
     this._admRenderLoops();
-    // Refrescar cards del mapa
     this._renderCards('', this._activeFilter || 'all');
+    if (this.mainMap) this._refreshMain();
   },
 
   // ── Loops ──
