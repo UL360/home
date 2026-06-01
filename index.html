@@ -3633,6 +3633,28 @@ const App = {
           }
         }
 
+        // ── Guía turístico IA: detectar POIs cercanos durante el loop activo ──
+        if (this._loopStarted && this._voiceNavRoute) {
+          const activeLoop = this._voiceNavRoute;
+          if (activeLoop.pois && activeLoop.pois.length) {
+            for (const poi of activeLoop.pois) {
+              if (!poi.lat || !poi.lng) continue;
+              const poiKey = poi.name + (poi.lat||'') + (poi.lng||'');
+              if (this._visitedPois.has(poiKey)) continue; // ya narrado
+              // Distancia haversine al POI
+              const dlat = (lat - poi.lat) * Math.PI / 180;
+              const dlng = (lng - poi.lng) * Math.PI / 180;
+              const a = Math.sin(dlat/2)**2 + Math.cos(poi.lat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dlng/2)**2;
+              const distToPoi = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+              if (distToPoi < 30) {
+                // ¡Llegó a menos de 30m del POI! → narrar con guía IA
+                this._narrarPoi(poi, activeLoop);
+                break; // un POI por vez
+              }
+            }
+          }
+        }
+
         // ── Recálculo automático si se desvía de la ruta (como Waze) ──
         if (!this._loopStarted && this._voiceNavRouteCoords && this._voiceNavRouteCoords.length > 1) {
           const distToRoute = this._distToPolyline(lat, lng, this._voiceNavRouteCoords);
@@ -3683,7 +3705,75 @@ const App = {
     return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [coords] } };
   },
 
-  // Distancia mínima en metros desde un punto a una polilínea [lng,lat][]
+  // ══════════════════════════════════════════
+  // 🎙️ GUÍA TURÍSTICO IA (Claude)
+  // ══════════════════════════════════════════
+  _visitedPois: new Set(), // POIs ya narrados en esta sesión
+
+  async _askGuiaTuristico(poi, loop) {
+    if (!this.ANTHROPIC_KEY) return null;
+    const ciudad  = loop.ciudad  || loop.cityId || this._luCity || 'La Paz';
+    const prov    = loop.provincia || this._luProv || 'Entre Ríos';
+    const pais    = loop.pais    || this._luPais || 'Argentina';
+    const tipo    = poi.cat || poi.type || 'lugar';
+    const prompt  = `Sos un guía de turismo local de ${ciudad}, ${prov}, ${pais}. 
+El visitante acaba de llegar a: "${poi.name}" (${tipo}).
+${poi.desc ? `Descripción disponible: "${poi.desc}".` : ''}
+Contá algo breve, interesante e histórico sobre este lugar en máximo 2 oraciones. 
+Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdown. Solo el texto para leer en voz alta.`;
+
+    try {
+      const resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': this.ANTHROPIC_KEY,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true'
+        },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5-20251001',
+          max_tokens: 120,
+          messages: [{ role: 'user', content: prompt }]
+        }),
+        signal: AbortSignal.timeout(8000)
+      });
+      if (!resp.ok) throw new Error(`API ${resp.status}`);
+      const data = await resp.json();
+      return data.content?.[0]?.text?.trim() || null;
+    } catch(e) {
+      console.warn('[guia IA]', e.message);
+      return null; // fallback: usar desc del POI
+    }
+  },
+
+  // Narrar un POI con guía IA (o fallback al desc existente)
+  async _narrarPoi(poi, loop) {
+    const poiKey = poi.name + (poi.lat||'') + (poi.lng||'');
+    if (this._visitedPois.has(poiKey)) return; // ya narrado
+    this._visitedPois.add(poiKey);
+
+    // Mostrar toast de llegada inmediatamente
+    this.toast(`📍 ${poi.em || '📍'} ${poi.name}`);
+
+    // Intentar guía IA, fallback a descripción básica
+    let texto = null;
+    if (this.ANTHROPIC_KEY && this._voiceOn) {
+      texto = await this._askGuiaTuristico(poi, loop);
+    }
+    if (!texto) {
+      // Fallback: descripción básica del POI
+      texto = poi.desc
+        ? `${poi.name}. ${poi.desc}`
+        : `Llegaste a ${poi.name}.`;
+    }
+
+    if (this._voiceOn) {
+      // Prefijo de llegada + descripción IA
+      const intro = `Parada ${poi.em ? poi.em + ' ' : ''}${poi.name}. `;
+      this._speak(intro + texto);
+    }
+  },
   _distToPolyline(lat, lng, coords) {
     let minDist = Infinity;
     for (let i = 0; i < coords.length - 1; i++) {
@@ -4157,6 +4247,7 @@ const App = {
       if (!this._locMarker) { this.toast('📍 Activá tu ubicación GPS primero'); return; }
     }
     this._loopStarted = false;  // reset flag de inicio de loop
+    this._visitedPois = new Set(); // reset POIs visitados para guía IA
     const loopStart = r.pts[0];
     const loopStartCoord = Array.isArray(loopStart) ? [loopStart[1],loopStart[0]] : [loopStart.lng,loopStart.lat];
     const uLL = this._locMarker.getLngLat();
@@ -4291,6 +4382,7 @@ const App = {
     this._rerouteActive = false;
     this._lastReroute = null;
     this._voiceNavRouteCoords = null;
+    this._visitedPois = new Set();
     this.toast('Navegación cancelada');
   },
 
@@ -7814,34 +7906,15 @@ const App = {
         </div>
         <!-- Ubicación: auto-detectada desde GPS del recorrido grabado -->
         <div style="margin-bottom:18px;">
-          <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">UBICACIÓN</label>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+          <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">UBICACIÓN AUTO-DETECTADA</label>
+          <div id="gsm-loc-badge" style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:10px;padding:10px 12px;">
+            <span style="font-size:18px;">📡</span>
             <div>
-              <label style="font-size:10px;color:var(--gr);display:block;margin-bottom:3px;">PAÍS</label>
-              <input id="gsm-pais" type="text" value="${this._luPais||'Argentina'}" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1.5px solid var(--bd);border-radius:10px;font-size:12px;background:var(--bg0);color:var(--dk);">
-            </div>
-            <div>
-              <label style="font-size:10px;color:var(--gr);display:block;margin-bottom:3px;">PROVINCIA</label>
-              <input id="gsm-prov" type="text" value="${this._luProv||'Entre Ríos'}" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1.5px solid var(--bd);border-radius:10px;font-size:12px;background:var(--bg0);color:var(--dk);">
+              <div style="font-size:13px;font-weight:700;color:var(--dk);" id="gsm-loc-ciudad">${this._luCity||'Detectando...'}</div>
+              <div style="font-size:11px;color:var(--gr);" id="gsm-loc-detalle">${this._luProv||''} · ${this._luPais||'Argentina'}</div>
             </div>
           </div>
-          <label style="font-size:10px;color:var(--gr);display:block;margin-bottom:3px;">CIUDAD</label>
-          <select id="gsm-city" style="width:100%;padding:9px 11px;border:1.5px solid var(--bd);border-radius:10px;font-size:13px;background:var(--bg0);color:var(--dk);">
-            <option value="${this._luCity||'La Paz'}" selected>📍 ${this._luCity||'La Paz'}</option>
-            <option value="La Paz">La Paz</option>
-            <option value="Santa Elena">Santa Elena</option>
-            <option value="Paraná">Paraná</option>
-            <option value="Concordia">Concordia</option>
-            <option value="Gualeguaychú">Gualeguaychú</option>
-            <option value="Colón">Colón</option>
-            <option value="Victoria">Victoria</option>
-            <option value="Rosario">Rosario</option>
-            <option value="Buenos Aires">Buenos Aires</option>
-            <option value="Córdoba">Córdoba</option>
-          </select>
-          <div style="font-size:10px;color:var(--gr);margin-top:4px;">
-            📡 Auto-detectado del recorrido GPS — podés corregirlo
-          </div>
+          <div style="font-size:10px;color:var(--gr);margin-top:4px;">📡 Detectado automáticamente del recorrido GPS</div>
         </div>
         <!-- Foto portada -->
         <div style="margin-bottom:18px;">
@@ -7907,11 +7980,10 @@ const App = {
       if (fpLat && fpLng) loc = await this._detectLocation(fpLat, fpLng);
     }
     if (!loc) loc = { pais:'Argentina', provincia: this._luProv||'Entre Ríos', ciudad: this._luCity||'La Paz' };
-    const city = document.getElementById('gsm-city')?.value || loc.ciudad;
-    // Leer provincia/pais del modal (puede haber sido editado manualmente)
-    const grabProv = (document.getElementById('gsm-prov')?.value || loc.provincia || 'Entre Ríos').trim();
-    const grabPais = (document.getElementById('gsm-pais')?.value || loc.pais      || 'Argentina').trim();
-    // Sobreescribir loc con lo que el usuario eligió
+    // Usar siempre la ubicación auto-detectada (ya no hay campos manuales)
+    const city      = loc.ciudad     || this._luCity     || 'La Paz';
+    const grabProv  = loc.provincia  || this._luProv     || 'Entre Ríos';
+    const grabPais  = loc.pais       || this._luPais     || 'Argentina';
     loc.ciudad = city; loc.provincia = grabProv; loc.pais = grabPais;
 
     const t = this.grabType||'running';
@@ -8075,6 +8147,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   // ADMIN PANEL
   // ══════════════════════════════════════════
   ADMIN_UID: '1OUEsPkVYrgvHP2jA0DcIvYjsUJ3',  // ← pegá tu UID de Firebase acá
+  ANTHROPIC_KEY: '',  // ← pegá tu Anthropic API key acá (sk-ant-...)
 
   _admCurrentTab: 'dashboard',
 
