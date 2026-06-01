@@ -2798,7 +2798,7 @@ const App = {
 
       this._db      = firebase.firestore();
       this._auth    = firebase.auth();
-      this._storage = firebase.storage();
+      this._storage = null; // Storage no activado — imágenes guardadas en Firestore (loop_imgs)
 
       // Long-polling: usar autoDetect (no mezclar con ForceLongPolling)
       this._db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
@@ -3162,6 +3162,13 @@ const App = {
         // Compatibilidad: limpiar marcadores [[base64]] de datos viejos
         this.routes.forEach(r => { if (r.img === '[[base64]]') r.img = ''; });
 
+        // Resolver imágenes guardadas en Firestore (marcador 'firestore:col/id')
+        await Promise.all(this.routes.map(async r => {
+          if (r.img && r.img.startsWith('firestore:')) {
+            r.img = await this._resolveImg(r.img).catch(() => '');
+          }
+        }));
+
         // Normalizar cityId
         this.routes = this.routes.map(r => {
           if (!r.cityId && !r.ciudad && r.pts && r.pts.length > 0) {
@@ -3198,6 +3205,12 @@ const App = {
             if (p.img === '[[base64]]') p.img = ''; // compatibilidad datos viejos
             this._fotoPosts.push(p);
           });
+          // Resolver imágenes en Firestore (marcador 'firestore:col/id')
+          await Promise.all(this._fotoPosts.map(async p => {
+            if (p.img && p.img.startsWith('firestore:')) {
+              p.img = await this._resolveImg(p.img).catch(() => '');
+            }
+          }));
         } catch(e) { console.warn('FotoLoops load:', e); this._fotoPosts = this._fotoPosts || []; }
 
         // Cargar feed posts
@@ -3267,9 +3280,10 @@ const App = {
 
     for (const r of mine) {
       const imgData = r.img && r.img.startsWith('data:') ? r.img : null;
-      // Si la imagen ya es una URL de Storage/http, la dejamos tal cual
-      const isStorageUrl = r.img && (r.img.startsWith('http://') || r.img.startsWith('https://'));
-      const rClean = { ...r, img: isStorageUrl ? r.img : (imgData ? '' : (r.img || '')) };
+      // Si la imagen ya es un marcador firestore: o URL http, la dejamos tal cual
+      const isResolved = r.img && (r.img.startsWith('firestore:') || r.img.startsWith('http://') || r.img.startsWith('https://'));
+      // En el doc de Firestore guardamos solo el marcador, nunca el base64 completo
+      const rClean = { ...r, img: isResolved ? r.img : (imgData ? '' : (r.img || '')) };
       Object.keys(rClean).forEach(k => { if (rClean[k] === undefined) delete rClean[k]; });
       rClean.authorId   = this._uid;
       rClean.authorName = this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo';
@@ -3281,21 +3295,23 @@ const App = {
       if (Array.isArray(rClean.pois)) {
         rClean.pois = rClean.pois.map(poi => {
           const p = {...poi};
+          // Quitar imágenes base64 de los pois (se guardan por separado)
+          if (p.img && p.img.startsWith('data:')) delete p.img;
           Object.keys(p).forEach(k => { if (p[k] === undefined) delete p[k]; });
           return p;
         });
       }
 
-      // Subir imagen a Storage si es base64 local (aún no subida)
-      if (imgData && this._storage && !isStorageUrl) {
+      // Guardar imagen en loop_imgs (Firestore) si es base64 local (aún no guardada)
+      if (imgData && !isResolved) {
         try {
-          console.log(`[_saveData] → Storage upload loops/${r.id}.jpg`);
+          console.log(`[_saveData] → Firestore upload loop_imgs/${r.id}`);
           rClean.img = await this._uploadImg(imgData, `loops/${r.id}.jpg`);
-          console.log(`[_saveData] ✓ Storage ${r.id} → ${rClean.img.slice(0,60)}...`);
-          // Actualizar en memoria también
-          r.img = rClean.img;
+          console.log(`[_saveData] ✓ Firestore img ${r.id} → ${rClean.img}`);
+          // Actualizar en memoria también (con la data: resuelta para mostrar en UI)
+          r.img = imgData; // mantener base64 en memoria para mostrar sin reload
         } catch(e) {
-          console.warn(`[_saveData] Storage error ${r.id}:`, e.message);
+          console.warn(`[_saveData] Firestore img error ${r.id}:`, e.message);
           rClean.img = ''; // no romper el guardado por una imagen
         }
       }
@@ -4523,26 +4539,55 @@ const App = {
   _grabCoverB64: null,   // loop grabado GPS
 
   // ══════════════════════════════════════════
-  // 🗂️ FIREBASE STORAGE — SUBIDA DE IMÁGENES
+  // 🗂️ IMÁGENES EN FIRESTORE (sin Storage)
   // ══════════════════════════════════════════
-  // Recibe base64 puro (sin prefijo data:) o con prefijo, sube a Storage
-  // y devuelve la URL pública. path ej: 'loops/cm_123.jpg'
+  // Guarda la imagen base64 en la colección loop_imgs/{docId}
+  // y devuelve un marcador "firestore:{docId}" como referencia.
+  // path ej: 'loops/cm_123.jpg' → docId = 'cm_123'
   async _uploadImg(b64OrDataUrl, path) {
-    if (!this._storage) throw new Error('Storage no inicializado');
+    if (!this._db) throw new Error('Firestore no inicializado');
     // Normalizar: asegurar que tenemos el prefijo data:
     const dataUrl = b64OrDataUrl.startsWith('data:')
       ? b64OrDataUrl
       : 'data:image/jpeg;base64,' + b64OrDataUrl;
 
-    const ref = this._storage.ref(path);
-    const snap = await ref.putString(dataUrl, 'data_url');
-    return await snap.ref.getDownloadURL();
+    // Extraer docId del path: 'loops/cm_123.jpg' → 'cm_123'
+    const filename = path.split('/').pop().replace(/\.[^.]+$/, '');
+    // Colección según tipo: loops/ → loop_imgs, fotoloops/ → fotoloop_imgs
+    const col = path.startsWith('fotoloops/') ? 'fotoloop_imgs' : 'loop_imgs';
+    const docId = path.startsWith('fotoloops/') ? filename : filename;
+
+    await this._db.collection(col).doc(docId).set({ img: dataUrl, ts: Date.now() });
+    // Devolver marcador especial que la app reconoce
+    return `firestore:${col}/${docId}`;
   },
 
-  // Eliminar imagen de Storage (para cuando se borra un loop)
+  // Eliminar imagen de Firestore (para cuando se borra un loop)
   async _deleteImg(path) {
-    if (!this._storage) return;
-    try { await this._storage.ref(path).delete(); } catch(e) { /* no existe, OK */ }
+    if (!this._db) return;
+    try {
+      const filename = path.split('/').pop().replace(/\.[^.]+$/, '');
+      const col = path.startsWith('fotoloops/') ? 'fotoloop_imgs' : 'loop_imgs';
+      await this._db.collection(col).doc(filename).delete();
+    } catch(e) { /* no existe, OK */ }
+  },
+
+  // Resolver imagen: si es marcador 'firestore:col/id', cargar desde Firestore
+  // Si ya es data: o http: devolverla tal cual
+  async _resolveImg(imgRef) {
+    if (!imgRef) return '';
+    if (imgRef.startsWith('data:') || imgRef.startsWith('http')) return imgRef;
+    if (imgRef.startsWith('firestore:')) {
+      const path = imgRef.replace('firestore:', ''); // 'loop_imgs/cm_123'
+      const [col, docId] = path.split('/');
+      if (!this._db || !col || !docId) return '';
+      try {
+        const snap = await this._db.collection(col).doc(docId).get();
+        return snap.exists ? (snap.data().img || '') : '';
+      } catch(e) { return ''; }
+    }
+    if (imgRef === '[[base64]]') return ''; // compat datos viejos
+    return imgRef;
   },
 
   _compressImg(file, cb) {
@@ -4944,11 +4989,13 @@ const App = {
           this.closeFotoLoop(); this.go('profile'); return;
         }
 
-        // Subir imagen a Storage
-        if (this._fotoLoopImg && this._storage) {
+        // Guardar imagen en Firestore (loop_imgs) en vez de Storage
+        if (this._fotoLoopImg) {
           try {
-            stopData.img = await this._uploadImg(this._fotoLoopImg, `fotoloops/${stopId}.jpg`);
-          } catch(e) { console.warn('[Storage] fotoloop img:', e.message); }
+            const imgRef = await this._uploadImg(this._fotoLoopImg, `fotoloops/${stopId}.jpg`);
+            stopData.img = imgRef;      // 'firestore:fotoloop_imgs/fotostop-123'
+            stopData.imgData = this._fotoLoopImg; // base64 para preview inmediato en memoria
+          } catch(e) { console.warn('[Firestore] fotoloop img:', e.message); }
         }
 
         await this._db.collection('fotoloops').doc(stopId).set(stopData);
@@ -4980,9 +5027,11 @@ const App = {
       }
 
       this.closeFotoLoop();
-      // Guardar en lista local para preview inmediato (usar URL de Storage, no base64 local)
+      // Guardar en lista local para preview inmediato — usar base64 (imgData) para mostrar sin reload
       if (!this._fotoPosts) this._fotoPosts = [];
-      this._fotoPosts.unshift({ ...stopData });
+      const localPost = { ...stopData, img: stopData.imgData || stopData.img };
+      delete localPost.imgData;
+      this._fotoPosts.unshift(localPost);
       this._drawFotoStopsOnMap();   // ← actualizar mapa
       this._addPts(30, 'Parada publicada');
       this._showSaveSuccess(name, `🌐 Publicado en ${cityId}`);
@@ -5455,17 +5504,18 @@ const App = {
         const idx = this.routes.findIndex(x=>x.id===this._editingId);
         if (idx > -1) {
           const existing = this.routes[idx];
-          // Determinar imagen final: subir a Storage si hay nueva imagen base64
+          // Determinar imagen final: subir a Firestore si hay nueva imagen base64
           let finalImg = existing.img || '';
-          if (this._imgBase64 && this._imgBase64.startsWith('data:') && this._storage) {
+          if (this._imgBase64 && this._imgBase64.startsWith('data:')) {
             try {
               finalImg = await this._uploadImg(this._imgBase64, `loops/${this._editingId}.jpg`);
+              // En memoria mostrar base64 directamente (sin reload)
             } catch(e) {
-              console.warn('[saveRoute edit] Storage upload error:', e.message);
-              finalImg = existing.img || ''; // preservar imagen anterior si falla
+              console.warn('[saveRoute edit] Firestore img error:', e.message);
+              finalImg = existing.img || '';
             }
-          } else if (this._imgBase64 && this._imgBase64.startsWith('http')) {
-            finalImg = this._imgBase64; // ya es URL Storage
+          } else if (this._imgBase64 && (this._imgBase64.startsWith('http') || this._imgBase64.startsWith('firestore:'))) {
+            finalImg = this._imgBase64; // ya es referencia resuelta
           }
           this.routes[idx] = {
             ...existing, name, type, desc:desc||existing.desc,
@@ -5519,7 +5569,8 @@ const App = {
           id:`custom-${Date.now()}`, name, type, desc:desc||`Loop ${name}, ${cityId}.`,
           emoji:cfg.emoji, badge:cfg.badge, color:cfg.color,
           dist:`${dist.toFixed(1)} km`, dur:`${Math.round(dist*13)} min`,
-          img: this._imgBase64 || '', pts:[...this.aPts],
+          img: this._imgBase64 || '',  // base64 en memoria para preview inmediato
+          pts:[...this.aPts],
           pois:this.aPois.filter(p=>p.name).map(p=>({...p})),
           cityId,                   // ← ciudad detectada
           ciudad:    cityId,
@@ -7716,23 +7767,25 @@ const App = {
       createdAt:  Date.now()
     };
 
-    // Subir portada a Storage antes de guardar
-    if (this._grabCoverB64 && this._storage) {
+    // Guardar portada en Firestore (loop_imgs) en vez de Storage
+    if (this._grabCoverB64) {
       try {
         r.img = await this._uploadImg(this._grabCoverB64, `loops/${grabId}.jpg`);
-      } catch(e) { console.warn('[Storage] grab cover:', e.message); }
+        // En memoria mantenemos el base64 para preview inmediato
+        r._imgPreview = this._grabCoverB64;
+      } catch(e) { console.warn('[Firestore] grab cover:', e.message); }
     }
 
-    // Subir imágenes de paradas fotográficas a Storage (quitar base64 del doc Firestore)
-    if (this._storage && r.pois && r.pois.length > 0) {
+    // Guardar imágenes de paradas fotográficas en Firestore (quitar base64 del doc loops)
+    if (r.pois && r.pois.length > 0) {
       r.pois = await Promise.all(r.pois.map(async (poi, idx) => {
         if (poi.img && poi.img.startsWith('data:')) {
           try {
-            const stopImgUrl = await this._uploadImg(poi.img, `loops/${grabId}_stop${idx}.jpg`);
-            return { ...poi, img: stopImgUrl };
+            const imgRef = await this._uploadImg(poi.img, `loops/${grabId}_stop${idx}.jpg`);
+            return { ...poi, img: imgRef };
           } catch(e) {
-            console.warn(`[Storage] stop ${idx} img:`, e.message);
-            return { ...poi, img: '' }; // no bloquear el guardado
+            console.warn(`[Firestore] stop ${idx} img:`, e.message);
+            return { ...poi, img: '' };
           }
         }
         return poi;
