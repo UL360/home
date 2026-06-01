@@ -2803,6 +2803,15 @@ const App = {
       this._auth    = firebase.auth();
       this._storage = null; // Storage no activado — imágenes guardadas en Firestore (loop_imgs)
 
+      // Cargar API key de Anthropic desde Firestore (_config/keys) — no se guarda en el código
+      try {
+        const cfgSnap = await this._db.collection('_config').doc('keys').get();
+        if (cfgSnap.exists && cfgSnap.data().anthropic) {
+          this.ANTHROPIC_KEY = cfgSnap.data().anthropic;
+          console.log('[config] Anthropic key cargada ✓');
+        }
+      } catch(e) { console.warn('[config] No se pudo cargar Anthropic key:', e.message); }
+
       // Long-polling: usar autoDetect (no mezclar con ForceLongPolling)
       this._db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
 
