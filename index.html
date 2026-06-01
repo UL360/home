@@ -3771,10 +3771,12 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       texto = await this._askGuiaTuristico(poi, loop);
     }
     if (!texto) {
-      // Fallback: descripción básica del POI
+      // Fallback: descripción más rica del POI
+      const emojiTxt = poi.em && poi.em !== '📍' ? `${poi.em} ` : '';
+      const catTxt = poi.cat ? ` — ${poi.cat}` : '';
       texto = poi.desc
-        ? `${poi.name}. ${poi.desc}`
-        : `Llegaste a ${poi.name}.`;
+        ? `${poi.desc}`
+        : `${emojiTxt}${poi.name}${catTxt}. Un lugar de interés en ${loop.ciudad || 'esta ciudad'}.`;
     }
 
     if (this._voiceOn) {
@@ -4444,10 +4446,9 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     // Mensaje de inicio completo
     const poiCount = r.pois && r.pois.length ? r.pois.length : 0;
     const firstPoi = r.pois && r.pois.length ? r.pois[0].name : null;
-    let msg = `Iniciando navegación ${mode.voz} hacia el punto de partida de ${r.name}. `;
-    msg += `Distancia: ${dist}, tiempo estimado: ${durMin} minuto${durMin !== 1 ? 's' : ''}. `;
-    if (poiCount > 0) msg += `Este loop tiene ${poiCount} parada${poiCount !== 1 ? 's' : ''}. `;
-    msg += `Seguí la línea naranja en el mapa.`;
+    let msg = `Iniciando ${r.name}. `;
+    msg += `A ${dist}, aproximadamente ${durMin} minuto${durMin !== 1 ? 's' : ''}.`;
+    if (poiCount > 0) msg += ` ${poiCount} parada${poiCount !== 1 ? 's' : ''} en el recorrido.`;
     this._speak(msg);
 
     if (steps && steps.length) {
@@ -4463,7 +4464,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       'turn sharp left':'Girá fuerte a la izquierda', 'turn sharp right':'Girá fuerte a la derecha',
       'turn slight left':'Mantenete levemente a la izquierda', 'turn slight right':'Mantenete levemente a la derecha',
       'continue straight':'Continuá recto', 'roundabout':'Tomá la rotonda',
-      'depart':'Empezá a caminar', 'arrive':'Llegaste al destino'
+      'depart':'Seguí recto', 'arrive':'Llegaste'
     };
     const key = modifier ? `${type} ${modifier}` : type;
     return dirs[key] || dirs[type] || 'Continuá';
@@ -4658,6 +4659,17 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     }
 
     this.go('detail');
+
+    // Posicionar el mapa principal en el loop para cuando el usuario vuelva al mapa
+    if (this.mainMap && r.pts && r.pts.length) {
+      const allCoords = r.pts.map(p => Array.isArray(p) ? [p[1],p[0]] : [p.lng,p.lat]);
+      const lngs = allCoords.map(c=>c[0]);
+      const lats = allCoords.map(c=>c[1]);
+      this.mainMap.fitBounds(
+        [[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],
+        { padding:80, maxZoom:17, duration:600, animate:true }
+      );
+    }
   },
 
   toggleFav() {
@@ -6370,14 +6382,16 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     };
 
     try {
-      // Subir imagen a Firebase Storage primero (si hay)
-      if (this._cmImgB64 && this._storage) {
-        if (btn) btn.textContent = '🖼️ Subiendo imagen...';
+      // Subir imagen a Firestore (loop_imgs) — Storage no disponible
+      if (this._cmImgB64) {
+        if (btn) btn.textContent = '🖼️ Guardando imagen...';
         try {
           loopData.img = await this._uploadImg(this._cmImgB64, `loops/${loopId}.jpg`);
+          // En memoria usar base64 para preview inmediato
+          loopData._imgPreview = this._cmImgB64;
         } catch(e) {
-          console.warn('[Storage] fallo al subir imagen:', e.message);
-          loopData.img = ''; // continúa sin imagen antes de fallar todo
+          console.warn('[Firestore] fallo al subir imagen cm:', e.message);
+          loopData.img = '';
         }
       }
 
@@ -6393,7 +6407,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
       // Agregar a routes locales con la URL ya resuelta
       if (vis !== 'pending') {
-        const loopForMap = { ...loopData, pts: this._cmPts };
+        const loopForMap = { ...loopData, pts: this._cmPts, img: loopData._imgPreview || loopData.img };
+        delete loopForMap._imgPreview;
         this.routes.push(loopForMap);
         if (vis === 'public') this.routesCom.push(loopForMap);
         if (this.mainMap) this._drawRoute(loopForMap);
@@ -7790,7 +7805,9 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       container: 'grab-map',
       style: document.body.classList.contains('day') ? this._ML_STYLE_LIGHT : this._ML_STYLE_DARK,
       center: [-59.6450, -30.7490],
-      zoom: 14
+      zoom: 16,
+      pitch: 45,
+      bearing: 0
     });
     this.grabMap.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right');
     this.grabPts=[]; this.grabSecs=0; this.grabState='idle';
@@ -7838,6 +7855,16 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   },
   _grabAddGPSPt(lat,lng) {
     if(this.grabState!=='recording') return;
+    // Calcular bearing desde el punto anterior para 3D
+    if(this.grabPts.length > 0) {
+      const prev = this.grabPts[this.grabPts.length-1];
+      const dLng = (lng - prev[1]) * Math.PI / 180;
+      const lat1 = prev[0] * Math.PI / 180;
+      const lat2 = lat * Math.PI / 180;
+      const y = Math.sin(dLng) * Math.cos(lat2);
+      const x = Math.cos(lat1)*Math.sin(lat2) - Math.sin(lat1)*Math.cos(lat2)*Math.cos(dLng);
+      this._lastGrabBearing = (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+    }
     this.grabPts.push([lat,lng]);
     if(this.grabMap && this.grabMap.loaded()){
       // Actualizar / crear la fuente GeoJSON de la línea grabada
@@ -7849,7 +7876,16 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         this.grabMap.addLayer({id:'grab-line-layer',type:'line',source:'grab-line-src',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#FF5F00','line-width':5,'line-opacity':0.92}});
         this._grabLine=true;
       }
-      this.grabMap.panTo([lng, lat],{animate:true,duration:500});
+      // Seguimiento 3D en el mapa de grabación
+      const bearing = this._lastGrabBearing || 0;
+      this.grabMap.easeTo({
+        center: [lng, lat],
+        bearing,
+        pitch: 45,
+        zoom: Math.max(this.grabMap.getZoom(), 16),
+        duration: 800,
+        easing: t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t
+      });
     }
     const dist=this._calcDist(this.grabPts);
     const dEl=document.getElementById('grab-dist'); if(dEl) dEl.textContent=dist.toFixed(2);
