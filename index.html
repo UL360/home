@@ -1297,9 +1297,9 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <button id="lbtn-all"  class="layer-chip all"
       onclick="App._setLayer('all')"  title="Ver todos los loops">🔀 Todos</button>
     <button id="lbtn-muni" class="layer-chip"
-      onclick="App._setLayer('muni')" title="Solo loops municipales">🏛 Municipio</button>
+      onclick="App._setLayer('muni')" title="Solo loops de la ciudad">🏙️ Ciudad</button>
     <button id="lbtn-com"  class="layer-chip"
-      onclick="App._setLayer('com')"  title="Solo loops de la comunidad">👥 Comunidad</button>
+      onclick="App._setLayer('com')"  title="Solo loops de loopers">👟 Loopers</button>
   </div>
 
   <!-- ── SEARCH BAR movida al menú lateral — se mantienen los ids para el JS ── -->
@@ -5573,9 +5573,9 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:16px;">
-          <button onclick="App._closeImgViewer();App.showDetail('${r.id}')"
+          <button onclick="App._fotoLoopVerEnMapa('${r.id}')"
             style="flex:1;height:44px;background:var(--or);color:white;border:none;border-radius:12px;font-family:var(--fH);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
             Ver en mapa
           </button>
           <button onclick="App._closeImgViewer();App.likeLoop('${r.id}');App._renderComunidad();"
@@ -5591,6 +5591,52 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   _closeImgViewer() {
     const m = document.getElementById('img-viewer-modal');
     if (m) m.style.display = 'none';
+  },
+
+  // Ver un Foto Loop en el mapa con opción de navegar hasta él
+  _fotoLoopVerEnMapa(id) {
+    this._closeImgViewer();
+    const p = (this._fotoPosts || []).find(x => x.id === id);
+    if (!p || !p.lat || !p.lng) {
+      this.toast('📍 Este foto loop no tiene ubicación GPS');
+      return;
+    }
+    // Ir al mapa y volar a la ubicación
+    this.go('explore');
+    setTimeout(() => {
+      this.mainMap.flyTo({ center: [p.lng, p.lat], zoom: 17, duration: 800 });
+      // Mostrar popup con opciones
+      const popup = new maplibregl.Popup({ closeButton: true, maxWidth: '280px', offset: 25 })
+        .setLngLat([p.lng, p.lat])
+        .setHTML(`
+          <div style="font-family:var(--fH);padding:4px;">
+            <div style="font-size:15px;font-weight:800;color:var(--dk);margin-bottom:4px;">${p.name}</div>
+            <div style="font-size:12px;color:var(--gr);margin-bottom:10px;">${p.ciudad||''} · Foto Loop</div>
+            <button onclick="App._navToFotoLoop(${p.lat},${p.lng},'${(p.name||'').replace(/'/g,'')}')"
+              style="width:100%;height:40px;background:var(--or);color:white;border:none;border-radius:10px;font-family:var(--fH);font-size:13px;font-weight:700;cursor:pointer;">
+              🧭 Ir a este Foto Loop
+            </button>
+          </div>
+        `)
+        .addTo(this.mainMap);
+    }, 400);
+  },
+
+  // Iniciar navegación hacia un Foto Loop
+  async _navToFotoLoop(lat, lng, name) {
+    if (!this._locMarker) {
+      this.toast('📍 Activá tu ubicación GPS primero');
+      return;
+    }
+    const fakeRoute = {
+      id: 'fotoloop-nav',
+      name,
+      pts: [[lat, lng]],
+      type: 'fotoloop',
+      pois: []
+    };
+    this.toast(`🧭 Navegando hacia ${name}`);
+    await this._calcAndDrawNav(fakeRoute);
   },
 
   // ── ADMIN MAP (MapLibre) ──
@@ -8402,6 +8448,10 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         <div class="adm-item-actions">
           <button class="adm-btn adm-btn-blue" onclick="App._admEditLoop('${r.id}')">✏️ Editar</button>
           <button class="adm-btn adm-btn-orange" onclick="App.selectRoute('${r.id}');App.go('explore')">🗺️ Ver mapa</button>
+          ${r.source !== 'municipio'
+            ? `<button class="adm-btn adm-btn-green" onclick="App._admSetCiudad('${r.id}','${r.name.replace(/'/g,'')}')">🏙️ Poner en Ciudad</button>`
+            : `<button class="adm-btn" style="opacity:.5;cursor:default;" disabled>🏙️ Ya es Ciudad</button>`
+          }
           <button class="adm-btn adm-btn-red" onclick="App._admDeleteLoop('${r.id}','${r.name.replace(/'/g,'')}')">🗑️ Eliminar</button>
         </div>
       </div>`;
@@ -8414,12 +8464,30 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (this._db) {
       try { await this._db.collection('loops').doc(id).delete(); } catch(e){}
     }
-    // Borrar imagen de Storage (si existe)
     await this._deleteImg(`loops/${id}.jpg`);
     await this._saveData();
     this._admRenderLoops();
     this._renderCards('', this._activeFilter||'all');
     this.toast(`🗑️ Loop "${name}" eliminado`);
+  },
+
+  async _admSetCiudad(id, name) {
+    if (!confirm(`¿Poner "${name}" como loop de Ciudad?\nAparecerá en el filtro 🏙️ Ciudad para todos los usuarios.`)) return;
+    const idx = this.routes.findIndex(r => r.id === id);
+    if (idx === -1) return;
+    this.routes[idx].source = 'municipio';
+    this.routes[idx].updatedAt = Date.now();
+    if (this._db) {
+      try {
+        await this._db.collection('loops').doc(id).update({ source: 'municipio', updatedAt: Date.now() });
+        this.toast(`🏙️ "${name}" ahora es un loop de Ciudad`);
+      } catch(e) {
+        this.toast(`⚠️ Error: ${e.message}`);
+        this.routes[idx].source = undefined; // revertir
+      }
+    }
+    this._admRenderLoops();
+    this._renderCards('', this._activeFilter||'all');
   },
 
   _admEditLoop(id) {
