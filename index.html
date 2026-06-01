@@ -1438,8 +1438,12 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <div class="sec-title">Las Paradas</div>
     <div class="stops" id="stops-list"></div>
   </div>
-  <div class="cta-fixed">
-    <button class="btn-go" onclick="App.startLoop()">
+  <div class="cta-fixed" style="display:flex;gap:10px;padding:12px 16px;">
+    <button onclick="App._verEnMapa()" style="flex:0 0 auto;padding:0 16px;height:52px;border-radius:14px;border:2px solid var(--or);background:var(--orL);color:var(--or);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;font-family:var(--fH);">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M1 6v16l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+      Ver mapa
+    </button>
+    <button class="btn-go" style="flex:1;" onclick="App.startLoop()">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       Iniciar Loop
     </button>
@@ -3599,26 +3603,24 @@ const App = {
           const startPt = r.pts[0];
           const sLat = Array.isArray(startPt) ? startPt[0] : startPt.lat;
           const sLng = Array.isArray(startPt) ? startPt[1] : startPt.lng;
-          // Distancia haversine aprox en metros
           const dlat = (lat - sLat) * Math.PI / 180;
           const dlng = (lng - sLng) * Math.PI / 180;
           const a = Math.sin(dlat/2)**2 + Math.cos(sLat*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dlng/2)**2;
           const distToStart = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 
-          if (distToStart < 40) {
-            // ¡Llegó! Iniciar modo loop
+          if (distToStart < 5) {
+            // ¡Llegó a 5m del inicio! Iniciar modo loop
             this._loopStarted = true;
+            this._rerouteActive = false;
             this._removeNavLine();
             const panel = document.getElementById('nav-panel');
             if (panel) panel.remove();
-            // Centrar el mapa en el loop
             const allCoords = r.pts.map(p => Array.isArray(p)?[p[1],p[0]]:[p.lng,p.lat]);
             const lngs = allCoords.map(c=>c[0]), lts = allCoords.map(c=>c[1]);
             this.mainMap.fitBounds(
               [[Math.min(...lngs),Math.min(...lts)],[Math.max(...lngs),Math.max(...lts)]],
               { padding:80, maxZoom:17, duration:900 }
             );
-            // Anuncio de inicio del loop con paradas
             if (this._voiceOn) {
               let startMsg = `¡Llegaste! Comenzá ${r.name}. `;
               if (r.pois && r.pois.length) {
@@ -3627,8 +3629,30 @@ const App = {
               }
               this._speak(startMsg);
             }
-            // Mostrar panel del loop con sus paradas
             this._showLoopStartPanel(r);
+          }
+        }
+
+        // ── Recálculo automático si se desvía de la ruta (como Waze) ──
+        if (!this._loopStarted && this._voiceNavRouteCoords && this._voiceNavRouteCoords.length > 1) {
+          const distToRoute = this._distToPolyline(lat, lng, this._voiceNavRouteCoords);
+          const desvioUmbral = 30; // metros — si se aleja más de 30m recalcula
+          if (distToRoute > desvioUmbral) {
+            const now = Date.now();
+            // No recalcular más de una vez cada 10 segundos
+            if (!this._lastReroute || now - this._lastReroute > 10000) {
+              this._lastReroute = now;
+              if (!this._rerouteActive) {
+                this._rerouteActive = true;
+                if (this._voiceOn) this._speak('Recalculando ruta.');
+                this.toast('↩️ Recalculando ruta...');
+                // Limpiar ruta vieja y recalcular
+                this._removeNavLine();
+                this._calcAndDrawNav(this._voiceNavRoute).finally(() => {
+                  this._rerouteActive = false;
+                });
+              }
+            }
           }
         }
       }
@@ -3657,6 +3681,28 @@ const App = {
       coords.push([lng + dy * Math.cos(angle), lat + dx * Math.sin(angle)]);
     }
     return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [coords] } };
+  },
+
+  // Distancia mínima en metros desde un punto a una polilínea [lng,lat][]
+  _distToPolyline(lat, lng, coords) {
+    let minDist = Infinity;
+    for (let i = 0; i < coords.length - 1; i++) {
+      const [x1, y1] = coords[i];   // lng, lat
+      const [x2, y2] = coords[i+1];
+      // Proyección del punto sobre el segmento
+      const dx = x2 - x1, dy = y2 - y1;
+      const lenSq = dx*dx + dy*dy;
+      let t = lenSq > 0 ? ((lng - x1)*dx + (lat - y1)*dy) / lenSq : 0;
+      t = Math.max(0, Math.min(1, t));
+      const cx = x1 + t*dx, cy = y1 + t*dy;
+      // Distancia haversine al punto más cercano del segmento
+      const dlat = (lat - cy) * Math.PI / 180;
+      const dlng = (lng - cx) * Math.PI / 180;
+      const a = Math.sin(dlat/2)**2 + Math.cos(cy*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dlng/2)**2;
+      const d = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      if (d < minDist) minDist = d;
+    }
+    return minDist;
   },
 
   // Toggle follow-me mode
@@ -4085,8 +4131,30 @@ const App = {
   async _calcAndDrawNav(r) {
     if (!r.pts || !r.pts.length) return;
     if (!this._locMarker) {
-      this.toast('📍 Activá tu ubicación GPS primero');
-      return;
+      // GPS no activo — activarlo automáticamente
+      this.toast('📍 Activando GPS...');
+      try {
+        await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(
+            pos => {
+              this._initGPS && this._initGPS();
+              // Esperar a que el marker aparezca
+              let tries = 0;
+              const wait = setInterval(() => {
+                tries++;
+                if (this._locMarker) { clearInterval(wait); resolve(); }
+                else if (tries > 20) { clearInterval(wait); reject(new Error('GPS timeout')); }
+              }, 300);
+            },
+            err => reject(err),
+            { enableHighAccuracy: true, timeout: 8000 }
+          );
+        });
+      } catch(e) {
+        this.toast('📍 Activá tu ubicación GPS primero');
+        return;
+      }
+      if (!this._locMarker) { this.toast('📍 Activá tu ubicación GPS primero'); return; }
     }
     this._loopStarted = false;  // reset flag de inicio de loop
     const loopStart = r.pts[0];
@@ -4130,6 +4198,8 @@ const App = {
         this.mainMap.addLayer({ id:'nav-main', type:'line', source:'nav-src-main', layout:{'line-join':'round','line-cap':'round'}, paint:{'line-color':'#FF5F00','line-width':5,'line-opacity':0.92} });
 
         this._navLine = ['nav-shadow','nav-main'];
+        // Guardar coords de la ruta para detectar desvíos
+        this._voiceNavRouteCoords = navCoords; // [[lng,lat],...]
 
         this._showNavPanel(r, distTxt, durMin, mode);
 
@@ -4218,6 +4288,9 @@ const App = {
     if (loopPanel) loopPanel.remove();
     this._stopVoice();
     this._loopStarted = false;
+    this._rerouteActive = false;
+    this._lastReroute = null;
+    this._voiceNavRouteCoords = null;
     this.toast('Navegación cancelada');
   },
 
@@ -4495,15 +4568,41 @@ const App = {
     this.showDetail(this.selId);
   },
 
+  // Ver el loop en el mapa sin iniciar navegación — vuela al inicio del loop
+  _verEnMapa() {
+    const r = this.routes.find(x => x.id === this.selId);
+    if (!r || !r.pts || !r.pts.length) return;
+    this.go('explore');
+    setTimeout(() => {
+      const pt = r.pts[0];
+      const lng = Array.isArray(pt) ? pt[1] : pt.lng;
+      const lat = Array.isArray(pt) ? pt[0] : pt.lat;
+      // Calcular bounds de todo el loop para mostrar el recorrido completo
+      const allCoords = r.pts.map(p => Array.isArray(p) ? [p[1],p[0]] : [p.lng,p.lat]);
+      const lngs = allCoords.map(c=>c[0]);
+      const lats = allCoords.map(c=>c[1]);
+      this.mainMap.fitBounds(
+        [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+        { padding: 80, maxZoom: 17, duration: 900 }
+      );
+      // Mostrar el popup del loop
+      this._showLoopMapCard(r);
+      this.toast(`🗺️ ${r.name}`);
+    }, 350);
+  },
+
   startLoop() {
     const r = this.routes.find(x => x.id === this.selId);
     if (!r) { this.toast('⚠️ Seleccioná un loop primero'); return; }
-
-    // Cerrar el panel de detalle y volver al mapa
     this.go('explore');
-
-    // Pequeño delay para que el mapa esté visible antes de iniciar nav
     setTimeout(() => {
+      // Primero volar al inicio del loop para orientar al usuario
+      if (r.pts && r.pts.length) {
+        const pt = r.pts[0];
+        const lng = Array.isArray(pt) ? pt[1] : pt.lng;
+        const lat = Array.isArray(pt) ? pt[0] : pt.lat;
+        this.mainMap.flyTo({ center: [lng, lat], zoom: 16, duration: 700 });
+      }
       this.toast(`🚀 Iniciando "${r.name}"…`);
       this._startNav(r);
     }, 350);
