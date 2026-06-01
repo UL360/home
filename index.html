@@ -4039,6 +4039,27 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const oldPanel = document.getElementById('nav-panel'); if (oldPanel) oldPanel.remove();
     this._stopVoice();
 
+    // Posicionar el mapa en el loop (fitBounds del recorrido completo)
+    // Delay para cuando se navega desde otra pantalla (mapa aún no visible)
+    const doFitBounds = () => {
+      if (r.pts && r.pts.length) {
+        const allCoords = r.pts.map(p => Array.isArray(p) ? [p[1],p[0]] : [p.lng,p.lat]);
+        const lngs = allCoords.map(c=>c[0]);
+        const lats = allCoords.map(c=>c[1]);
+        this.mainMap.fitBounds(
+          [[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],
+          { padding:80, maxZoom:17, duration:700, animate:true }
+        );
+      }
+    };
+    // Si el mapa está visible lo hacemos inmediato, si no, esperamos al render
+    const mapEl = document.getElementById('explore');
+    if (mapEl && mapEl.style.display !== 'none') {
+      doFitBounds();
+    } else {
+      setTimeout(doFitBounds, 400);
+    }
+
     // Mostrar SOLO este loop en el mapa
     this._showOnlyRoute(id);
 
@@ -4659,17 +4680,6 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     }
 
     this.go('detail');
-
-    // Posicionar el mapa principal en el loop para cuando el usuario vuelva al mapa
-    if (this.mainMap && r.pts && r.pts.length) {
-      const allCoords = r.pts.map(p => Array.isArray(p) ? [p[1],p[0]] : [p.lng,p.lat]);
-      const lngs = allCoords.map(c=>c[0]);
-      const lats = allCoords.map(c=>c[1]);
-      this.mainMap.fitBounds(
-        [[Math.min(...lngs),Math.min(...lats)],[Math.max(...lngs),Math.max(...lats)]],
-        { padding:80, maxZoom:17, duration:600, animate:true }
-      );
-    }
   },
 
   toggleFav() {
