@@ -3698,15 +3698,26 @@ const App = {
       try { if (this.mainMap.getSource('src-' + r.id)) this.mainMap.removeSource('src-' + r.id); } catch(e) {}
       try { if (this.mainMap.getSource('dot-' + r.id)) this.mainMap.removeSource('dot-' + r.id); } catch(e) {}
     }
+    // Limpiar siempre por las dudas (puede quedar de una sesión anterior)
+    try { if (this.mainMap.getLayer('glow-' + r.id)) this.mainMap.removeLayer('glow-' + r.id); } catch(e) {}
+    try { if (this.mainMap.getLayer('line-' + r.id)) this.mainMap.removeLayer('line-' + r.id); } catch(e) {}
+    try { if (this.mainMap.getLayer('dot-'  + r.id)) this.mainMap.removeLayer('dot-'  + r.id); } catch(e) {}
+    try { if (this.mainMap.getSource('src-' + r.id)) this.mainMap.removeSource('src-' + r.id); } catch(e) {}
+    try { if (this.mainMap.getSource('dot-' + r.id)) this.mainMap.removeSource('dot-' + r.id); } catch(e) {}
 
     const coords = r.pts.map(p => Array.isArray(p) ? [p[1], p[0]] : [p.lng, p.lat]);
     const layerIds = [];
 
     // Fuente de la polilínea
-    this.mainMap.addSource('src-' + r.id, {
-      type: 'geojson',
-      data: { type: 'Feature', geometry: { type: 'LineString', coordinates: coords } }
-    });
+    try {
+      this.mainMap.addSource('src-' + r.id, {
+        type: 'geojson',
+        data: { type: 'Feature', geometry: { type: 'LineString', coordinates: coords } }
+      });
+    } catch(e) {
+      // Si ya existe actualizar los datos en vez de agregar
+      try { this.mainMap.getSource('src-' + r.id).setData({ type: 'Feature', geometry: { type: 'LineString', coordinates: coords } }); } catch(_) {}
+    }
 
     // Glow / halo
     this.mainMap.addLayer({
@@ -3730,14 +3741,18 @@ const App = {
     this.mainMap.on('mouseleave', 'line-' + r.id, () => this.mainMap.getCanvas().style.cursor = '');
 
     // Punto de inicio
-    this.mainMap.addSource('dot-' + r.id, {
-      type: 'geojson',
-      data: {
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: coords[0] },
-        properties: { name: r.name, emoji: r.emoji }
-      }
-    });
+    try {
+      this.mainMap.addSource('dot-' + r.id, {
+        type: 'geojson',
+        data: {
+          type: 'Feature',
+          geometry: { type: 'Point', coordinates: coords[0] },
+          properties: { name: r.name, emoji: r.emoji }
+        }
+      });
+    } catch(e) {
+      try { this.mainMap.getSource('dot-' + r.id).setData({ type: 'Feature', geometry: { type: 'Point', coordinates: coords[0] }, properties: { name: r.name, emoji: r.emoji } }); } catch(_) {}
+    }
     this.mainMap.addLayer({
       id: 'dot-' + r.id, type: 'circle', source: 'dot-' + r.id,
       paint: {
