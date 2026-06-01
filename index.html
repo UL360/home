@@ -4382,7 +4382,7 @@ const App = {
     const pt = r.pts[0];
     const lngLat = Array.isArray(pt) ? [pt[1], pt[0]] : [pt.lng, pt.lat];
     const imgHtml = r.img
-      ? `<img src="${r.img}" style="width:100%;height:96px;object-fit:cover;display:block;border-radius:4px 4px 0 0;" onerror="this.style.display='none'">`
+      ? `${App._imgTag(r.img,"width:100%;height:96px;object-fit:cover;display:block;border-radius:4px 4px 0 0;")}`
       : `<div style="width:100%;height:60px;background:linear-gradient(135deg,${r.color}30,${r.color}60);display:flex;align-items:center;justify-content:center;font-size:32px;border-radius:4px 4px 0 0;">${r.emoji}</div>`;
     const html = `<div style="font-family:'DM Sans',sans-serif;min-width:190px;">
       ${imgHtml}
@@ -4430,8 +4430,20 @@ const App = {
 
     const img = document.getElementById('dt-img');
     if (r.img) {
-      img.src = r.img; img.style.display = 'block';
-      img.onerror = () => { img.style.display='none'; document.getElementById('dt-hero').style.background=`linear-gradient(135deg,${r.color},#FF8C42)`; };
+      const src = this._imgSrc(r.img);
+      if (src) {
+        img.src = src; img.style.display = 'block';
+        img.onerror = () => { img.style.display='none'; document.getElementById('dt-hero').style.background=`linear-gradient(135deg,${r.color},#FF8C42)`; };
+      } else if (r.img.startsWith('firestore:')) {
+        img.style.display = 'none';
+        this._resolveImg(r.img).then(resolved => {
+          if (resolved) { img.src = resolved; img.style.display = 'block'; }
+          else { document.getElementById('dt-hero').style.background=`linear-gradient(135deg,${r.color},#FF8C42)`; }
+        });
+      } else {
+        img.style.display = 'none';
+        document.getElementById('dt-hero').style.background = `linear-gradient(135deg,${r.color},#FF8C42)`;
+      }
     } else {
       img.style.display = 'none';
       document.getElementById('dt-hero').style.background = `linear-gradient(135deg,${r.color},#FF8C42)`;
@@ -4515,7 +4527,7 @@ const App = {
       <div class="rc ${r.id===this.selId?'sel':''}" data-id="${r.id}" onclick="App.selectRoute('${r.id}')">
         <div class="rc-img-wrap" style="background:linear-gradient(135deg,${r.color||'#FF5F00'}18,${r.color||'#FF5F00'}33)">
           <span class="rc-emoji">${r.emoji||'🔄'}</span>
-          ${r.img ? `<img src="${r.img}" alt="${r.name||''}" loading="lazy" onerror="this.style.display='none'">` : ''}
+          ${r.img ? App._imgTag(r.img,"width:100%;height:100%;object-fit:cover;") : ""}
         </div>
         <div class="rc-body">
           <span class="rc-badge ${r.badge||''}">${r.emoji||'🔄'} ${this._typeLabel(r.type)}</span>
@@ -4529,6 +4541,8 @@ const App = {
         <button class="rc-detail-btn" onclick="event.stopPropagation();App.showDetail('${r.id}')">Ver →</button>
       </div>
     `).join('');
+    // Cargar imágenes firestore: lazy
+    setTimeout(() => this._lazyLoadFsImgs(document.getElementById('cards')), 50);
   },
 
   _srchTimer: null,
@@ -4604,6 +4618,43 @@ const App = {
     return imgRef;
   },
 
+  // Devuelve el src listo para usar en un <img>.
+  // Si es firestore: devuelve '' y programa la carga lazy via data-fsimg.
+  _imgSrc(imgRef) {
+    if (!imgRef) return '';
+    if (imgRef.startsWith('data:') || imgRef.startsWith('http')) return imgRef;
+    return ''; // firestore: o desconocido → se carga lazy
+  },
+
+  // Genera el tag <img> completo con soporte para firestore: lazy loading
+  _imgTag(imgRef, style='', cls='') {
+    if (!imgRef) return '';
+    const src = this._imgSrc(imgRef);
+    const fsAttr = imgRef.startsWith('firestore:') ? ` data-fsimg="${imgRef}"` : '';
+    const srcAttr = src ? ` src="${src}"` : '';
+    return `<img${srcAttr}${fsAttr} class="fs-lazy ${cls}" style="${style}" loading="lazy" onerror="this.style.display='none'">`;
+  },
+
+  // Carga todas las imágenes firestore: pendientes en el DOM
+  async _lazyLoadFsImgs(container) {
+    const el = container || document;
+    const imgs = el.querySelectorAll('img[data-fsimg]');
+    if (!imgs.length) return;
+    await Promise.all(Array.from(imgs).map(async img => {
+      const ref = img.getAttribute('data-fsimg');
+      if (!ref) return;
+      try {
+        const resolved = await this._resolveImg(ref);
+        if (resolved) {
+          img.src = resolved;
+          img.removeAttribute('data-fsimg');
+        } else {
+          img.style.display = 'none';
+        }
+      } catch(e) { img.style.display = 'none'; }
+    }));
+  },
+
   _compressImg(file, cb) {
     const reader = new FileReader();
     reader.onload = e => {
@@ -4671,7 +4722,7 @@ const App = {
   },
   _loadAdmImgPreview(r) {
     // Soporte para base64 (data:) y URLs de Storage (http/https)
-    const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
+    const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
     this._imgBase64 = r.img && r.img.startsWith('data:') ? r.img : null;
     const imgSrc = hasImg ? r.img : null;
     const prev  = document.getElementById('adm-img-preview');
@@ -5254,7 +5305,7 @@ const App = {
            || this.routes.find(x=>x.id===id);
     if (!r) return;
 
-    const img  = r.img && (r.img.startsWith('data:') || r.img.startsWith('http')) ? r.img : null;
+    const img  = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:')) ? r.img : null;
     const city = r.cityId || r.ciudad || 'La Paz';
     const FL_CATS = { lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️' };
     const catIcon = FL_CATS[r.cat||r.type] || r.emoji || '🔄';
@@ -5723,14 +5774,14 @@ const App = {
       const isPrincipal = i === 0 && r._score >= 0;
       const color  = TC[r.type] || r.color || '#FF5F00';
       const liked  = (this.likes||[]).includes(r.id);
-      const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
+      const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
 
       if (isPrincipal) {
         // ── HERO CARD ──
         return `<div class="lu-card" style="padding:0;overflow:hidden;border-radius:16px;border:0.5px solid var(--bd);box-shadow:0 4px 20px rgba(0,0,0,.12);">
           ${hasImg
             ? `<div style="width:100%;height:160px;overflow:hidden;position:relative;cursor:pointer;" onclick="App._openImgViewer('${r.id}')">
-                 <img src="${r.img}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                 ${App._imgTag(r.img,"width:100%;height:100%;object-fit:cover;display:block;")}
                  <div style="display:none;width:100%;height:160px;background:linear-gradient(135deg,${color}22,${color}44);align-items:center;justify-content:center;font-size:52px;">${r.emoji||'🔄'}</div>
                  <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.7));pointer-events:none;"></div>
                  <div style="position:absolute;top:10px;left:10px;background:rgba(255,165,0,.92);border-radius:8px;padding:3px 9px;font-size:10px;font-weight:700;color:white;">★ Principal</div>
@@ -5774,7 +5825,7 @@ const App = {
         <!-- Imagen izquierda 40% -->
         <div style="width:40%;flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(135deg,${color}28,${color}55);cursor:pointer;" onclick="App.showDetail('${r.id}')">
           ${hasImg
-            ? `<img src="${r.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+            ? `${App._imgTag(r.img,"position:absolute;inset:0;width:100%;height:100%;object-fit:cover;")}`
             : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;">${r.emoji||'🔄'}</div>`
           }
           <div style="position:absolute;bottom:5px;left:5px;right:5px;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);border-radius:20px;padding:2px 7px;font-size:9px;font-weight:700;color:white;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${typePill}</div>
@@ -5857,9 +5908,9 @@ const App = {
         style="border-radius:13px;overflow:hidden;background:var(--wh);border:0.5px solid var(--bd);cursor:pointer;transition:transform .12s;box-shadow:var(--sh);"
         onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''"
         ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
-        ${p.img && (p.img.startsWith('data:') || p.img.startsWith('http'))
+        ${p.img && (p.img.startsWith('data:') || p.img.startsWith('http') || p.img.startsWith('firestore:'))
           ? `<div style="aspect-ratio:4/3;overflow:hidden;position:relative;">
-               <img src="${p.img}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy"
+               ${App._imgTag(p.img,"width:100%;height:100%;object-fit:cover;display:block;").replace('loading="lazy"','')} <img style="display:none"
                  onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;\'>${FL_CATS[p.cat]||'📍'}</div>'">
              </div>`
           : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;">${FL_CATS[p.cat]||'📍'}</div>`
@@ -5872,6 +5923,8 @@ const App = {
         </div>
       </div>`).join('')}
     </div>`;
+    // Cargar imágenes firestore: lazy
+    setTimeout(() => this._lazyLoadFsImgs(document.getElementById('loops-urbanos')), 50);
   },
 
   luSetTab(tab, el) {
@@ -6475,7 +6528,7 @@ const App = {
     list.map(r => {
       const liked  = (this.likes||[]).includes(r.id);
       const lkCt   = (r.likes||0) + (liked?1:0);
-      const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
+      const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
       const color  = r.color || '#FF5F00';
       const typeTxt = (TYPE_LBL[r.type]||'🔄') + ' ' + (TYPE_NAME[r.type]||r.type||'Loop');
       return `
@@ -6484,7 +6537,7 @@ const App = {
         <!-- ── Imagen izquierda (40%) ── -->
         <div style="width:40%;flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(135deg,${color}28,${color}55);cursor:pointer;" onclick="App.showDetail('${r.id}')">
           ${hasImg
-            ? `<img src="${r.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+            ? `${App._imgTag(r.img,"position:absolute;inset:0;width:100%;height:100%;object-fit:cover;")}`
             : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:38px;">${r.emoji||'🔄'}</div>`
           }
           <!-- pill tipo -->
@@ -6560,7 +6613,7 @@ const App = {
         style="border-radius:14px;overflow:hidden;background:var(--lt);border:0.5px solid var(--bd);cursor:pointer;transition:transform .12s;box-shadow:var(--sh);"
         onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''"
         ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
-        ${p.img && (p.img.startsWith('data:') || p.img.startsWith('http'))
+        ${p.img && (p.img.startsWith('data:') || p.img.startsWith('http') || p.img.startsWith('firestore:'))
           ? `<div style="aspect-ratio:4/3;overflow:hidden;"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\'aspect-ratio:4/3;background:var(--orL);display:flex;align-items:center;justify-content:center;font-size:36px;\'>${FL_CATS[p.cat]||'📍'}</div>'"></div>`
           : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;">${FL_CATS[p.cat]||'📍'}</div>`
         }
@@ -6574,6 +6627,8 @@ const App = {
     <div style="padding:0 14px 14px;text-align:center;">
       <button onclick="App.openFotoLoop()" style="background:var(--orL);border:none;border-radius:10px;padding:10px 24px;color:var(--or);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--fH);">+ Agregar Foto Loop</button>
     </div>`;
+    // Cargar imágenes firestore: lazy
+    setTimeout(() => this._lazyLoadFsImgs(document.getElementById('comunidad')), 50);
   },
 
   // ─── Tab: TODOS LOS LOOPS — MUNDO ───
@@ -6623,7 +6678,7 @@ const App = {
             const provincia= r.provincia|| '—';
             const pais     = r.pais     || 'Argentina';
             const color    = r.color    || '#FF5F00';
-            const hasImg   = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
+            const hasImg   = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
             const loopTs   = getTs(r);
             const timeAgo  = this._timeAgo(loopTs);
             const isNew    = i < 3 && (Date.now() - loopTs) < 3600000; // primer hora
@@ -6636,7 +6691,7 @@ const App = {
               <!-- Imagen / emoji izq -->
               <div style="width:70px;flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(135deg,${color}28,${color}55);">
                 ${hasImg
-                  ? `<img src="${r.img}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`
+                  ? `${App._imgTag(r.img,"position:absolute;inset:0;width:100%;height:100%;object-fit:cover;")}`
                   : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:30px;">${r.emoji||'🔄'}</div>`
                 }
               </div>
@@ -6716,10 +6771,13 @@ const App = {
             this.routes = merged;
             if (this._comTab === 'mundo') {
               renderList(liveLoops.filter(r => r.type !== 'fotostop'));
+              setTimeout(() => this._lazyLoadFsImgs(body), 100);
             }
           }, err => console.warn('[mundo] onSnapshot error:', err));
       } catch(e) { console.warn('[mundo] listener:', e); }
     }
+    // Cargar imágenes firestore: lazy después del render inicial
+    setTimeout(() => this._lazyLoadFsImgs(body), 100);
   },
 
   
@@ -8100,7 +8158,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (!el) return;
     if (list.length === 0) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin loops</div>`; return; }
     el.innerHTML = list.map(r => {
-      const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http'));
+      const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
       const noImgBadge = !hasImg ? `<span style="font-size:9px;background:#FEE2E2;color:#991B1B;border-radius:6px;padding:1px 6px;font-weight:700;">SIN FOTO</span> ` : '';
       return `<div class="adm-item">
         <div class="adm-item-row">
