@@ -2319,9 +2319,9 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     </div>
     <!-- Tabs: Loops / Foto Loops / Explorar -->
     <div style="display:flex;border-top:0.5px solid var(--bd);">
-      <button id="lu-tab-loops"   onclick="App.luSetTab('loops',this)"   class="com-tab on">🔄 Loops</button>
-      <button id="lu-tab-foto"    onclick="App.luSetTab('foto',this)"    class="com-tab">📸 Foto</button>
-      <button id="lu-tab-explorar" onclick="App.luSetTab('explorar',this)" class="com-tab">🌍 Explorar</button>
+      <button id="lu-tab-loops"   onclick="App.luSetTab('loops',this)"   class="com-tab on">🔄 Loop Urbanos</button>
+      <button id="lu-tab-foto"    onclick="App.luSetTab('foto',this)"    class="com-tab">📸 FotoLoop</button>
+      <button id="lu-tab-explorar" onclick="App.luSetTab('explorar',this)" class="com-tab">🌍 Otras Ciudades</button>
     </div>
   </div>
 
@@ -3440,7 +3440,16 @@ const App = {
       this._initAdmin();
     }
     if (sid==='loops')           this._renderLoops();
-    if (sid==='loops-urbanos')   { this._renderLoopsUrbanos(); }
+    if (sid==='loops-urbanos')   {
+      // Siempre arrancar en el tab Loop Urbanos al entrar a la pantalla
+      this._luTab = 'loops';
+      document.querySelectorAll('#loops-urbanos .com-tab').forEach(t => t.classList.remove('on'));
+      document.getElementById('lu-tab-loops')?.classList.add('on');
+      // Mostrar filtros Cercanos/Populares (ocultos en tab explorar)
+      const filters = document.getElementById('lu-btn-cercanos')?.parentElement;
+      if (filters) filters.style.display = 'flex';
+      this._renderLoopsUrbanos();
+    }
     if (sid==='comunidad')       { this._renderComunidad(); }
     if (sid==='eventos')         { this._renderEventos(); }
     if (sid==='ranking')         { this._renderRanking(); }
