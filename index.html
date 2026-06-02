@@ -6022,6 +6022,10 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           }
           if (this.mainMap) this._drawRoute(this.routes[idx]);
           this._showSaveSuccess(name, '💾 Loop actualizado en la nube');
+          // FX edición
+          const editBtn = document.getElementById('adm-save-btn');
+          this._fxBurst(editBtn || document.getElementById('admin'), 12);
+          setTimeout(() => this._fxPts(20), 150);
         }
       } else {
         // ── MODO CREAR ──
@@ -6073,6 +6077,9 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         this._addPts(50,'Loop publicado');
         if((r.pois||[]).length>0) this._addPts((r.pois.length)*15,'POIs agregados');
         this._showSaveSuccess(name, '☁️ Loop subido a la nube');
+        // Sincronizar stat del dashboard
+        const statEl2 = document.getElementById('aStat-loops');
+        if (statEl2) statEl2.textContent = this.routes.filter(r=>r.type!=='fotostop').length;
         // FX
         const saveBtn = document.getElementById('adm-save-btn') || document.querySelector('.adm-save-btn');
         this._fxBurst(saveBtn || document.getElementById('admin'), 16);
@@ -6087,8 +6094,9 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       document.getElementById('adm-name').value='';
       document.getElementById('adm-desc').value='';
       this._clearAdmImg();
+      const wasEditing = !!this._editingId;
       this._editingId = null;
-      if(btn) { btn.disabled = false; btn.textContent = 'Guardar Loop 🚀'; }
+      if(btn) { btn.disabled = false; btn.textContent = wasEditing ? '💾 Actualizar Loop' : 'Guardar Loop 🚀'; }
       this.clearPts(true); this.aPois=[]; this._renderPois();
       this._renderCards('', this._activeFilter||'all');
       setTimeout(()=>this.go('explore'), 1200);
@@ -9163,7 +9171,17 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
 
   async _admDeleteLoop(id, name) {
     if (!confirm(`¿Eliminar el loop "${name}"? Esta acción no se puede deshacer.`)) return;
-    this.routes = this.routes.filter(r => r.id !== id);
+    this.routes     = this.routes.filter(r => r.id !== id);
+    this.routesCom  = (this.routesCom  || []).filter(r => r.id !== id);
+    this.routesMuni = (this.routesMuni || []).filter(r => r.id !== id);
+    // Limpiar capas MapLibre
+    if (this.mainMap && this._layers && this._layers[id]) {
+      this._layers[id].forEach(lid => {
+        try { if (this.mainMap.getLayer(lid)) this.mainMap.removeLayer(lid); } catch(e) {}
+      });
+      try { if (this.mainMap.getSource(id)) this.mainMap.removeSource(id); } catch(e) {}
+      delete this._layers[id];
+    }
     if (this._db) {
       try { await this._db.collection('loops').doc(id).delete(); } catch(e){}
     }
@@ -9171,6 +9189,9 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     await this._saveData();
     this._admRenderLoops();
     this._renderCards('', this._activeFilter||'all');
+    // Sincronizar stat del dashboard
+    const statEl = document.getElementById('aStat-loops');
+    if (statEl) statEl.textContent = this.routes.filter(r=>r.type!=='fotostop').length;
     this.toast(`🗑️ Loop "${name}" eliminado`);
   },
 
@@ -9222,6 +9243,9 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
           const fp=this.aPts[0]; this.admMap.flyTo({center:[fp[1],fp[0]],zoom:14});
         }
       }
+      // Cargar POIs existentes
+      this.aPois = (r.pois || []).map(p => ({...p}));
+      this._renderPois();
       // Cargar imagen previa
       this._loadAdmImgPreview(r);
       // Usar _editingId (nombre correcto que lee saveRoute)
@@ -9278,7 +9302,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       await this._db.collection('loops_municipio').doc(id).set(data);
       await this._db.collection('loops_municipio_pending').doc(id).delete();
       // Agregar al array local
-      const loopForMap = { ...data, pts: (data.pts||[]).map(p => [p.lat, p.lng]) };
+      const loopForMap = { ...data, pts: (data.pts||[]).map(p => Array.isArray(p) ? p : [p.lat, p.lng]) };
       this.routesMuni.push(loopForMap);
       this.routes.push(loopForMap);
       if (this.mainMap) this._drawRoute(loopForMap);
@@ -9355,10 +9379,10 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (this._db) {
       try { await this._db.collection('fotoloops').doc(id).update({status}); } catch(e){}
     }
-    // Refrescar marcadores del mapa si está disponible
+    // Refrescar marcadores del mapa (siempre: aprobar agrega, rechazar remueve)
     if (this.mainMap) this._drawFotoStopsOnMap();
     this._admRenderFotoloops();
-    this.toast(status==='approved' ? '✅ Foto loop aprobado — aparece en el mapa' : '❌ Foto loop rechazado');
+    this.toast(status==='approved' ? '✅ Foto loop aprobado — aparece en el mapa' : '❌ Foto loop rechazado — removido del mapa');
   },
 
   async _admDeleteFL(id) {
