@@ -2307,9 +2307,9 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
         <p style="font-size:11px;color:var(--gr);margin-top:1px;display:flex;align-items:center;gap:4px;">
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
           <span id="lu-city-label">La Paz, Entre Ríos</span>
+          <span id="lu-dept-label" style="color:var(--bd);">· Dpto. La Paz</span>
         </p>
       </div>
-      <!-- Ordenar -->
       <div style="display:flex;gap:5px;">
         <button id="lu-btn-cercanos" onclick="App.luSetFilter('cercanos',this)"
           style="background:var(--orL);color:var(--or);border:0.5px solid var(--or)33;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;">Cercanos</button>
@@ -2317,11 +2317,11 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
           style="background:var(--bg2);border:0.5px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--md);cursor:pointer;">Populares</button>
       </div>
     </div>
-
-    <!-- Tabs: Loops / Foto Loops -->
+    <!-- Tabs: Loops / Foto Loops / Explorar -->
     <div style="display:flex;border-top:0.5px solid var(--bd);">
-      <button id="lu-tab-loops" onclick="App.luSetTab('loops',this)" class="com-tab on">🔄 Loops</button>
-      <button id="lu-tab-foto"  onclick="App.luSetTab('foto',this)"  class="com-tab">📸 Foto Loops</button>
+      <button id="lu-tab-loops"   onclick="App.luSetTab('loops',this)"   class="com-tab on">🔄 Loops</button>
+      <button id="lu-tab-foto"    onclick="App.luSetTab('foto',this)"    class="com-tab">📸 Foto</button>
+      <button id="lu-tab-explorar" onclick="App.luSetTab('explorar',this)" class="com-tab">🌍 Explorar</button>
     </div>
   </div>
 
@@ -5997,10 +5997,14 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   _renderLoopsUrbanos() {
     const city = this._luCity || 'La Paz';
     const prov = this._luProv || 'Entre Ríos';
+    const dept = this._luDept || '';
     const lbl  = document.getElementById('lu-city-label');
+    const deptLbl = document.getElementById('lu-dept-label');
     if (lbl) lbl.textContent = city + ', ' + prov;
+    if (deptLbl) deptLbl.textContent = dept ? `· Dpto. ${dept}` : '';
     const tab = this._luTab || 'loops';
-    if (tab === 'foto') return this._renderLuFoto();
+    if (tab === 'foto')     return this._renderLuFoto();
+    if (tab === 'explorar') return this._renderLuExplorar();
     this._renderLuLoops();
   },
 
@@ -6162,6 +6166,206 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     setTimeout(() => this._lazyLoadFsImgs(list), 50);
   },
 
+  _renderLuExplorar() {
+    const list = document.getElementById('lu-list');
+    const body = document.getElementById('lu-body');
+    if (!list) return;
+    if (body) body.style.padding = '0';
+
+    const userCity = this._luCity || 'La Paz';
+    const userProv = this._luProv || 'Entre Ríos';
+    const userLat  = this._lastLat || null;
+    const userLng  = this._lastLng || null;
+
+    const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
+
+    const haversine = (lat1,lng1,lat2,lng2) => {
+      const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLng=(lng2-lng1)*Math.PI/180;
+      const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+      return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    };
+
+    const getCoords = r => {
+      if (!r.pts||!r.pts.length) return null;
+      const p=r.pts[0]; return Array.isArray(p)?{lat:p[0],lng:p[1]}:{lat:p.lat,lng:p.lng};
+    };
+
+    // Agrupar todos los loops por ciudad (excluyendo la ciudad actual del usuario)
+    const cityMap = {}; // { cityName: { loops, fotoloops, dist, dept, prov } }
+
+    // Loops
+    this.routes.forEach(r => {
+      if (r.type === 'fotostop') return;
+      const rCity = r.ciudad || r.cityId || '';
+      if (!rCity || normCity(rCity) === normCity(userCity)) return;
+      const coords = getCoords(r);
+      let dist = 9999;
+      if (userLat && userLng && coords) dist = haversine(userLat, userLng, coords.lat, coords.lng);
+      if (!cityMap[rCity]) cityMap[rCity] = { loops:[], fotoloops:[], dist, dept: r.departamento||'', prov: r.provincia||'' };
+      cityMap[rCity].loops.push(r);
+      if (dist < cityMap[rCity].dist) cityMap[rCity].dist = dist;
+    });
+
+    // FotoLoops
+    (this._fotoPosts || []).forEach(p => {
+      const pCity = p.ciudad || p.cityId || '';
+      if (!pCity || normCity(pCity) === normCity(userCity)) return;
+      if (!cityMap[pCity]) {
+        let dist = 9999;
+        if (userLat && userLng && p.lat && p.lng) dist = haversine(userLat, userLng, p.lat, p.lng);
+        cityMap[pCity] = { loops:[], fotoloops:[], dist, dept: p.departamento||'', prov: p.provincia||'' };
+      }
+      cityMap[pCity].fotoloops.push(p);
+    });
+
+    if (Object.keys(cityMap).length === 0) {
+      list.innerHTML = `<div style="text-align:center;padding:48px 20px;">
+        <div style="font-size:40px;margin-bottom:12px;">🌍</div>
+        <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);margin-bottom:6px;">Sin loops en otras ciudades aún</div>
+        <p style="font-size:13px;color:var(--gr);line-height:1.6;">Cuando haya loops en otras ciudades aparecerán acá.</p>
+      </div>`;
+      return;
+    }
+
+    // Separar: misma provincia / otras provincias
+    const mismaProv  = Object.entries(cityMap).filter(([,v]) => normCity(v.prov||'') === normCity(userProv)).sort((a,b)=>a[1].dist-b[1].dist);
+    const otrasProv  = Object.entries(cityMap).filter(([,v]) => normCity(v.prov||'') !== normCity(userProv)).sort((a,b)=>a[1].dist-b[1].dist);
+
+    const renderCityCard = ([cityName, data]) => {
+      const distLabel  = data.dist < 9999 ? `${Math.round(data.dist)} km` : '';
+      const loopCount  = data.loops.length;
+      const fotoCount  = data.fotoloops.length;
+      const dept       = data.dept ? `Dpto. ${data.dept}` : data.prov;
+      // Buscar imagen del primer loop con imagen
+      const loopWithImg = data.loops.find(r => r.img && (r.img.startsWith('data:')||r.img.startsWith('http')||r.img.startsWith('firestore:')));
+      const imgHtml = loopWithImg
+        ? `<div style="width:56px;height:56px;border-radius:12px;overflow:hidden;flex-shrink:0;">${App._imgTag(loopWithImg.img,'width:56px;height:56px;object-fit:cover;')}</div>`
+        : `<div style="width:56px;height:56px;border-radius:12px;background:var(--orL);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">📍</div>`;
+
+      return `<div onclick="App._luExplorarCity('${cityName.replace(/'/g,"\\'")}','${(data.prov||'').replace(/'/g,"\\'")}','${(data.dept||'').replace(/'/g,"\\'")}'"
+        style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--wh);border-radius:14px;border:0.5px solid var(--bd);cursor:pointer;transition:box-shadow .15s;margin-bottom:8px;"
+        onmouseover="this.style.boxShadow='var(--shL)'" onmouseout="this.style.boxShadow='none'">
+        ${imgHtml}
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:var(--fH);font-size:15px;font-weight:800;color:var(--dk);">${cityName}</div>
+          <div style="font-size:11px;color:var(--gr);margin-top:2px;">${dept}</div>
+          <div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;">
+            ${loopCount ? `<span style="font-size:11px;font-weight:600;color:var(--or);background:var(--orL);padding:2px 8px;border-radius:10px;">🔄 ${loopCount} loop${loopCount!==1?'s':''}</span>` : ''}
+            ${fotoCount ? `<span style="font-size:11px;font-weight:600;color:#7B2F9E;background:#F3E8FF;padding:2px 8px;border-radius:10px;">📸 ${fotoCount} foto${fotoCount!==1?'s':''}</span>` : ''}
+          </div>
+        </div>
+        ${distLabel ? `<div style="font-size:12px;font-weight:700;color:var(--or);background:var(--orL);padding:5px 10px;border-radius:20px;flex-shrink:0;">${distLabel}</div>` : ''}
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+      </div>`;
+    };
+
+    // Buscador
+    let html = `
+      <div style="padding:12px 14px 6px;">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:10px;padding:8px 12px;border:1px solid var(--bd);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input id="lu-explorar-q" type="text" placeholder="Buscar ciudad..."
+            style="border:none;outline:none;font-family:var(--fB);font-size:13px;color:var(--dk);background:transparent;flex:1;"
+            oninput="App._luExplorarFilter(this.value)">
+        </div>
+      </div>
+      <div id="lu-explorar-results" style="padding:0 14px 14px;">`;
+
+    // Misma provincia
+    if (mismaProv.length) {
+      html += `<div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;padding:10px 2px 6px;">📍 ${userProv}</div>`;
+      html += mismaProv.map(renderCityCard).join('');
+    }
+
+    // Otras provincias
+    if (otrasProv.length) {
+      html += `<div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;padding:14px 2px 6px;">🌍 Otras provincias</div>`;
+      html += otrasProv.map(renderCityCard).join('');
+    }
+
+    html += `</div>`;
+    list.innerHTML = html;
+    setTimeout(() => this._lazyLoadFsImgs(list), 50);
+
+    // Guardar datos para el buscador
+    this._luExplorarData = cityMap;
+  },
+
+  // Filtrar ciudades por búsqueda
+  _luExplorarFilter(q) {
+    if (!this._luExplorarData) return;
+    const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const qn = norm(q);
+    const results = document.getElementById('lu-explorar-results');
+    if (!results) return;
+    if (!qn) { this._renderLuExplorar(); return; }
+    const filtered = Object.entries(this._luExplorarData)
+      .filter(([city, data]) => norm(city).includes(qn) || norm(data.dept||'').includes(qn) || norm(data.prov||'').includes(qn))
+      .sort((a,b) => a[1].dist - b[1].dist);
+    if (!filtered.length) {
+      results.innerHTML = `<div style="text-align:center;padding:24px;color:var(--gr);font-size:13px;">Sin resultados para "${q}"</div>`;
+      return;
+    }
+    results.innerHTML = filtered.map(([cityName, data]) => {
+      const loopCount = data.loops.length, fotoCount = data.fotoloops.length;
+      const distLabel = data.dist < 9999 ? `${Math.round(data.dist)} km` : '';
+      return `<div onclick="App._luExplorarCity('${cityName.replace(/'/g,"\\'")}','${(data.prov||'').replace(/'/g,"\\'")}','${(data.dept||'').replace(/'/g,"\\'")}'"
+        style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--wh);border-radius:14px;border:0.5px solid var(--bd);cursor:pointer;margin-bottom:8px;">
+        <div style="width:44px;height:44px;border-radius:10px;background:var(--orL);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">📍</div>
+        <div style="flex:1;">
+          <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${cityName}</div>
+          <div style="display:flex;gap:6px;margin-top:3px;">
+            ${loopCount?`<span style="font-size:11px;color:var(--or);">🔄 ${loopCount}</span>`:''}
+            ${fotoCount?`<span style="font-size:11px;color:#7B2F9E;">📸 ${fotoCount}</span>`:''}
+          </div>
+        </div>
+        ${distLabel?`<span style="font-size:11px;color:var(--or);font-weight:700;">${distLabel}</span>`:''}
+      </div>`;
+    }).join('');
+  },
+
+  // Al tocar una ciudad en Explorar → filtrar loops de esa ciudad
+  _luExplorarCity(city, prov, dept) {
+    // Cambiar temporalmente la ciudad activa y mostrar sus loops
+    const prevCity = this._luCity, prevProv = this._luProv, prevDept = this._luDept;
+    this._luCity = city; this._luProv = prov; this._luDept = dept;
+    this._luTab = 'loops';
+    // Actualizar labels
+    const lbl = document.getElementById('lu-city-label');
+    const deptLbl = document.getElementById('lu-dept-label');
+    if (lbl) lbl.textContent = city + (prov ? ', '+prov : '');
+    if (deptLbl) deptLbl.textContent = dept ? `· Dpto. ${dept}` : '';
+    // Activar tab loops
+    document.querySelectorAll('#loops-urbanos .com-tab').forEach(t => t.classList.remove('on'));
+    document.getElementById('lu-tab-loops')?.classList.add('on');
+    this._renderLuLoops();
+    // Botón para volver a tu ciudad
+    const list = document.getElementById('lu-list');
+    if (list) {
+      const banner = document.createElement('div');
+      banner.style.cssText = 'background:var(--orL);border-bottom:1px solid var(--or)33;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;';
+      banner.innerHTML = `
+        <span style="font-size:12px;color:var(--or);font-weight:600;">📍 Explorando ${city}</span>
+        <button onclick="App._luVolverMiCiudad('${prevCity.replace(/'/g,"\\'")}','${(prevProv||'').replace(/'/g,"\\'")}','${(prevDept||'').replace(/'/g,"\\'")}',this)"
+          style="font-size:11px;font-weight:700;color:var(--or);background:white;border:1px solid var(--or)33;border-radius:8px;padding:4px 10px;cursor:pointer;">
+          ← Volver a ${prevCity}
+        </button>`;
+      list.prepend(banner);
+    }
+  },
+
+  _luVolverMiCiudad(city, prov, dept) {
+    this._luCity = city; this._luProv = prov; this._luDept = dept;
+    const lbl = document.getElementById('lu-city-label');
+    const deptLbl = document.getElementById('lu-dept-label');
+    if (lbl) lbl.textContent = city + (prov ? ', '+prov : '');
+    if (deptLbl) deptLbl.textContent = dept ? `· Dpto. ${dept}` : '';
+    this._luTab = 'explorar';
+    document.querySelectorAll('#loops-urbanos .com-tab').forEach(t => t.classList.remove('on'));
+    document.getElementById('lu-tab-explorar')?.classList.add('on');
+    this._renderLuExplorar();
+  },
+
   _renderLuFoto() {
     const city  = this._luCity || 'La Paz';
     const list  = document.getElementById('lu-list');
@@ -6228,6 +6432,9 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     this._luTab = tab;
     document.querySelectorAll('#loops-urbanos .com-tab').forEach(t => t.classList.remove('on'));
     if (el) el.classList.add('on');
+    // Ocultar/mostrar filtros Cercanos/Populares — no aplican en Explorar
+    const filters = document.getElementById('lu-btn-cercanos')?.parentElement;
+    if (filters) filters.style.display = tab === 'explorar' ? 'none' : 'flex';
     this._renderLoopsUrbanos();
   },
 
@@ -6581,27 +6788,86 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
   // Tabla de fallback local (País / Provincia / Ciudad)
   _GEO_KNOWN: [
-    { lat:-30.749, lng:-59.645, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'La Paz' },
-    { lat:-30.953, lng:-60.078, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Santa Elena' },
-    { lat:-31.730, lng:-60.530, radio:35, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Paraná' },
-    { lat:-31.390, lng:-57.950, radio:25, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Concordia' },
-    { lat:-33.011, lng:-58.522, radio:25, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Gualeguaychú' },
-    { lat:-32.227, lng:-58.140, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Colón' },
-    { lat:-32.615, lng:-60.155, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Victoria' },
-    { lat:-32.067, lng:-60.641, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Diamante' },
-    { lat:-32.393, lng:-59.793, radio:20, pais:'Argentina', provincia:'Entre Ríos',  ciudad:'Nogoyá' },
-    { lat:-32.946, lng:-60.639, radio:40, pais:'Argentina', provincia:'Santa Fe',    ciudad:'Rosario' },
-    { lat:-27.468, lng:-58.834, radio:35, pais:'Argentina', provincia:'Corrientes',  ciudad:'Corrientes' },
-    { lat:-34.603, lng:-58.381, radio:60, pais:'Argentina', provincia:'Buenos Aires',ciudad:'Buenos Aires' },
-    { lat:-38.000, lng:-57.558, radio:35, pais:'Argentina', provincia:'Buenos Aires',ciudad:'Mar del Plata' },
-    { lat:-32.890, lng:-68.845, radio:40, pais:'Argentina', provincia:'Mendoza',     ciudad:'Mendoza' },
-    { lat:-31.417, lng:-64.183, radio:40, pais:'Argentina', provincia:'Córdoba',     ciudad:'Córdoba' },
-    { lat:-27.480, lng:-55.765, radio:40, pais:'Argentina', provincia:'Misiones',    ciudad:'Posadas' },
+    // ── ENTRE RÍOS — Departamento La Paz ──
+    { lat:-30.749, lng:-59.645, radio:8,  pais:'Argentina', provincia:'Entre Ríos', departamento:'La Paz',         ciudad:'La Paz' },
+    { lat:-30.555, lng:-59.635, radio:6,  pais:'Argentina', provincia:'Entre Ríos', departamento:'La Paz',         ciudad:'San Gustavo' },
+    { lat:-30.867, lng:-59.783, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'La Paz',         ciudad:'General Alvear' },
+    { lat:-30.650, lng:-59.530, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'La Paz',         ciudad:'Piedras Blancas' },
+    { lat:-30.900, lng:-59.550, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'La Paz',         ciudad:'Bovril' },
+    { lat:-30.780, lng:-59.850, radio:4,  pais:'Argentina', provincia:'Entre Ríos', departamento:'La Paz',         ciudad:'Alcaraz' },
+    { lat:-30.620, lng:-59.730, radio:4,  pais:'Argentina', provincia:'Entre Ríos', departamento:'La Paz',         ciudad:'Villa Elisa' },
+    // ── ENTRE RÍOS — Departamento Feliciano ──
+    { lat:-30.383, lng:-58.750, radio:8,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Feliciano',      ciudad:'San José de Feliciano' },
+    { lat:-30.170, lng:-58.970, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Feliciano',      ciudad:'Colonia Ayuí' },
+    // ── ENTRE RÍOS — Departamento Federal ──
+    { lat:-30.957, lng:-58.783, radio:8,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Federal',        ciudad:'Federal' },
+    { lat:-30.783, lng:-58.617, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Federal',        ciudad:'Los Conquistadores' },
+    // ── ENTRE RÍOS — Departamento Concordia ──
+    { lat:-31.390, lng:-57.950, radio:18, pais:'Argentina', provincia:'Entre Ríos', departamento:'Concordia',      ciudad:'Concordia' },
+    { lat:-31.217, lng:-57.917, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Concordia',      ciudad:'Chajarí' },
+    { lat:-31.083, lng:-58.017, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Concordia',      ciudad:'Villa del Rosario' },
+    // ── ENTRE RÍOS — Departamento Federación ──
+    { lat:-30.983, lng:-57.917, radio:6,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Federación',     ciudad:'Federación' },
+    { lat:-31.133, lng:-57.883, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Federación',     ciudad:'Santa Ana' },
+    // ── ENTRE RÍOS — Departamento Colón ──
+    { lat:-32.227, lng:-58.140, radio:10, pais:'Argentina', provincia:'Entre Ríos', departamento:'Colón',          ciudad:'Colón' },
+    { lat:-32.067, lng:-58.233, radio:6,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Colón',          ciudad:'San José' },
+    { lat:-32.383, lng:-58.017, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Colón',          ciudad:'Ubajay' },
+    // ── ENTRE RÍOS — Departamento Uruguay ──
+    { lat:-32.483, lng:-58.233, radio:10, pais:'Argentina', provincia:'Entre Ríos', departamento:'Uruguay',        ciudad:'Concepción del Uruguay' },
+    { lat:-32.350, lng:-58.350, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Uruguay',        ciudad:'Basavilbaso' },
+    { lat:-32.617, lng:-58.100, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Uruguay',        ciudad:'Villa Elisa' },
+    // ── ENTRE RÍOS — Departamento Gualeguaychú ──
+    { lat:-33.011, lng:-58.522, radio:15, pais:'Argentina', provincia:'Entre Ríos', departamento:'Gualeguaychú',   ciudad:'Gualeguaychú' },
+    { lat:-33.283, lng:-58.483, radio:6,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Gualeguaychú',   ciudad:'Larroque' },
+    // ── ENTRE RÍOS — Departamento Paraná ──
+    { lat:-31.730, lng:-60.530, radio:25, pais:'Argentina', provincia:'Entre Ríos', departamento:'Paraná',         ciudad:'Paraná' },
+    { lat:-31.533, lng:-60.217, radio:6,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Paraná',         ciudad:'Oro Verde' },
+    { lat:-31.617, lng:-60.417, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Paraná',         ciudad:'Sauce Montrull' },
+    // ── ENTRE RÍOS — Departamento Diamante ──
+    { lat:-32.067, lng:-60.641, radio:10, pais:'Argentina', provincia:'Entre Ríos', departamento:'Diamante',       ciudad:'Diamante' },
+    { lat:-32.233, lng:-60.517, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Diamante',       ciudad:'General Racedo' },
+    // ── ENTRE RÍOS — Departamento Victoria ──
+    { lat:-32.615, lng:-60.155, radio:12, pais:'Argentina', provincia:'Entre Ríos', departamento:'Victoria',       ciudad:'Victoria' },
+    { lat:-32.783, lng:-60.017, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Victoria',       ciudad:'Antelo' },
+    // ── ENTRE RÍOS — Departamento Nogoyá ──
+    { lat:-32.393, lng:-59.793, radio:10, pais:'Argentina', provincia:'Entre Ríos', departamento:'Nogoyá',         ciudad:'Nogoyá' },
+    { lat:-32.550, lng:-59.550, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Nogoyá',         ciudad:'Tabossi' },
+    // ── ENTRE RÍOS — Departamento Tala ──
+    { lat:-32.067, lng:-59.100, radio:8,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Tala',           ciudad:'Rosario del Tala' },
+    { lat:-32.150, lng:-59.300, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Tala',           ciudad:'Ramirez' },
+    // ── ENTRE RÍOS — Departamento Villaguay ──
+    { lat:-31.867, lng:-59.017, radio:10, pais:'Argentina', provincia:'Entre Ríos', departamento:'Villaguay',      ciudad:'Villaguay' },
+    { lat:-31.700, lng:-58.783, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Villaguay',      ciudad:'Bergara' },
+    // ── ENTRE RÍOS — Departamento San Salvador ──
+    { lat:-31.617, lng:-58.500, radio:7,  pais:'Argentina', provincia:'Entre Ríos', departamento:'San Salvador',   ciudad:'San Salvador' },
+    // ── ENTRE RÍOS — Departamento Gualeguay ──
+    { lat:-33.150, lng:-59.317, radio:10, pais:'Argentina', provincia:'Entre Ríos', departamento:'Gualeguay',      ciudad:'Gualeguay' },
+    { lat:-32.983, lng:-59.200, radio:5,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Gualeguay',      ciudad:'Urdinarrain' },
+    // ── ENTRE RÍOS — Departamento Islas del Ibicuy ──
+    { lat:-33.767, lng:-58.833, radio:10, pais:'Argentina', provincia:'Entre Ríos', departamento:'Islas del Ibicuy', ciudad:'Ibicuy' },
+    { lat:-33.917, lng:-59.017, radio:6,  pais:'Argentina', provincia:'Entre Ríos', departamento:'Islas del Ibicuy', ciudad:'Médanos' },
+    // ── ENTRE RÍOS — Santa Elena ──
+    { lat:-30.953, lng:-60.078, radio:10, pais:'Argentina', provincia:'Entre Ríos', departamento:'La Paz',         ciudad:'Santa Elena' },
+    // ── CORRIENTES — ciudades limítrofes ──
+    { lat:-27.468, lng:-58.834, radio:25, pais:'Argentina', provincia:'Corrientes',  departamento:'Capital',        ciudad:'Corrientes' },
+    { lat:-29.033, lng:-59.533, radio:8,  pais:'Argentina', provincia:'Corrientes',  departamento:'Esquina',        ciudad:'Esquina' },
+    { lat:-28.533, lng:-59.217, radio:6,  pais:'Argentina', provincia:'Corrientes',  departamento:'Sauce',          ciudad:'Sauce' },
+    { lat:-28.083, lng:-58.983, radio:6,  pais:'Argentina', provincia:'Corrientes',  departamento:'Goya',           ciudad:'Goya' },
+    { lat:-30.400, lng:-59.833, radio:6,  pais:'Argentina', provincia:'Corrientes',  departamento:'Monte Caseros',  ciudad:'Monte Caseros' },
+    { lat:-28.650, lng:-55.900, radio:6,  pais:'Argentina', provincia:'Corrientes',  departamento:'Santo Tomé',     ciudad:'Santo Tomé' },
+    // ── OTRAS PROVINCIAS ──
+    { lat:-32.946, lng:-60.639, radio:30, pais:'Argentina', provincia:'Santa Fe',    departamento:'Rosario',        ciudad:'Rosario' },
+    { lat:-34.603, lng:-58.381, radio:60, pais:'Argentina', provincia:'Buenos Aires',departamento:'CABA',           ciudad:'Buenos Aires' },
+    { lat:-38.000, lng:-57.558, radio:25, pais:'Argentina', provincia:'Buenos Aires',departamento:'General Pueyrredón', ciudad:'Mar del Plata' },
+    { lat:-32.890, lng:-68.845, radio:30, pais:'Argentina', provincia:'Mendoza',     departamento:'Capital',        ciudad:'Mendoza' },
+    { lat:-31.417, lng:-64.183, radio:30, pais:'Argentina', provincia:'Córdoba',     departamento:'Capital',        ciudad:'Córdoba' },
+    { lat:-27.480, lng:-55.765, radio:25, pais:'Argentina', provincia:'Misiones',    departamento:'Capital',        ciudad:'Posadas' },
   ],
 
   // Fallback tabla local sincrónico — devuelve {pais, provincia, ciudad}
   _geoFromCoordsSync(lat, lng) {
-    if (!lat || !lng) return { pais:'Argentina', provincia:'Entre Ríos', ciudad: this._luCity || 'La Paz' };
+    if (!lat || !lng) return { pais:'Argentina', provincia:'Entre Ríos', departamento:'La Paz', ciudad: this._luCity || 'La Paz' };
     const hav = (a,b,c,e) => {
       const R=6371, dL=(c-a)*Math.PI/180, dG=(e-b)*Math.PI/180;
       const x = Math.sin(dL/2)**2 + Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;
@@ -6612,8 +6878,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       const d = hav(lat, lng, row.lat, row.lng);
       if (d < row.radio && d < min) { min = d; best = row; }
     }
-    if (best) return { pais: best.pais, provincia: best.provincia, ciudad: best.ciudad };
-    return { pais:'Argentina', provincia:'', ciudad: this._luCity || 'La Paz' };
+    if (best) return { pais: best.pais, provincia: best.provincia, departamento: best.departamento || '', ciudad: best.ciudad };
+    return { pais:'Argentina', provincia:'', departamento:'', ciudad: this._luCity || 'La Paz' };
   },
 
   // Compatibilidad: devuelve solo la ciudad (string) para código legacy
@@ -6629,9 +6895,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     if (this._geoCache) {
       const distM = this._haversineKm(lat, lng, this._geoCache.lat, this._geoCache.lng) * 1000;
       const age   = Date.now() - (this._geoCache.ts || 0);
-      if (distM < 500 && age < 30 * 60 * 1000) {
-        return this._geoCache;
-      }
+      if (distM < 500 && age < 30 * 60 * 1000) return this._geoCache;
     }
     // 2. BigDataCloud (gratis, sin key, retorna país/provincia/ciudad en es)
     try {
@@ -6643,28 +6907,44 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       const rawCiudad = data.city || data.locality || '';
       let rawProv = data.principalSubdivision || data.principalSubdivisionCode || '';
       rawProv = rawProv.replace(/^Provincia de /i,'').replace(/^Province of /i,'').trim();
+
+      // Extraer departamento de localityInfo.administrative (adminLevel 6)
+      let rawDept = '';
+      const admLevels = data.localityInfo?.administrative || [];
+      const deptEntry = admLevels.find(a => a.adminLevel === 6 || a.adminLevel === 7);
+      if (deptEntry) {
+        rawDept = deptEntry.name
+          .replace(/^Departamento /i,'')
+          .replace(/^Partido de /i,'')
+          .replace(/^Municipio de /i,'')
+          .trim();
+      }
+
       const result = {
         lat, lng,
-        pais:      data.countryName || 'Argentina',
-        provincia: rawProv,
-        ciudad:    rawCiudad,
+        pais:         data.countryName || 'Argentina',
+        provincia:    rawProv,
+        departamento: rawDept,
+        ciudad:       rawCiudad,
         ts: Date.now()
       };
-      // ── Normalizar ciudad contra la tabla _GEO_KNOWN para garantizar consistencia ──
-      // Si hay una ciudad conocida a menos de 8km, usar su nombre canónico
+
+      // ── Normalizar contra _GEO_KNOWN para nombres canónicos ──
       let bestKnown = null, bestDist = Infinity;
       for (const row of this._GEO_KNOWN) {
         const d = this._haversineKm(lat, lng, row.lat, row.lng);
         if (d < row.radio && d < bestDist) { bestDist = d; bestKnown = row; }
       }
       if (bestKnown) {
-        result.ciudad    = bestKnown.ciudad;
-        result.provincia = bestKnown.provincia;
-        result.pais      = bestKnown.pais;
+        result.ciudad        = bestKnown.ciudad;
+        result.provincia     = bestKnown.provincia;
+        result.pais          = bestKnown.pais;
+        result.departamento  = bestKnown.departamento || rawDept;
       }
+
       if (result.ciudad) {
         this._geoCache = result;
-        console.log(`[geo] BigDataCloud (${rawCiudad}) → normalizado: ${result.ciudad}, ${result.provincia}, ${result.pais}`);
+        console.log(`[geo] ${result.ciudad}, Dpto. ${result.departamento}, ${result.provincia}, ${result.pais}`);
         return result;
       }
     } catch(e) {
@@ -6674,27 +6954,28 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const sync = this._geoFromCoordsSync(lat, lng);
     const result = { lat, lng, ...sync, ts: Date.now() };
     this._geoCache = result;
-    console.log(`[geo] Fallback local → ${result.ciudad}, ${result.provincia}, ${result.pais}`);
     return result;
   },
 
   // ── Actualizar ciudad del usuario desde GPS (se llama al mover el marcador) ──
   async _updateCityFromGPS(lat, lng) {
-    if (this._cityDetected) return; // solo la primera vez por sesión
+    if (this._cityDetected) return;
     this._cityDetected = true;
     const loc = await this._detectLocation(lat, lng);
     if (loc.ciudad && loc.ciudad !== this._luCity) {
-      this._luCity    = loc.ciudad;
-      this._luProv    = loc.provincia;
-      this._luPais    = loc.pais;
-      this._comCity   = loc.ciudad;
-      // Actualizar labels visibles
+      this._luCity  = loc.ciudad;
+      this._luProv  = loc.provincia;
+      this._luPais  = loc.pais;
+      this._luDept  = loc.departamento || '';
+      this._comCity = loc.ciudad;
       const suffix = loc.provincia ? `, ${loc.provincia}` : '';
-      const lbl    = document.getElementById('lu-city-label');
+      const lbl = document.getElementById('lu-city-label');
       if (lbl) lbl.textContent = loc.ciudad + suffix;
+      const deptLbl = document.getElementById('lu-dept-label');
+      if (deptLbl) deptLbl.textContent = loc.departamento ? `· Dpto. ${loc.departamento}` : '';
       const comLbl = document.getElementById('com-city-label');
       if (comLbl) comLbl.textContent = loc.ciudad + suffix;
-      console.log(`[GPS] Ubicación actualizada: ${loc.ciudad}, ${loc.provincia}, ${loc.pais}`);
+      console.log(`[GPS] ${loc.ciudad}, Dpto. ${loc.departamento}, ${loc.provincia}, ${loc.pais}`);
     }
   },
 
