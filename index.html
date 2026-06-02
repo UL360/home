@@ -2330,12 +2330,8 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <div style="display:flex;flex-direction:column;gap:10px;padding:14px;" id="lu-list"></div>
   </div>
 
-  <!-- Footer: Crear loop -->
+  <!-- Footer: Crear foto loop -->
   <div style="padding:10px 14px 20px;flex-shrink:0;background:var(--wh);border-top:0.5px solid var(--bd);display:flex;gap:8px;">
-    <button onclick="App.go('admin')" style="flex:1;padding:12px;border-radius:11px;background:var(--orL);border:0.5px solid var(--or)33;color:var(--or);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-      Crear Loop
-    </button>
     <button onclick="App.openFotoLoop()" style="flex:1;padding:12px;border-radius:11px;background:var(--bg2);border:0.5px solid var(--bd);color:var(--md);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
       + Foto Loop
@@ -3441,11 +3437,9 @@ const App = {
     }
     if (sid==='loops')           this._renderLoops();
     if (sid==='loops-urbanos')   {
-      // Siempre arrancar en el tab Loop Urbanos al entrar a la pantalla
       this._luTab = 'loops';
       document.querySelectorAll('#loops-urbanos .com-tab').forEach(t => t.classList.remove('on'));
       document.getElementById('lu-tab-loops')?.classList.add('on');
-      // Mostrar filtros Cercanos/Populares (ocultos en tab explorar)
       const filters = document.getElementById('lu-btn-cercanos')?.parentElement;
       if (filters) filters.style.display = 'flex';
       this._renderLoopsUrbanos();
@@ -6245,26 +6239,61 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       const loopCount  = data.loops.length;
       const fotoCount  = data.fotoloops.length;
       const dept       = data.dept ? `Dpto. ${data.dept}` : data.prov;
+      const safeCity   = cityName.replace(/'/g,"\\'");
+      const safeProv   = (data.prov||'').replace(/'/g,"\\'");
+      const safeDept   = (data.dept||'').replace(/'/g,"\\'");
+      const cardId     = 'ec-' + cityName.replace(/[^a-zA-Z0-9]/g,'_');
+
       // Buscar imagen del primer loop con imagen
       const loopWithImg = data.loops.find(r => r.img && (r.img.startsWith('data:')||r.img.startsWith('http')||r.img.startsWith('firestore:')));
       const imgHtml = loopWithImg
         ? `<div style="width:56px;height:56px;border-radius:12px;overflow:hidden;flex-shrink:0;">${App._imgTag(loopWithImg.img,'width:56px;height:56px;object-fit:cover;')}</div>`
         : `<div style="width:56px;height:56px;border-radius:12px;background:var(--orL);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">📍</div>`;
 
-      return `<div onclick="App._luExplorarCity('${cityName.replace(/'/g,"\\'")}','${(data.prov||'').replace(/'/g,"\\'")}','${(data.dept||'').replace(/'/g,"\\'")}'"
-        style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--wh);border-radius:14px;border:0.5px solid var(--bd);cursor:pointer;transition:box-shadow .15s;margin-bottom:8px;"
+      // Onclick: 1 loop → mapa directo; >1 → desplegar lista inline
+      const totalLoops = data.loops.length;
+      const onClickCity = totalLoops === 1
+        ? `App.selectRoute('${data.loops[0].id.replace(/'/g,"\\'")}');App.go('explore')`
+        : `App._luToggleCityLoops('${cardId}','${safeCity}','${safeProv}','${safeDept}')`;
+
+      // Sub-lista de loops (oculta por defecto, se expande al tocar si hay >1)
+      const TC = { running:'#EF4444',mtb:'#16A34A',ciclismo:'#2563EB',caminata:'#D97706',perro:'#DB2777',paseo:'#0891B2',pesca:'#0E7490',atardecer:'#7C3AED',gastro:'#B45309',trad:'#92400E',relax:'#6B7280' };
+      const TYPE_LBL  = {trad:'☕',pesca:'🎣',gastro:'🍽️',atardecer:'🌅',running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',relax:'🧘',trabajo:'💼',vacaciones:'🏖️',salidas:'🎉',otra:'🗺️'};
+      const loopsSublist = totalLoops > 1 ? `
+        <div id="${cardId}-loops" style="display:none;border-top:0.5px solid var(--bd);padding:8px 12px 10px;display:none;flex-direction:column;gap:6px;">
+          ${data.loops.map(r => {
+            const color = TC[r.type]||r.color||'#FF5F00';
+            const icon = TYPE_LBL[r.type]||'🔄';
+            return `<div onclick="event.stopPropagation();App.selectRoute('${r.id.replace(/'/g,"\\'")}');App.go('explore')"
+              style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg2);border-radius:10px;cursor:pointer;border:0.5px solid var(--bd);"
+              onmousedown="this.style.opacity='.7'" onmouseup="this.style.opacity='1'" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'">
+              <div style="width:32px;height:32px;border-radius:8px;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${r.emoji||icon}</div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name||'Loop'}</div>
+                <div style="font-size:10px;color:var(--gr);">${r.dist||''} ${r.dur?'· '+r.dur:''}</div>
+              </div>
+              <div style="font-size:11px;font-weight:700;color:${color};background:${color}18;padding:3px 8px;border-radius:8px;flex-shrink:0;">🗺️ Mapa</div>
+            </div>`;
+          }).join('')}
+        </div>` : '';
+
+      const chevronId = cardId + '-chevron';
+      return `<div id="${cardId}" style="background:var(--wh);border-radius:14px;border:0.5px solid var(--bd);cursor:pointer;transition:box-shadow .15s;margin-bottom:8px;overflow:hidden;"
         onmouseover="this.style.boxShadow='var(--shL)'" onmouseout="this.style.boxShadow='none'">
-        ${imgHtml}
-        <div style="flex:1;min-width:0;">
-          <div style="font-family:var(--fH);font-size:15px;font-weight:800;color:var(--dk);">${cityName}</div>
-          <div style="font-size:11px;color:var(--gr);margin-top:2px;">${dept}</div>
-          <div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;">
-            ${loopCount ? `<span style="font-size:11px;font-weight:600;color:var(--or);background:var(--orL);padding:2px 8px;border-radius:10px;">🔄 ${loopCount} loop${loopCount!==1?'s':''}</span>` : ''}
-            ${fotoCount ? `<span style="font-size:11px;font-weight:600;color:#7B2F9E;background:#F3E8FF;padding:2px 8px;border-radius:10px;">📸 ${fotoCount} foto${fotoCount!==1?'s':''}</span>` : ''}
+        <div onclick="${onClickCity}" style="display:flex;align-items:center;gap:12px;padding:12px;">
+          ${imgHtml}
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:var(--fH);font-size:15px;font-weight:800;color:var(--dk);">${cityName}</div>
+            <div style="font-size:11px;color:var(--gr);margin-top:2px;">${dept}</div>
+            <div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;">
+              ${loopCount ? `<span style="font-size:11px;font-weight:600;color:var(--or);background:var(--orL);padding:2px 8px;border-radius:10px;">🔄 ${loopCount} loop${loopCount!==1?'s':''}</span>` : ''}
+              ${fotoCount ? `<span style="font-size:11px;font-weight:600;color:#7B2F9E;background:#F3E8FF;padding:2px 8px;border-radius:10px;">📸 ${fotoCount} foto${fotoCount!==1?'s':''}</span>` : ''}
+            </div>
           </div>
+          ${distLabel ? `<div style="font-size:12px;font-weight:700;color:var(--or);background:var(--orL);padding:5px 10px;border-radius:20px;flex-shrink:0;">${distLabel}</div>` : ''}
+          <svg id="${chevronId}" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2" style="flex-shrink:0;transition:transform .2s;"><path d="${totalLoops > 1 ? 'M6 9l6 6 6-6' : 'M9 18l6-6-6-6'}"/></svg>
         </div>
-        ${distLabel ? `<div style="font-size:12px;font-weight:700;color:var(--or);background:var(--orL);padding:5px 10px;border-radius:20px;flex-shrink:0;">${distLabel}</div>` : ''}
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        ${loopsSublist}
       </div>`;
     };
 
@@ -6333,6 +6362,16 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     }).join('');
   },
 
+  // Tocar ciudad con >1 loop en Otras Ciudades: despliega/colapsa lista inline
+  _luToggleCityLoops(cardId, city, prov, dept) {
+    const sublist = document.getElementById(cardId + '-loops');
+    const chevron = document.getElementById(cardId + '-chevron');
+    if (!sublist) return;
+    const isOpen = sublist.style.display === 'flex';
+    sublist.style.display = isOpen ? 'none' : 'flex';
+    if (chevron) chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  },
+
   // Al tocar una ciudad en Explorar → filtrar loops de esa ciudad
   _luExplorarCity(city, prov, dept) {
     // Cambiar temporalmente la ciudad activa y mostrar sus loops
@@ -6377,6 +6416,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
   _renderLuFoto() {
     const city  = this._luCity || 'La Paz';
+    const prov  = this._luProv || 'Entre Ríos';
     const list  = document.getElementById('lu-list');
     const body  = document.getElementById('lu-body');
     if (!list) return;
@@ -6384,56 +6424,91 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
     const FL_CATS = {lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
 
-    const normCity = c => (c||'')
-      .replace(/ciudad aut[oó]noma de /i,'')
-      .replace(/partido de /i,'')
-      .trim().toLowerCase();
-
+    const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
     const uCityLu = normCity(city);
-    const uProvLu = normCity(this._luProv || '');
-    const posts = (this._fotoPosts||[]).filter(p => {
+    const uProvLu = normCity(prov);
+
+    const localPosts    = [];
+    const deptPosts     = {};
+    const otherProvPosts = {};
+
+    (this._fotoPosts || []).forEach(p => {
       const pCity = normCity(p.cityId || p.ciudad || '');
       const pProv = normCity(p.provincia || '');
-      const cityMatch = pCity === uCityLu ||
+      const pDept = p.departamento || '';
+
+      const isMyCity = pCity && (pCity === uCityLu ||
         (pCity.length > 3 && uCityLu.includes(pCity)) ||
-        (uCityLu.length > 3 && pCity.includes(uCityLu));
-      const provMatch = uProvLu && pProv && pProv === uProvLu &&
-        this._isNearCity(p.cityId || p.ciudad || city, 15);
-      return cityMatch || provMatch;
+        (uCityLu.length > 3 && pCity.includes(uCityLu)));
+
+      if (isMyCity || !pCity) {
+        localPosts.push(p);
+      } else if (uProvLu && pProv && (pProv === uProvLu || pProv.includes(uProvLu) || uProvLu.includes(pProv))) {
+        const key = pDept || p.ciudad || p.cityId || 'Otras ciudades';
+        if (!deptPosts[key]) deptPosts[key] = [];
+        deptPosts[key].push(p);
+      } else {
+        const key = p.provincia || p.cityId || p.ciudad || 'Otras provincias';
+        if (!otherProvPosts[key]) otherProvPosts[key] = [];
+        otherProvPosts[key].push(p);
+      }
     });
 
-    if (posts.length === 0) {
+    const totalAll = (this._fotoPosts || []).length;
+
+    if (totalAll === 0) {
       list.innerHTML = `<div style="text-align:center;padding:48px 20px;">
         <div style="font-size:40px;margin-bottom:12px;">📸</div>
-        <div style="font-family:var(--fH);font-size:15px;font-weight:700;color:var(--dk);margin-bottom:6px;">Sin Foto Loops en ${city}</div>
-        <p style="font-size:12px;color:var(--gr);margin-bottom:16px;">¡Subí el primero de tu ciudad!</p>
+        <div style="font-family:var(--fH);font-size:15px;font-weight:700;color:var(--dk);margin-bottom:6px;">Sin Foto Loops aún</div>
+        <p style="font-size:12px;color:var(--gr);margin-bottom:16px;">¡Subí el primero!</p>
         <button onclick="App.openFotoLoop()" style="background:var(--or);border:none;border-radius:10px;padding:11px 24px;color:white;font-size:13px;font-weight:700;cursor:pointer;">📸 Agregar Foto Loop</button>
       </div>`;
       return;
     }
 
-    list.innerHTML = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px;">
+    const renderGrid = posts => `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:8px 14px 12px;">
       ${posts.map(p => `
-      <div onclick="App._openImgViewer('${p.id}','foto')"
-        style="border-radius:13px;overflow:hidden;background:var(--wh);border:0.5px solid var(--bd);cursor:pointer;transition:transform .12s;box-shadow:var(--sh);"
-        onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''"
-        ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
-        ${p.img && (p.img.startsWith('data:') || p.img.startsWith('http') || p.img.startsWith('firestore:'))
-          ? `<div style="aspect-ratio:4/3;overflow:hidden;position:relative;">
-               ${App._imgTag(p.img,"width:100%;height:100%;object-fit:cover;display:block;").replace('loading="lazy"','')} <img style="display:none"
-                 onerror="this.parentElement.innerHTML='<div style=\'width:100%;height:100%;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;\'>${FL_CATS[p.cat]||'📍'}</div>'">
-             </div>`
-          : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;">${FL_CATS[p.cat]||'📍'}</div>`
-        }
-        <div style="padding:8px 10px 10px;">
-          <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name||'Foto Loop'}</div>
-          <div style="font-size:10px;color:var(--or);font-weight:600;margin-top:2px;">${FL_CATS[p.cat]||'📍'} ${p.cat||'lugar'}</div>
-          ${p.desc ? `<div style="font-size:10px;color:var(--gr);margin-top:2px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">${p.desc}</div>` : ''}
-          ${p.authorName ? `<div style="font-size:10px;color:var(--gr);margin-top:3px;">por ${p.authorName.split(' ')[0]}</div>` : ''}
-        </div>
-      </div>`).join('')}
+        <div onclick="App._openImgViewer('${p.id}','foto')"
+          style="border-radius:13px;overflow:hidden;background:var(--wh);border:0.5px solid var(--bd);cursor:pointer;transition:transform .12s;box-shadow:var(--sh);"
+          onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''"
+          ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
+          ${p.img && (p.img.startsWith('data:') || p.img.startsWith('http') || p.img.startsWith('firestore:'))
+            ? `<div style="aspect-ratio:4/3;overflow:hidden;">${App._imgTag(p.img,'width:100%;height:100%;object-fit:cover;display:block;')}</div>`
+            : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;">${FL_CATS[p.cat]||'📍'}</div>`
+          }
+          <div style="padding:8px 10px 10px;">
+            <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name||'Foto Loop'}</div>
+            <div style="font-size:10px;color:var(--or);font-weight:600;margin-top:2px;">${FL_CATS[p.cat]||'📍'} ${p.cat||'lugar'}</div>
+            ${p.authorName ? `<div style="font-size:10px;color:var(--gr);margin-top:3px;">por ${p.authorName.split(' ')[0]}</div>` : ''}
+          </div>
+        </div>`).join('')}
     </div>`;
-    // Cargar imágenes firestore: lazy
+
+    const renderSection = (icon, label, count) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:14px 14px 6px;">
+        <div style="flex:1;height:1px;background:var(--bd);"></div>
+        <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;white-space:nowrap;">${icon} ${label.toUpperCase()} · ${count}</div>
+        <div style="flex:1;height:1px;background:var(--bd);"></div>
+      </div>`;
+
+    let html = '';
+
+    if (localPosts.length) {
+      html += renderSection('📍', city, localPosts.length);
+      html += renderGrid(localPosts);
+    }
+
+    Object.entries(deptPosts).forEach(([key, posts]) => {
+      html += renderSection('🏘️', key, posts.length);
+      html += renderGrid(posts);
+    });
+
+    Object.entries(otherProvPosts).forEach(([key, posts]) => {
+      html += renderSection('🌍', key, posts.length);
+      html += renderGrid(posts);
+    });
+
+    list.innerHTML = html || `<div style="text-align:center;padding:48px 20px;color:var(--gr);font-size:13px;">Sin Foto Loops disponibles</div>`;
     setTimeout(() => this._lazyLoadFsImgs(document.getElementById('loops-urbanos')), 50);
   },
 
