@@ -2599,6 +2599,44 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
 <!-- ════════════ BOTTOM NAV ════════════ -->
 
+<!-- ════════════ ONBOARDING ════════════ -->
+<div id="onboarding-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:var(--wh);border-radius:24px;width:100%;max-width:360px;padding:28px 24px 24px;box-shadow:var(--shL);position:relative;">
+    <!-- Dots indicadores -->
+    <div style="display:flex;justify-content:center;gap:7px;margin-bottom:20px;" id="onb-dots">
+      <div class="onb-dot on" style="width:22px;height:7px;border-radius:4px;background:var(--or);transition:all .3s;"></div>
+      <div class="onb-dot" style="width:7px;height:7px;border-radius:4px;background:var(--bd);transition:all .3s;"></div>
+      <div class="onb-dot" style="width:7px;height:7px;border-radius:4px;background:var(--bd);transition:all .3s;"></div>
+    </div>
+    <!-- Contenido de cada paso -->
+    <div id="onb-steps">
+      <!-- Paso 1 -->
+      <div class="onb-step" data-step="0" style="text-align:center;">
+        <div style="font-size:54px;margin-bottom:12px;">🗺️</div>
+        <div style="font-family:var(--fH);font-size:19px;font-weight:800;color:var(--dk);margin-bottom:8px;">Explorá Loops</div>
+        <div style="font-size:14px;color:var(--gr);line-height:1.5;">Descubrí recorridos de running, ciclismo y caminatas en tu ciudad. Filtrá por tipo, distancia y más.</div>
+      </div>
+      <!-- Paso 2 -->
+      <div class="onb-step" data-step="1" style="display:none;text-align:center;">
+        <div style="font-size:54px;margin-bottom:12px;">⏺️</div>
+        <div style="font-family:var(--fH);font-size:19px;font-weight:800;color:var(--dk);margin-bottom:8px;">Grabá el tuyo</div>
+        <div style="font-size:14px;color:var(--gr);line-height:1.5;">Tocá el botón naranja <span style="background:var(--or);color:white;border-radius:6px;padding:1px 6px;font-weight:700;">+</span> para grabar un loop en tiempo real o crearlo manualmente.</div>
+      </div>
+      <!-- Paso 3 -->
+      <div class="onb-step" data-step="2" style="display:none;text-align:center;">
+        <div style="font-size:54px;margin-bottom:12px;">🌐</div>
+        <div style="font-family:var(--fH);font-size:19px;font-weight:800;color:var(--dk);margin-bottom:8px;">Compartilo</div>
+        <div style="font-size:14px;color:var(--gr);line-height:1.5;">Publicá tu loop para que toda la comunidad pueda recorrerlo. También podés subir Foto Loops de lugares copados.</div>
+      </div>
+    </div>
+    <!-- Botones nav -->
+    <div style="display:flex;gap:10px;margin-top:24px;align-items:center;">
+      <button id="onb-skip" onclick="App._onbClose()" style="flex:1;padding:12px;border-radius:12px;border:1.5px solid var(--bd);background:none;font-size:13px;font-weight:600;color:var(--gr);cursor:pointer;">Saltar</button>
+      <button id="onb-next" onclick="App._onbNext()" style="flex:2;padding:12px;border-radius:12px;border:none;background:var(--or);color:white;font-size:14px;font-weight:700;cursor:pointer;">Siguiente →</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════ FAB +Loop ════════════ -->
 <div id="fab-loop" onclick="App.openLoopModal()"
   style="position:fixed;bottom:28px;right:20px;z-index:50;
@@ -2759,12 +2797,43 @@ const App = {
       const isMobile = window.innerWidth <= 768;
       this._sbApply(isMobile ? 0 : 1);
       this._checkAdBlock();
+      setTimeout(() => this._onbShow(), 600);
     }, 520);
   },
 
   async _checkAdBlock() {
     // No hacemos ping a Firestore — genera 403 en file:// y ruido en consola.
     // La detección real ocurre en _saveData cuando el write falla con timeout.
+  },
+
+  // ── ONBOARDING ──
+  _onbStep: 0,
+  _onbShow() {
+    const seen = localStorage.getItem('ul360_onb_seen');
+    if (seen) return;
+    const ov = document.getElementById('onboarding-overlay');
+    if (ov) { ov.style.display = 'flex'; this._onbStep = 0; this._onbRender(); }
+  },
+  _onbRender() {
+    document.querySelectorAll('.onb-step').forEach(el => {
+      el.style.display = +el.dataset.step === this._onbStep ? 'block' : 'none';
+    });
+    const dots = document.querySelectorAll('.onb-dot');
+    dots.forEach((d, i) => {
+      d.style.width = i === this._onbStep ? '22px' : '7px';
+      d.style.background = i === this._onbStep ? 'var(--or)' : 'var(--bd)';
+    });
+    const btn = document.getElementById('onb-next');
+    if (btn) btn.textContent = this._onbStep === 2 ? '¡Empezar! 🚀' : 'Siguiente →';
+  },
+  _onbNext() {
+    if (this._onbStep < 2) { this._onbStep++; this._onbRender(); }
+    else this._onbClose();
+  },
+  _onbClose() {
+    localStorage.setItem('ul360_onb_seen', '1');
+    const ov = document.getElementById('onboarding-overlay');
+    if (ov) ov.style.display = 'none';
   },
 
   // ── FIREBASE ──
@@ -3423,7 +3492,7 @@ const App = {
 
     const navScreens = ['explore','loops','loops-urbanos','saved','profile','comunidad','eventos','ranking','grabar','detail','admin','explorar-ciudades','ciudad-remota','crear-manual'];
     const fab = document.getElementById('fab-loop');
-    const showFab = ['explore','loops','loops-urbanos','comunidad','ranking','profile'].includes(sid);
+    const showFab = ['explore','loops','loops-urbanos','comunidad','ranking','profile','eventos','saved'].includes(sid);
     if (fab) fab.style.display = showFab ? 'flex' : 'none';
     const bnav = document.getElementById('bnav');
     if (bnav) bnav.style.display = 'none'; // siempre oculto, usamos menú
@@ -7344,6 +7413,12 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name||'Foto Loop'}</div>
           <div style="font-size:11px;color:var(--or);font-weight:600;margin-top:2px;">${FL_CATS[p.cat]||'📍'} ${p.cat||'lugar'}</div>
           ${p.authorName ? `<div style="font-size:10px;color:var(--gr);margin-top:3px;">por ${p.authorName.split(' ')[0]}</div>` : ''}
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
+            <button onclick="event.stopPropagation();App.likeFotoLoop('${p.id}');App._renderComunidad()"
+              style="background:none;border:none;padding:0;cursor:pointer;font-size:13px;color:${(this.likes||[]).includes('fl_'+p.id)?'#FC8181':'var(--gr)'};display:flex;align-items:center;gap:3px;">
+              ${(this.likes||[]).includes('fl_'+p.id)?'❤️':'🤍'} <span style="font-size:10px;font-weight:600;">${p.likes||0}</span>
+            </button>
+          </div>
         </div>
       </div>`).join('')}
     </div>
@@ -8057,6 +8132,32 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     if (this.selId === id) this.showDetail(id);
     // Refrescar cards si el mapa está activo
     this._renderCards('', this._activeFilter || 'all');
+  },
+
+  likeFotoLoop(id) {
+    this.likes = this.likes || [];
+    const post = (this._fotoPosts || []).find(x => x.id === id);
+    if (!post) return;
+    const key = 'fl_' + id;
+    const i = this.likes.indexOf(key);
+    if (i > -1) {
+      this.likes.splice(i, 1);
+      post.likes = Math.max(0, (post.likes || 1) - 1);
+      this.toast('Like quitado');
+    } else {
+      this.likes.push(key);
+      post.likes = (post.likes || 0) + 1;
+      this._addPts(1, 'Like en FotoLoop');
+      this.toast('❤️ ¡Te gustó!');
+    }
+    // Persistir en Firestore
+    if (this._db) {
+      this._db.collection('fotoloops').doc(id)
+        .update({ likes: post.likes })
+        .catch(() => {});
+    }
+    this._savePts();
+    localStorage.setItem('ul360_likes', JSON.stringify(this.likes));
   },
 
   // ══════════════════════════════════════════
