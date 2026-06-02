@@ -3520,6 +3520,14 @@ const App = {
       const acc = Math.min(pos.coords.accuracy, 300);
       const gpsHeading = pos.coords.heading; // null si está quieto
 
+      // ── Filtro de precisión: ignorar si la señal GPS es muy mala ──
+      // En navegación activa ser más estricto (20m), en reposo más permisivo (80m)
+      const accThreshold = (this._navLine && this._navLine.length) ? 20 : 80;
+      if (acc > accThreshold && this._lastLat !== null) {
+        console.log(`[GPS] Punto ignorado: precisión ${acc.toFixed(0)}m > umbral ${accThreshold}m`);
+        return;
+      }
+
       // ── Filtro de ruido: ignorar si se movió menos de MIN_MOVE_METERS ──
       if (this._lastLat !== null) {
         const d = distMeters(this._lastLat, this._lastLng, lat, lng);
@@ -3697,7 +3705,7 @@ const App = {
     this._gpsWatcher = navigator.geolocation.watchPosition(onPos, onErr, {
       enableHighAccuracy: true,
       timeout: 15000,
-      maximumAge: 2000
+      maximumAge: 3000  // aceptar posición de hasta 3s de antigüedad (evita fallos en pantalla suspendida)
     });
   },
 
@@ -7888,15 +7896,67 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       const s=(this.grabSecs%60).toString().padStart(2,'0');
       const el=document.getElementById('grab-time'); if(el) el.textContent=m+':'+s;
     },1000);
+
+    // Wake Lock — mantener pantalla activa durante la grabación
+    this._acquireWakeLock();
+
     if(navigator.geolocation) {
       this.grabWatcher = navigator.geolocation.watchPosition(
-        pos=>this._grabAddGPSPt(pos.coords.latitude,pos.coords.longitude),
-        ()=>this._grabSimulate(),
-        {enableHighAccuracy:true,timeout:3000,maximumAge:0}
+        pos => {
+          const acc = pos.coords.accuracy;
+          // Ignorar puntos con precisión peor a 30m (deriva GPS cuando está quieto)
+          if (acc > 30) {
+            console.log(`[GPS] Punto ignorado: precisión ${acc.toFixed(0)}m`);
+            return;
+          }
+          this._grabAddGPSPt(pos.coords.latitude, pos.coords.longitude, acc);
+        },
+        err => {
+          // Solo simular si es error de hardware, no si es timeout (puede recuperarse)
+          if (err.code === 2) this._grabSimulate();
+          console.warn('[GPS grab]', err.message);
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 3000 }
       );
     } else { this._grabSimulate(); }
     this._updateGrabUI();
     this.toast('🔴 Grabando tu loop...');
+  },
+
+  // Wake Lock API — evita que la pantalla se apague durante la grabación
+  async _acquireWakeLock() {
+    if (!('wakeLock' in navigator)) {
+      console.log('[WakeLock] No disponible en este navegador');
+      return;
+    }
+    try {
+      this._wakeLock = await navigator.wakeLock.request('screen');
+      console.log('[WakeLock] ✓ Pantalla bloqueada activa');
+      // Re-adquirir si la página vuelve al foco (ej: al desbloquear el teléfono)
+      this._wakeLockHandler = async () => {
+        if (this._wakeLock?.released && this.grabState === 'recording') {
+          try {
+            this._wakeLock = await navigator.wakeLock.request('screen');
+            console.log('[WakeLock] ✓ Re-adquirido');
+          } catch(e) { console.warn('[WakeLock] Re-adquirir falló:', e.message); }
+        }
+      };
+      document.addEventListener('visibilitychange', this._wakeLockHandler);
+    } catch(e) {
+      console.warn('[WakeLock] No se pudo adquirir:', e.message);
+    }
+  },
+
+  // Liberar Wake Lock al detener grabación
+  _releaseWakeLock() {
+    if (this._wakeLock && !this._wakeLock.released) {
+      this._wakeLock.release().catch(e => console.warn('[WakeLock] release:', e));
+      this._wakeLock = null;
+    }
+    if (this._wakeLockHandler) {
+      document.removeEventListener('visibilitychange', this._wakeLockHandler);
+      this._wakeLockHandler = null;
+    }
   },
   _grabSimulate() {
     if(this._grabSim) return;
@@ -7909,8 +7969,19 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       this._grabAddGPSPt(lat,lng);
     },1500);
   },
-  _grabAddGPSPt(lat,lng) {
+  _grabAddGPSPt(lat, lng, acc) {
     if(this.grabState!=='recording') return;
+
+    // Filtro de distancia mínima: ignorar puntos a menos de 3m del último
+    // evita acumulación de ruido GPS cuando el usuario está quieto
+    if(this.grabPts.length > 0) {
+      const prev = this.grabPts[this.grabPts.length-1];
+      const dlat = (lat - prev[0]) * Math.PI / 180;
+      const dlng = (lng - prev[1]) * Math.PI / 180;
+      const a = Math.sin(dlat/2)**2 + Math.cos(prev[0]*Math.PI/180)*Math.cos(lat*Math.PI/180)*Math.sin(dlng/2)**2;
+      const dist = 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      if (dist < 3) return; // menos de 3 metros → ignorar
+    }
     // Calcular bearing desde el punto anterior para 3D
     if(this.grabPts.length > 0) {
       const prev = this.grabPts[this.grabPts.length-1];
@@ -7953,6 +8024,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     this.grabState='paused';
     clearInterval(this.grabTimer);
     if(this._grabSim){clearInterval(this._grabSim);this._grabSim=null;}
+    this._releaseWakeLock(); // liberar pantalla al pausar
     this._updateGrabUI();
     this.toast('⏸ Loop pausado');
   },
@@ -7961,11 +8033,10 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     clearInterval(this.grabTimer);
     if(this._grabSim){clearInterval(this._grabSim);this._grabSim=null;}
     if(this.grabWatcher){ navigator.geolocation.clearWatch(this.grabWatcher); this.grabWatcher=null; }
+    this._releaseWakeLock(); // liberar pantalla al detener
     if(this.grabPts.length < 2){ this.toast('⚠️ Recorrido muy corto'); this.grabState='idle'; this._updateGrabUI(); return; }
-    // Pausar estado visual mientras se edita
     this.grabState='done';
     this._updateGrabUI();
-    // Mostrar modal de confirmación
     this._showGrabSaveModal();
   },
 
