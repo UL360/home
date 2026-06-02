@@ -1939,7 +1939,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <div>
       <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">TRAZADO DEL RECORRIDO</label>
       <div style="border-radius:14px;overflow:hidden;border:1.5px solid var(--bd);position:relative;">
-        <div id="cm-map" style="width:100%;height:300px;"></div>
+        <div id="cm-map" style="width:100%;height:320px;min-height:320px;display:block;"></div>
         <!-- Info overlay -->
         <div style="position:absolute;top:10px;left:10px;right:10px;pointer-events:none;">
           <div id="cm-map-hint" style="background:rgba(0,0,0,.6);color:white;font-size:11px;font-weight:600;padding:6px 10px;border-radius:8px;text-align:center;backdrop-filter:blur(4px);">
@@ -1950,14 +1950,19 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
         <div id="cm-pts-badge" style="position:absolute;bottom:10px;left:10px;background:var(--or);color:white;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;">
           0 puntos
         </div>
-        <!-- Botón limpiar -->
+        <!-- Botón limpiar todo -->
         <button onclick="App._cmClearPts()" style="position:absolute;bottom:10px;right:10px;background:rgba(0,0,0,.6);color:white;border:none;border-radius:8px;padding:5px 10px;font-size:11px;cursor:pointer;backdrop-filter:blur(4px);">
-          🗑 Limpiar
+          🗑 Limpiar todo
         </button>
       </div>
       <div id="cm-city-hint" style="font-size:11px;color:var(--or);margin-top:5px;display:flex;align-items:center;gap:5px;">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         <span id="cm-city-detected">Tocá el mapa para detectar la ciudad</span>
+      </div>
+      <!-- Lista de puntos con coordenadas y botón eliminar -->
+      <div id="cm-pts-list" style="margin-top:10px;display:none;">
+        <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:6px;">PUNTOS DEL RECORRIDO</div>
+        <div id="cm-pts-items" style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto;border:1px solid var(--bd);border-radius:10px;padding:6px;background:var(--bg2);"></div>
       </div>
     </div>
 
@@ -3441,7 +3446,7 @@ const App = {
     if (sid==='ranking')         { this._renderRanking(); }
     if (sid==='explorar-ciudades') { this._renderExplorar(); }
     if (sid==='grabar')          { setTimeout(()=>this._initGrabMap(),100); }
-    if (sid==='crear-manual')    { setTimeout(()=>this._cmInit(),100); }
+    if (sid==='crear-manual')    { setTimeout(()=>this._cmInit(),200); }
     if (sid==='profile')         { this._updateProfileUI(); }
 
     // Update active sidebar button
@@ -6314,8 +6319,11 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     }
 
     if (this._cmMap) {
-      this._cmMap.resize();
-      this._cmRedraw();
+      // Forzar resize con delay para asegurar que el contenedor es visible
+      setTimeout(() => {
+        this._cmMap.resize();
+        this._cmRedraw();
+      }, 150);
       return;
     }
     const isDark = !document.body.classList.contains('day');
@@ -6329,25 +6337,34 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       dragRotate: false
     });
     this._cmMap.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-left');
+    this._cmMap.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
     this._cmMap.on('load', () => {
+      // Forzar resize después del load por si el contenedor tenía tamaño 0
+      this._cmMap.resize();
       // Fuente y capa para el trazado
       this._cmMap.addSource('cm-route', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
       this._cmMap.addLayer({ id:'cm-line', type:'line', source:'cm-route',
         paint:{ 'line-color':'#FF5F00', 'line-width':4, 'line-opacity':0.85 } });
       this._cmMap.addLayer({ id:'cm-dots', type:'circle', source:'cm-route',
         filter:['==','$type','Point'],
-        paint:{ 'circle-radius':5, 'circle-color':'#FF5F00', 'circle-stroke-width':2, 'circle-stroke-color':'white' } });
+        paint:{ 'circle-radius':7, 'circle-color':'#FF5F00', 'circle-stroke-width':2, 'circle-stroke-color':'white' } });
       // Centrar en GPS si disponible
       if (this._lastLat) {
-        this._cmMap.flyTo({ center:[this._lastLng, this._lastLat], zoom:14 });
+        this._cmMap.flyTo({ center:[this._lastLng, this._lastLat], zoom:15 });
       } else if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(p => {
-          this._cmMap.flyTo({ center:[p.coords.longitude, p.coords.latitude], zoom:14 });
+          this._cmMap.flyTo({ center:[p.coords.longitude, p.coords.latitude], zoom:15 });
         });
       }
     });
     // Click para agregar punto
     this._cmMap.on('click', e => this._cmAddPt(e.lngLat.lat, e.lngLat.lng));
+    // ResizeObserver: si el contenedor cambia de tamaño (ej: pantalla se muestra) forzar resize
+    if (window.ResizeObserver) {
+      this._cmResizeObs = new ResizeObserver(() => this._cmMap && this._cmMap.resize());
+      const el = document.getElementById('cm-map');
+      if (el) this._cmResizeObs.observe(el);
+    }
   },
 
   _cmAddPt(lat, lng) {
@@ -6384,6 +6401,52 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   _cmUpdateBadge() {
     const b = document.getElementById('cm-pts-badge');
     if (b) b.textContent = `${this._cmPts.length} punto${this._cmPts.length!==1?'s':''}`;
+
+    // Mostrar/ocultar lista de puntos
+    const listEl = document.getElementById('cm-pts-list');
+    const itemsEl = document.getElementById('cm-pts-items');
+    if (!listEl || !itemsEl) return;
+
+    if (this._cmPts.length === 0) {
+      listEl.style.display = 'none';
+      return;
+    }
+
+    listEl.style.display = 'block';
+    itemsEl.innerHTML = this._cmPts.map((p, i) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:5px 6px;border-radius:7px;background:var(--bg0);">
+        <div style="width:22px;height:22px;border-radius:50%;background:var(--or);color:white;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${i+1}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:10px;font-family:monospace;color:var(--md);">
+            ${p[0].toFixed(6)}, ${p[1].toFixed(6)}
+          </div>
+          ${i===0 ? '<div style="font-size:9px;color:var(--or);font-weight:600;">INICIO</div>' : ''}
+          ${i===this._cmPts.length-1 && i>0 ? '<div style="font-size:9px;color:#10B981;font-weight:600;">FIN</div>' : ''}
+        </div>
+        <button onclick="App._cmRemovePt(${i})" style="width:26px;height:26px;border-radius:7px;background:#FEE2E2;border:none;color:#DC2626;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">×</button>
+      </div>
+    `).join('');
+  },
+
+  // Eliminar un punto específico por índice
+  _cmRemovePt(idx) {
+    if (idx < 0 || idx >= this._cmPts.length) return;
+    this._cmPts.splice(idx, 1);
+    // Si se eliminó el primer punto, resetear la ciudad detectada
+    if (idx === 0) {
+      this._cmLoc = null;
+      const hint = document.getElementById('cm-city-detected');
+      if (hint) hint.textContent = this._cmPts.length > 0 ? '📍 Detectando ciudad...' : 'Tocá el mapa para detectar la ciudad';
+      if (this._cmPts.length > 0) {
+        this._detectLocation(this._cmPts[0][0], this._cmPts[0][1]).then(loc => {
+          this._cmLoc = loc;
+          const h = document.getElementById('cm-city-detected');
+          if (h) h.textContent = `📍 ${loc.ciudad}, ${loc.provincia}`;
+        });
+      }
+    }
+    this._cmRedraw();
+    this._cmUpdateBadge();
   },
 
   _cmClearPts() {
