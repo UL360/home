@@ -1554,6 +1554,10 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
       </div>
 
+      <!-- Ver intro / onboarding -->
+      <button onclick="App._onbReset()" style="margin-top:12px;width:100%;padding:11px;border-radius:12px;border:1px solid var(--bd);background:var(--lt);font-size:12px;color:var(--gr);cursor:pointer;">
+        🎓 Ver introducción nuevamente
+      </button>
       <!-- Test Firebase -->
       <button onclick="App._testFirebase()" style="margin-top:12px;width:100%;padding:11px;border-radius:12px;border:1px solid var(--bd);background:var(--lt);font-size:12px;color:var(--gr);cursor:pointer;">
         🔧 Probar conexión Firebase
@@ -2871,11 +2875,23 @@ const App = {
 
   // ── ONBOARDING ──
   _onbStep: 0,
+  _onbActive: false,
   _onbShow() {
     const seen = localStorage.getItem('ul360_onb_seen');
     if (seen) return;
+    this._onbOpen();
+  },
+  _onbOpen() {
     const ov = document.getElementById('onboarding-overlay');
-    if (ov) { ov.style.display = 'flex'; this._onbStep = 0; this._onbRender(); }
+    if (!ov) return;
+    this._onbStep = 0;
+    this._onbActive = true;
+    ov.style.display = 'flex';
+    this._onbRender();
+  },
+  _onbReset() {
+    localStorage.removeItem('ul360_onb_seen');
+    this._onbOpen();
   },
   _onbRender() {
     document.querySelectorAll('.onb-step').forEach(el => {
@@ -2897,6 +2913,7 @@ const App = {
   },
   _onbClose() {
     localStorage.setItem('ul360_onb_seen', '1');
+    this._onbActive = false;
     const ov = document.getElementById('onboarding-overlay');
     if (ov) ov.style.display = 'none';
   },
@@ -9919,40 +9936,26 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
          </div>`
       : allCustom.map(r => {
           const isOwn = r.authorId === myUid;
-          const authorName = r.authorName ? r.authorName.split(' ')[0] : '';
-          const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
-          const color = r.color || '#FF5F00';
-          const imgHtml = hasImg
-            ? App._imgTag(r.img, 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;')
-            : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:42px;">${r.emoji||'🔄'}</div>`;
+          const authorLabel = r.authorName ? `por ${r.authorName}` : '';
           return `
-      <div style="border-radius:14px;border:0.5px solid ${isOwn?'var(--or)':'var(--bd)'};overflow:hidden;background:var(--lt);">
-        <!-- Imagen principal -->
-        <div style="width:100%;height:96px;position:relative;overflow:hidden;cursor:pointer;background:linear-gradient(135deg,${color}28,${color}55);"
-             onclick="App.closeLoopModal();App.selectRoute('${r.id}');App.go('explore');">
-          ${imgHtml}
-          <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 35%,rgba(0,0,0,.68));pointer-events:none;"></div>
-          <div style="position:absolute;bottom:0;left:0;right:0;padding:7px 10px;display:flex;align-items:flex-end;justify-content:space-between;gap:6px;">
-            <div style="min-width:0;flex:1;">
-              <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:white;text-shadow:0 1px 3px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                ${r.name||'Loop'}${isOwn?' <span style="font-size:9px;background:var(--or);color:white;border-radius:4px;padding:1px 4px;vertical-align:middle;margin-left:3px;">tuyo</span>':''}
-              </div>
-              <div style="font-size:10px;color:rgba(255,255,255,.82);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                ${r.emoji||''} ${r.dist||'—'} · ${r.dur||'—'} · ❤️${r.likes||0}${authorName?' · '+authorName:''}
-              </div>
-            </div>
-            ${isOwn ? `<div style="display:flex;gap:4px;flex-shrink:0;">
-              <button onclick="event.stopPropagation();App.editRoute('${r.id}');" title="Editar"
-                style="width:28px;height:28px;border-radius:7px;border:none;background:rgba(255,255,255,.22);cursor:pointer;display:flex;align-items:center;justify-content:center;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              </button>
-              <button onclick="event.stopPropagation();App.deleteRoute('${r.id}');" title="Eliminar"
-                style="width:28px;height:28px;border-radius:7px;border:none;background:rgba(239,68,68,.35);cursor:pointer;display:flex;align-items:center;justify-content:center;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-              </button>
-            </div>` : ''}
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--lt);border:0.5px solid ${isOwn?'var(--or)':'var(--bd)'};border-radius:12px;transition:all .2s;">
+        <div onclick="App.closeLoopModal();App.selectRoute('${r.id}');App.go('explore');"
+          style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer;min-width:0;">
+          <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,${r.color}22,${r.color}44);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${r.emoji}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}${isOwn?' <span style="font-size:10px;background:var(--or);color:white;border-radius:4px;padding:1px 5px;">tuyo</span>':''}</div>
+            <div style="font-size:11px;color:var(--gr);margin-top:1px;">${r.dist||'—'} · ${r.pois?r.pois.length:0} paradas${authorLabel?' · '+authorLabel:''}</div>
           </div>
         </div>
+        ${isOwn ? `
+        <button onclick="event.stopPropagation();App.editRoute('${r.id}');" title="Editar"
+          style="width:32px;height:32px;border-radius:8px;border:0.5px solid var(--bd);background:var(--lt);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button onclick="event.stopPropagation();App.deleteRoute('${r.id}');" title="Eliminar"
+          style="width:32px;height:32px;border-radius:8px;border:0.5px solid var(--bd);background:var(--lt);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>` : ''}
       </div>`;
         }).join('');
 
@@ -10004,7 +10007,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
             <span>🔒</span><span>Iniciá sesión para crear y guardar tus propios loops</span>
             <button onclick="App.closeLoopModal();App.go('profile');" style="margin-left:auto;background:#FF5F00;color:white;border:none;border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;">Ingresar</button>
           </div>` : ''}
-          <div style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;scrollbar-width:none;">
+          <div style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;scrollbar-width:none;">
             ${loopsHtml}
           </div>
         </div>
