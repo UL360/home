@@ -1554,6 +1554,10 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
       </div>
 
+      <!-- Ver intro / onboarding -->
+      <button onclick="App._onbReset()" style="margin-top:12px;width:100%;padding:11px;border-radius:12px;border:1px solid var(--bd);background:var(--lt);font-size:12px;color:var(--gr);cursor:pointer;">
+        🎓 Ver introducción nuevamente
+      </button>
       <!-- Test Firebase -->
       <button onclick="App._testFirebase()" style="margin-top:12px;width:100%;padding:11px;border-radius:12px;border:1px solid var(--bd);background:var(--lt);font-size:12px;color:var(--gr);cursor:pointer;">
         🔧 Probar conexión Firebase
@@ -2871,11 +2875,23 @@ const App = {
 
   // ── ONBOARDING ──
   _onbStep: 0,
+  _onbActive: false,
   _onbShow() {
     const seen = localStorage.getItem('ul360_onb_seen');
     if (seen) return;
+    this._onbOpen();
+  },
+  _onbOpen() {
     const ov = document.getElementById('onboarding-overlay');
-    if (ov) { ov.style.display = 'flex'; this._onbStep = 0; this._onbRender(); }
+    if (!ov) return;
+    this._onbStep = 0;
+    this._onbActive = true;
+    ov.style.display = 'flex';
+    this._onbRender();
+  },
+  _onbReset() {
+    localStorage.removeItem('ul360_onb_seen');
+    this._onbOpen();
   },
   _onbRender() {
     document.querySelectorAll('.onb-step').forEach(el => {
@@ -2897,6 +2913,7 @@ const App = {
   },
   _onbClose() {
     localStorage.setItem('ul360_onb_seen', '1');
+    this._onbActive = false;
     const ov = document.getElementById('onboarding-overlay');
     if (ov) ov.style.display = 'none';
   },
