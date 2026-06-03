@@ -2358,46 +2358,59 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
 <!-- ════════════ EXPLORAR CIUDADES ════════════ -->
 <div id="explorar-ciudades" class="screen" style="background:var(--bg0);">
+  <!-- Header -->
   <div style="padding:14px 16px 12px;background:var(--wh);border-bottom:1px solid var(--bd);flex-shrink:0;">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
       <button class="scr-back-btn" onclick="App.go('explore')" title="Volver al mapa">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
       </button>
-      <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);flex:1;">Explorar</h1>
+      <div style="flex:1;">
+        <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);line-height:1.1;">Explorando</h1>
+        <div style="font-size:11px;color:var(--gr);margin-top:1px;">Ciudades con loops activos en el mundo</div>
+      </div>
+      <div id="explorar-total-badge" style="background:var(--orL);border:1px solid var(--or);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--or);white-space:nowrap;"></div>
     </div>
+    <!-- Buscador -->
     <div style="display:flex;align-items:center;gap:8px;background:var(--lt);border-radius:10px;padding:9px 12px;border:1.5px solid var(--bd);">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input id="explorar-search" type="text" placeholder="Buscá una ciudad…"
+      <input id="explorar-search" type="text" placeholder="Buscá ciudad, provincia o país…"
         style="border:none;outline:none;font-family:var(--fB);font-size:14px;color:var(--dk);background:transparent;flex:1;"
         oninput="App._filterExplorar(this.value)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2" style="cursor:pointer;" onclick="document.getElementById('explorar-search').value='';App._filterExplorar('')"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </div>
+    <!-- Filtros provincia -->
+    <div id="explorar-prov-chips" style="display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none;"></div>
   </div>
-  <div style="flex:1;overflow-y:auto;padding:12px 14px;">
 
-    <!-- Destinos populares -->
-    <div id="explorar-popular-section">
-      <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">DESTINOS POPULARES</p>
-      <div id="explorar-popular-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px;"></div>
-    </div>
+  <!-- Contenido -->
+  <div style="flex:1;overflow-y:auto;padding:14px;">
 
-    <!-- Guardados -->
-    <div id="explorar-saved-section" style="display:none;">
-      <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">DESTINOS GUARDADOS</p>
-      <div id="explorar-saved-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px;"></div>
+    <!-- Feed novedades (vista por defecto) -->
+    <div id="explorar-feed-section">
+      <!-- Ciudades con más loops -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;">🌍 CIUDADES ACTIVAS</p>
+        <span id="explorar-ciudad-count" style="font-size:11px;color:var(--gr);"></span>
+      </div>
+      <div id="explorar-ciudades-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
+
+      <!-- Feed novedades: últimos loops sumados -->
+      <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:10px;">🆕 ÚLTIMOS EN SUMARSE</p>
+      <div id="explorar-novedades-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
     </div>
 
     <!-- Resultados de búsqueda -->
     <div id="explorar-results-section" style="display:none;">
       <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">RESULTADOS</p>
-      <div id="explorar-results-list" style="display:flex;flex-direction:column;gap:7px;margin-bottom:18px;"></div>
+      <div id="explorar-results-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;"></div>
     </div>
 
-    <!-- Provincias -->
-    <div id="explorar-prov-section">
-      <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">OTRAS PROVINCIAS</p>
-      <div style="display:flex;flex-wrap:wrap;gap:7px;" id="explorar-prov-chips"></div>
+    <!-- Guardados -->
+    <div id="explorar-saved-section" style="display:none;">
+      <p style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">⭐ DESTINOS GUARDADOS</p>
+      <div id="explorar-saved-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px;"></div>
     </div>
+
   </div>
 </div>
 
@@ -8343,81 +8356,236 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   },
 
   // ══════════════════════════════════════════
-  // EXPLORAR CIUDADES
+  // EXPLORAR CIUDADES — datos reales desde loops
   // ══════════════════════════════════════════
-  _CIUDADES: [
-    { name:'La Paz',        prov:'Entre Ríos', loops:3,  miembros:412,  rating:4.7, color:'#E1F5EE', iconColor:'#0F6E56', dist:0    },
-    { name:'Gualeguaychú',  prov:'Entre Ríos', loops:5,  miembros:842,  rating:4.8, color:'#EEEDFE', iconColor:'#534AB7', dist:180  },
-    { name:'Paraná',        prov:'Entre Ríos', loops:8,  miembros:2300, rating:4.9, color:'#E1F5EE', iconColor:'#0F6E56', dist:210  },
-    { name:'Colón',         prov:'Entre Ríos', loops:6,  miembros:1100, rating:4.8, color:'#FFF4E2', iconColor:'#BA7517', dist:280  },
-    { name:'Concordia',     prov:'Entre Ríos', loops:4,  miembros:730,  rating:4.6, color:'#EEEDFE', iconColor:'#534AB7', dist:320  },
-    { name:'Rosario',       prov:'Santa Fe',   loops:12, miembros:4800, rating:4.9, color:'#E1F5EE', iconColor:'#0F6E56', dist:390  },
-    { name:'Corrientes',    prov:'Corrientes', loops:7,  miembros:1600, rating:4.7, color:'#FFF4E2', iconColor:'#BA7517', dist:530  },
-    { name:'Buenos Aires',  prov:'CABA',       loops:24, miembros:18000,rating:4.8, color:'#EEEDFE', iconColor:'#534AB7', dist:720  },
-    { name:'Mar del Plata', prov:'Bs. Aires',  loops:9,  miembros:3200, rating:4.7, color:'#E1F5EE', iconColor:'#0F6E56', dist:960  },
-    { name:'Mendoza',       prov:'Mendoza',    loops:11, miembros:4100, rating:4.8, color:'#FFF4E2', iconColor:'#BA7517', dist:1100 },
-    { name:'Córdoba',       prov:'Córdoba',    loops:15, miembros:7200, rating:4.9, color:'#EEEDFE', iconColor:'#534AB7', dist:660  },
-    { name:'Misiones',      prov:'Misiones',   loops:6,  miembros:920,  rating:4.9, color:'#E1F5EE', iconColor:'#0F6E56', dist:780  },
-  ],
   _savedDests: [],
+  _explorarGeoCache: {},  // cache: "lat,lng" -> { ciudad, prov, pais }
 
-  _renderExplorar() {
-    // Populares: los 5 más cercanos / con más loops
-    const popular = [...this._CIUDADES].filter(c => c.name !== (this._luCity||'La Paz')).slice(0, 5);
-    const popList = document.getElementById('explorar-popular-list');
-    if (popList) popList.innerHTML = popular.map(c => this._explorarCityCard(c)).join('');
+  // Colores por tipo de actividad
+  _explorarColors: {
+    running:  { bg:'#E8F5E9', ic:'#2E7D32' },
+    ciclismo: { bg:'#E3F2FD', ic:'#1565C0' },
+    mtb:      { bg:'#E3F2FD', ic:'#1565C0' },
+    caminata: { bg:'#FFF3E0', ic:'#E65100' },
+    trad:     { bg:'#F3E5F5', ic:'#6A1B9A' },
+    atardecer:{ bg:'#FFF8E1', ic:'#F57F17' },
+    fotoloop: { bg:'#FCE4EC', ic:'#880E4F' },
+    default:  { bg:'#EEEDFE', ic:'#534AB7' },
+  },
 
-    // Provincias
-    const provs = [...new Set(this._CIUDADES.map(c => c.prov))];
+  // Tipo → etiqueta legible
+  _explorarTypeName: {
+    running:'Running', ciclismo:'Ciclismo', mtb:'MTB', caminata:'Trekking',
+    trad:'Tradicional', atardecer:'Atardecer', fotoloop:'FotoLoop',
+    pesca:'Pesca', gastro:'Gastro', paseo:'Paseo', relax:'Relax',
+    trabajo:'Trabajo', vacaciones:'Vacaciones', salidas:'Social', otra:'Otro',
+  },
+
+  // ── Extraer city real de un loop ──
+  _explorarCityOf(r) {
+    return (r.ciudad || r.cityId || '').trim() || null;
+  },
+
+  // ── Obtener info geo de un punto (con cache + Nominatim) ──
+  async _explorarGeoOf(lat, lng) {
+    const key = `${(+lat).toFixed(3)},${(+lng).toFixed(3)}`;
+    if (this._explorarGeoCache[key]) return this._explorarGeoCache[key];
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&zoom=10&addressdetails=1`,
+        { headers: { 'Accept-Language': 'es' } }
+      );
+      const d = await res.json();
+      const a = d.address || {};
+      const info = {
+        ciudad: a.city || a.town || a.village || a.municipality || a.county || 'Desconocida',
+        prov:   a.state || a.province || a.region || '',
+        pais:   a.country || '',
+      };
+      this._explorarGeoCache[key] = info;
+      return info;
+    } catch(e) {
+      return { ciudad: 'Desconocida', prov: '', pais: 'Argentina' };
+    }
+  },
+
+  // ── Construir el mapa de ciudades desde this.routes ──
+  async _explorarBuildCities() {
+    const TYPE_LBL = {trad:'☕',pesca:'🎣',gastro:'🍽️',atardecer:'🌅',running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',relax:'🧘',trabajo:'💼',vacaciones:'🏖️',salidas:'🎉',fotoloop:'📸',otra:'🗺️'};
+    const routes = (this.routes || []).filter(r => r.type !== 'fotostop');
+    const cityMap = {}; // key: cityName -> { name, prov, pais, loops:[], color, iconColor }
+
+    for (const r of routes) {
+      let cityName = this._explorarCityOf(r);
+      let prov = r.provincia || r.prov || '';
+      let pais = r.pais || 'Argentina';
+
+      // Si no tiene ciudad pero tiene coordenadas, geocodificar
+      if (!cityName && r.pts && r.pts.length > 0) {
+        const fp = r.pts[0];
+        const lat = Array.isArray(fp) ? fp[0] : fp?.lat;
+        const lng = Array.isArray(fp) ? fp[1] : fp?.lng;
+        if (lat && lng) {
+          const geo = await this._explorarGeoOf(lat, lng);
+          cityName = geo.ciudad;
+          if (!prov) prov = geo.prov;
+          if (!pais) pais = geo.pais;
+        }
+      }
+      if (!cityName) continue;
+
+      if (!cityMap[cityName]) {
+        const col = this._explorarColors[r.type] || this._explorarColors.default;
+        cityMap[cityName] = { name: cityName, prov, pais, loops: [], color: col.bg, iconColor: col.ic };
+      }
+      cityMap[cityName].loops.push(r);
+      // Actualizar prov/pais si se consiguió ahora
+      if (!cityMap[cityName].prov && prov) cityMap[cityName].prov = prov;
+      if (!cityMap[cityName].pais && pais) cityMap[cityName].pais = pais;
+    }
+    return Object.values(cityMap).sort((a, b) => b.loops.length - a.loops.length);
+  },
+
+  async _renderExplorar() {
+    const feedSec = document.getElementById('explorar-feed-section');
+    const cidList = document.getElementById('explorar-ciudades-list');
+    const novList = document.getElementById('explorar-novedades-list');
+    const totalBadge = document.getElementById('explorar-total-badge');
+    const cidCount  = document.getElementById('explorar-ciudad-count');
     const provChips = document.getElementById('explorar-prov-chips');
-    if (provChips) provChips.innerHTML = provs.map(p => `<div class="explorar-prov-chip" onclick="App._filterExplorar('${p}')">${p}</div>`).join('');
+
+    // Loading state
+    if (cidList) cidList.innerHTML = '<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">⏳ Cargando ciudades…</div>';
+    if (novList) novList.innerHTML = '';
+
+    const cities = await this._explorarBuildCities();
+    this._explorarCities = cities; // guardar para filtros
+
+    // Total badge
+    const totalLoops = cities.reduce((s, c) => s + c.loops.length, 0);
+    if (totalBadge) totalBadge.textContent = `${cities.length} ciudades · ${totalLoops} loops`;
+    if (cidCount)   cidCount.textContent   = `${cities.length} ciudades`;
+
+    // ── Chips de provincia/país ──
+    const provSet = [...new Set(cities.map(c => c.prov || c.pais).filter(Boolean))];
+    if (provChips) provChips.innerHTML = provSet.map(p =>
+      `<div class="explorar-prov-chip" onclick="App._filterExplorar('${p}')">${p}</div>`
+    ).join('');
+
+    // ── Lista de ciudades ──
+    if (cidList) {
+      if (!cities.length) {
+        cidList.innerHTML = '<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">No hay loops registrados aún.<br>¡Sé el primero en grabar uno!</div>';
+      } else {
+        cidList.innerHTML = cities.map(c => this._explorarCityCard(c)).join('');
+      }
+    }
+
+    // ── Feed novedades: últimos loops añadidos ──
+    if (novList) {
+      const TYPE_LBL = {trad:'☕',pesca:'🎣',gastro:'🍽️',atardecer:'🌅',running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',relax:'🧘',trabajo:'💼',vacaciones:'🏖️',salidas:'🎉',fotoloop:'📸',otra:'🗺️'};
+      const allLoops = cities.flatMap(c => c.loops.map(r => ({ ...r, _cityObj: c })));
+      // Ordenar por fecha de creación si existe, si no por índice natural
+      const sorted = allLoops
+        .filter(r => r.type !== 'fotostop')
+        .sort((a, b) => {
+          const ta = a.createdAt?.seconds || a.ts || 0;
+          const tb = b.createdAt?.seconds || b.ts || 0;
+          return tb - ta;
+        })
+        .slice(0, 20);
+
+      if (!sorted.length) {
+        novList.innerHTML = '<div style="color:var(--gr);font-size:12px;text-align:center;padding:16px;">Sin novedades aún.</div>';
+      } else {
+        novList.innerHTML = sorted.map(r => {
+          const c = r._cityObj;
+          const icon = TYPE_LBL[r.type] || '🔄';
+          const typeName = this._explorarTypeName[r.type] || r.type || 'Loop';
+          const isFoto = r.type === 'fotoloop';
+          const accion = isFoto ? 'se sumó un FotoLoop' : `se sumó un loop de ${typeName}`;
+          const lugar = [c.name, c.prov, c.pais].filter(Boolean).join(', ');
+          const colores = this._explorarColors[r.type] || this._explorarColors.default;
+          // Fecha relativa
+          let fechaStr = '';
+          const ts = r.createdAt?.seconds ? r.createdAt.seconds * 1000 : (r.ts ? r.ts * 1000 : 0);
+          if (ts) {
+            const diff = Date.now() - ts;
+            const dias = Math.floor(diff / 86400000);
+            fechaStr = dias === 0 ? 'Hoy' : dias === 1 ? 'Ayer' : `Hace ${dias} días`;
+          }
+          return `
+          <div style="background:var(--wh);border-radius:12px;padding:12px 14px;border:0.5px solid var(--bd);box-shadow:var(--sh);display:flex;gap:12px;align-items:flex-start;cursor:pointer;" onclick="App.openCiudadRemota('${c.name.replace(/'/g,"\'")}')">
+            <div style="width:42px;height:42px;border-radius:11px;background:${colores.bg};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${icon}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:700;color:var(--dk);line-height:1.3;">📍 En <span style="color:var(--or);">${c.name}</span> ${accion}</div>
+              <div style="font-size:12px;font-weight:600;color:var(--dk);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name || 'Sin nombre'}</div>
+              <div style="font-size:11px;color:var(--gr);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;">
+                <span>${lugar}</span>
+                ${r.dist ? `<span>· ${r.dist}</span>` : ''}
+                ${r.dur  ? `<span>· ${r.dur}</span>`  : ''}
+              </div>
+            </div>
+            ${fechaStr ? `<div style="font-size:10px;color:var(--gr);flex-shrink:0;padding-top:2px;">${fechaStr}</div>` : ''}
+          </div>`;
+        }).join('');
+      }
+    }
 
     // Guardados
-    const savedSec = document.getElementById('explorar-saved-section');
+    const savedSec  = document.getElementById('explorar-saved-section');
     const savedList = document.getElementById('explorar-saved-list');
-    if (this._savedDests.length && savedList) {
+    if (this._savedDests.length && savedList && cities.length) {
       savedSec.style.display = 'block';
-      savedList.innerHTML = this._savedDests.map(name => {
-        const c = this._CIUDADES.find(x => x.name === name);
-        return c ? this._explorarCityCard(c) : '';
-      }).join('');
+      savedList.innerHTML = this._savedDests
+        .map(name => { const c = cities.find(x => x.name === name); return c ? this._explorarCityCard(c) : ''; })
+        .join('');
     } else if (savedSec) {
       savedSec.style.display = 'none';
     }
   },
 
   _explorarCityCard(c) {
+    const loopCount = c.loops.length;
+    const types = [...new Set(c.loops.map(r => r.type).filter(Boolean))];
+    const TYPE_LBL = {trad:'☕',pesca:'🎣',gastro:'🍽️',atardecer:'🌅',running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',relax:'🧘',trabajo:'💼',vacaciones:'🏖️',salidas:'🎉',fotoloop:'📸',otra:'🗺️'};
+    const typeIcons = types.slice(0, 3).map(t => TYPE_LBL[t] || '🔄').join(' ');
+    const subLine = [c.prov, c.pais].filter(Boolean).join(' · ');
     return `
-    <div class="explorar-city-card" onclick="App.openCiudadRemota('${c.name}')">
+    <div class="explorar-city-card" onclick="App.openCiudadRemota('${c.name.replace(/'/g,"\'")}')">
       <div class="explorar-city-ico" style="background:${c.color};">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${c.iconColor}" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
       </div>
-      <div style="flex:1;">
+      <div style="flex:1;min-width:0;">
         <div class="explorar-city-name">${c.name}</div>
-        <div class="explorar-city-sub">${c.prov} · ${c.loops} loops · ${c.miembros>=1000?(c.miembros/1000).toFixed(1)+'k':c.miembros} miembros</div>
+        <div class="explorar-city-sub">${subLine}</div>
+        ${typeIcons ? `<div style="font-size:13px;margin-top:3px;">${typeIcons}</div>` : ''}
       </div>
-      ${c.dist > 0 ? `<div style="font-size:11px;color:var(--gr);text-align:right;flex-shrink:0;">${c.dist} km</div>` : ''}
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--or);">${loopCount}</div>
+        <div style="font-size:10px;color:var(--gr);">${loopCount === 1 ? 'loop' : 'loops'}</div>
+      </div>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2" style="flex-shrink:0;"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;
   },
 
   _filterExplorar(q) {
     const resSec  = document.getElementById('explorar-results-section');
     const resList = document.getElementById('explorar-results-list');
-    const popSec  = document.getElementById('explorar-popular-section');
-    const provSec = document.getElementById('explorar-prov-section');
+    const feedSec = document.getElementById('explorar-feed-section');
     if (!q) {
       if (resSec)  resSec.style.display  = 'none';
-      if (popSec)  popSec.style.display  = 'block';
-      if (provSec) provSec.style.display = 'block';
+      if (feedSec) feedSec.style.display = 'block';
       return;
     }
     const ql = q.toLowerCase();
-    const found = this._CIUDADES.filter(c =>
-      c.name.toLowerCase().includes(ql) || c.prov.toLowerCase().includes(ql)
+    const cities = this._explorarCities || [];
+    const found = cities.filter(c =>
+      c.name.toLowerCase().includes(ql) ||
+      (c.prov||'').toLowerCase().includes(ql) ||
+      (c.pais||'').toLowerCase().includes(ql)
     );
-    if (popSec)  popSec.style.display  = 'none';
-    if (provSec) provSec.style.display = 'none';
+    if (feedSec) feedSec.style.display = 'none';
     if (resSec)  resSec.style.display  = 'block';
     if (resList) resList.innerHTML = found.length
       ? found.map(c => this._explorarCityCard(c)).join('')
@@ -8426,8 +8594,9 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
   // Abrir ciudad remota
   openCiudadRemota(cityName) {
-    const c = this._CIUDADES.find(x => x.name === cityName);
-    if (!c) return;
+    const cities = this._explorarCities || [];
+    const c = cities.find(x => x.name === cityName);
+    if (!c) { this.toast('Ciudad no encontrada'); return; }
     this._crCity = c;
 
     const cn = document.getElementById('cr-city-name');
@@ -8436,12 +8605,13 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const cs = document.getElementById('cr-stat-loops');
     const cm = document.getElementById('cr-stat-miembros');
     const cr = document.getElementById('cr-stat-rating');
+    const loopCount = c.loops.length;
     if (cn) cn.textContent = c.name;
-    if (cl) cl.textContent = `${c.loops} loops`;
-    if (cd) cd.textContent = c.dist > 0 ? `${c.dist} km` : 'Tu ciudad';
-    if (cs) cs.textContent = c.loops;
-    if (cm) cm.textContent = c.miembros >= 1000 ? (c.miembros/1000).toFixed(1)+'k' : c.miembros;
-    if (cr) cr.textContent = `★ ${c.rating}`;
+    if (cl) cl.textContent = `${loopCount} ${loopCount === 1 ? 'loop' : 'loops'}`;
+    if (cd) cd.textContent = [c.prov, c.pais].filter(Boolean).join(' · ') || 'Argentina';
+    if (cs) cs.textContent = loopCount;
+    if (cm) cm.textContent = '—';
+    if (cr) cr.textContent = `★ —`;
 
     // mapa de fondo con color de la ciudad
     const bg = document.getElementById('cr-map-bg');
@@ -8456,30 +8626,36 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg> Guardar destino`;
     }
 
-    // loops demo de la ciudad remota
+    // loops REALES de la ciudad
+    const TYPE_LBL = {trad:'☕',pesca:'🎣',gastro:'🍽️',atardecer:'🌅',running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',relax:'🧘',trabajo:'💼',vacaciones:'🏖️',salidas:'🎉',fotoloop:'📸',otra:'🗺️'};
     const ll = document.getElementById('cr-loops-list');
     if (ll) {
-      const fakeLoops = [
-        { name:`Loop ${c.name} Principal`, likes: Math.round(c.miembros*0.12), paseos: Math.round(c.miembros*0.8), dist:'4.5 km', dur:'~50 min', principal:true },
-        { name:`Loop Río`,                 likes: Math.round(c.miembros*0.08), paseos: Math.round(c.miembros*0.5), dist:'3.1 km', dur:'~35 min', principal:false },
-        { name:`Loop Centro`,              likes: Math.round(c.miembros*0.05), paseos: Math.round(c.miembros*0.3), dist:'1.8 km', dur:'~20 min', principal:false },
-      ];
-      ll.innerHTML = fakeLoops.map(l => `
-        <div style="background:var(--wh);border-radius:10px;padding:11px 12px;border:${l.principal?'2px solid #EF9F27':'0.5px solid var(--bd)'};cursor:default;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-            <div style="display:flex;align-items:center;gap:7px;">
-              ${l.principal?'<span style="font-size:13px;color:#BA7517;">★</span>':'<span style="font-size:12px;color:var(--gr);">·</span>'}
-              <span style="font-size:13px;font-weight:600;color:var(--dk);">${l.name}</span>
-              ${l.principal?'<span style="background:#FAEEDA;color:#633806;font-size:9px;padding:2px 6px;border-radius:6px;">Principal</span>':''}
+      const realLoops = c.loops.filter(r => r.type !== 'fotostop');
+      if (!realLoops.length) {
+        ll.innerHTML = '<div style="color:var(--gr);font-size:12px;text-align:center;padding:16px;">Sin loops disponibles aún.</div>';
+      } else {
+        ll.innerHTML = realLoops.map((l, i) => {
+          const isPrincipal = i === 0;
+          const icon = TYPE_LBL[l.type] || '🔄';
+          const typeName = this._explorarTypeName[l.type] || l.type || 'Loop';
+          return `
+          <div style="background:var(--wh);border-radius:10px;padding:11px 12px;border:${isPrincipal?'2px solid #EF9F27':'0.5px solid var(--bd)'};cursor:pointer;" onclick="App.selectRoute('${l.id}');App.go('explore')">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+              <div style="display:flex;align-items:center;gap:7px;">
+                <span style="font-size:14px;">${icon}</span>
+                <span style="font-size:13px;font-weight:600;color:var(--dk);">${l.name || 'Loop'}</span>
+                ${isPrincipal?'<span style="background:#FAEEDA;color:#633806;font-size:9px;padding:2px 6px;border-radius:6px;">Principal</span>':''}
+              </div>
+              <span style="font-size:10px;color:var(--gr);">${typeName}</span>
             </div>
-            <span style="font-size:11px;color:var(--gr);">${l.dist}</span>
-          </div>
-          <div style="display:flex;gap:10px;">
-            <span style="font-size:11px;color:var(--gr);">❤️ ${l.likes}</span>
-            <span style="font-size:11px;color:var(--gr);">🏃 ${l.paseos} paseos</span>
-            <span style="font-size:11px;color:var(--gr);">⏱ ${l.dur}</span>
-          </div>
-        </div>`).join('');
+            <div style="display:flex;gap:10px;">
+              <span style="font-size:11px;color:var(--gr);">❤️ ${l.likes||0}</span>
+              ${l.dist?`<span style="font-size:11px;color:var(--gr);">📍 ${l.dist}</span>`:''}
+              ${l.dur ?`<span style="font-size:11px;color:var(--gr);">⏱ ${l.dur}</span>` :''}
+            </div>
+          </div>`;
+        }).join('');
+      }
     }
 
     this.go('ciudad-remota');
