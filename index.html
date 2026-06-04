@@ -10578,5 +10578,58 @@ document.addEventListener('DOMContentLoaded',()=>{
   App.init();
 });
 </script>
+
+<!-- ── Manejador de errores global ── -->
+<script>
+(function() {
+
+  // Errores JS no capturados (excepciones sincrónicas)
+  window.onerror = function(message, source, line, col, error) {
+    const ignore = [
+      'ResizeObserver loop',     // error inofensivo del navegador
+      'Non-Error promise',       // ruido de extensiones
+      'Extension context',       // extensiones del navegador
+    ];
+    if (ignore.some(i => message && message.includes(i))) return true;
+
+    console.error('[UL360] Error no capturado:', {
+      message, source, line, col,
+      stack: error && error.stack
+    });
+
+    // Mostrar toast solo si App ya esta inicializado
+    if (window.App && typeof App.toast === 'function') {
+      App.toast('Algo salio mal. Intenta recargar la pagina.');
+    }
+    return true;
+  };
+
+  // Promesas rechazadas sin catch (llamadas async sin manejo de error)
+  window.addEventListener('unhandledrejection', function(event) {
+    var msg = (event.reason && event.reason.message) ? event.reason.message : String(event.reason);
+
+    var ignore = [
+      'network-request-failed',  // sin conexion — se maneja en la UI
+      'permission-denied',       // Firestore auth — se maneja por flujo
+      'Failed to fetch',         // sin conexion
+      'replaceState',            // error de iframe en previsualizadores
+      'about:srcdoc',            // entorno de preview, no produccion
+    ];
+    for (var i = 0; i < ignore.length; i++) {
+      if (msg.includes(ignore[i])) return;
+    }
+
+    // Serializar el error de forma legible
+    var detail;
+    try {
+      detail = JSON.stringify(event.reason, Object.getOwnPropertyNames(event.reason));
+    } catch(e) {
+      detail = String(event.reason);
+    }
+    console.error('[UL360] Promesa rechazada sin catch:', msg, detail);
+  });
+
+})();
+</script>
 </body>
 </html>
