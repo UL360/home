@@ -3,6 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<!-- ── Content Security Policy ──
+     Define exactamente qué dominios pueden ejecutar scripts, cargar estilos,
+     conectarse a APIs, etc. El navegador bloquea todo lo que no esté acá.
+-->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com https://api.maptiler.com https://*.tile.openstreetmap.org; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://urbanloop360.firebaseapp.com https://api.maptiler.com https://api.bigdatacloud.net https://nominatim.openstreetmap.org https://router.project-osrm.org https://raw.githubusercontent.com; frame-src 'none'; object-src 'none'; base-uri 'self';">
 <title>Urban Loop 360° — Descubrí y grabá loops en tu ciudad</title>
 <meta name="description" content="Descubrí, grabá y compartí loops urbanos en La Paz, Entre Ríos y toda Argentina. Running, ciclismo, caminatas y más.">
 <meta name="theme-color" content="#FF5F00">
