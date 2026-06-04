@@ -2786,6 +2786,18 @@ const App = {
   panelOpen: true,
   favs: [],
 
+  // ── Escapa caracteres HTML peligrosos en datos de Firestore ──
+  // Usar siempre que se inserte texto de usuarios via innerHTML
+  _esc(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#x27;');
+  },
+
   async init() {
     document.addEventListener('input', e => {
       if (e.target.id === 'srch') this._onSrch(e.target.value);
@@ -3490,7 +3502,7 @@ const App = {
         }
       }
 
-      console.log(`[_saveData] → set loops/${r.id} nombre="${r.name}"`);
+      console.log(`[_saveData] → set loops/${r.id} nombre="${App._esc(r.name)}"`);
       const setPromise = this._db.collection('loops').doc(r.id).set(rClean);
       const timeoutPromise = new Promise((_, rej) =>
         setTimeout(() => rej(new Error(
@@ -3808,7 +3820,7 @@ const App = {
               { padding:80, maxZoom:17, duration:900 }
             );
             if (this._voiceOn) {
-              let startMsg = `¡Llegaste! Comenzá ${r.name}. `;
+              let startMsg = `¡Llegaste! Comenzá ${App._esc(r.name)}. `;
               if (r.pois && r.pois.length) {
                 startMsg += `Primera parada: ${r.pois[0].name}. `;
                 if (r.pois[0].desc) startMsg += r.pois[0].desc;
@@ -4563,7 +4575,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     panel.innerHTML = `
       <div style="width:40px;height:40px;border-radius:50%;background:var(--or);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;">${mode.emoji}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.emoji} ${r.name}</div>
+        <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.emoji} ${App._esc(r.name)}</div>
         <div style="font-size:12px;color:var(--gr);margin-top:2px;">${mode.label} · ${dist} · ~${durMin} min</div>
       </div>
       <button onclick="App._toggleVoice()" id="voice-btn" title="${voiceActive?'Silenciar voz':'Activar voz'}"
@@ -4619,7 +4631,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
         <div style="width:36px;height:36px;border-radius:50%;background:var(--orL);border:2px solid var(--or);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">${r.emoji}</div>
         <div style="flex:1;min-width:0;">
-          <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${r.name}</div>
+          <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);">${App._esc(r.name)}</div>
           <div style="font-size:11px;color:var(--or);font-weight:600;">▶ Loop activo · ${r.dist||'—'}</div>
         </div>
         <button onclick="App._stopNav()" style="width:32px;height:32px;border-radius:9px;border:1.5px solid var(--bd);background:var(--lt);cursor:pointer;display:flex;align-items:center;justify-content:center;">
@@ -4644,7 +4656,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     // Mensaje de inicio completo
     const poiCount = r.pois && r.pois.length ? r.pois.length : 0;
     const firstPoi = r.pois && r.pois.length ? r.pois[0].name : null;
-    let msg = `Iniciando ${r.name}. `;
+    let msg = `Iniciando ${App._esc(r.name)}. `;
     msg += `A ${dist}, aproximadamente ${durMin} minuto${durMin !== 1 ? 's' : ''}.`;
     if (poiCount > 0) msg += ` ${poiCount} parada${poiCount !== 1 ? 's' : ''} en el recorrido.`;
     this._speak(msg);
@@ -4675,7 +4687,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       const r = this._voiceNavRoute;
       let arrivalMsg = '¡Llegaste al punto de partida del loop! ';
       if (r) {
-        arrivalMsg += `Estás listo para comenzar ${r.name}. `;
+        arrivalMsg += `Estás listo para comenzar ${App._esc(r.name)}. `;
         if (r.pois && r.pois.length) {
           const names = r.pois.slice(0, 3).map(p => p.name).join(', ');
           const extra = r.pois.length > 3 ? ` y ${r.pois.length - 3} paradas más` : '';
@@ -4760,7 +4772,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const html = `<div style="font-family:'DM Sans',sans-serif;min-width:190px;">
       ${imgHtml}
       <div style="padding:8px 10px 4px;">
-        <div style="font-weight:700;font-size:13px;color:#111;">${r.emoji} ${r.name}</div>
+        <div style="font-weight:700;font-size:13px;color:#111;">${r.emoji} ${App._esc(r.name)}</div>
         <div style="font-size:11px;color:#888;margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'} · ${r.pois?r.pois.length:0} paradas</div>
         <button onclick="App.showDetail('${r.id}')"
           style="margin-top:8px;width:100%;padding:7px;background:#FF5F00;color:white;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">
@@ -4887,7 +4899,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       );
       // Mostrar el popup del loop
       this._showLoopMapCard(r);
-      this.toast(`🗺️ ${r.name}`);
+      this.toast(`🗺️ ${App._esc(r.name)}`);
     }, 350);
   },
 
@@ -4903,7 +4915,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         const lat = Array.isArray(pt) ? pt[0] : pt.lat;
         this.mainMap.flyTo({ center: [lng, lat], zoom: 16, duration: 700 });
       }
-      this.toast(`🚀 Iniciando "${r.name}"…`);
+      this.toast(`🚀 Iniciando "${App._esc(r.name)}"…`);
       this._startNav(r);
     }, 350);
   },
@@ -4920,7 +4932,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     // Mini cards
     const miniEl = document.getElementById('mini-cards');
     if(miniEl) {
-      miniEl.innerHTML = list.slice(0,8).map(r=>'<div onclick="App.selectRoute(\''+r.id+'\')" style="flex-shrink:0;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;padding:10px 12px;cursor:pointer;min-width:128px;"><div style="font-size:20px;margin-bottom:4px;">'+r.emoji+'</div><div style="font-family:var(--fH);font-size:12px;font-weight:700;color:#F5F5F5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:108px;">'+r.name+'</div><div style="font-size:11px;color:#5A5A68;margin-top:2px;">'+(r.dist||'—')+' · '+(r.dur||'—')+'</div></div>').join('');
+      miniEl.innerHTML = list.slice(0,8).map(r=>'<div onclick="App.selectRoute(\''+r.id+'\')" style="flex-shrink:0;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;padding:10px 12px;cursor:pointer;min-width:128px;"><div style="font-size:20px;margin-bottom:4px;">'+r.emoji+'</div><div style="font-family:var(--fH);font-size:12px;font-weight:700;color:#F5F5F5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:108px;">'+App._esc(r.name)+'</div><div style="font-size:11px;color:#5A5A68;margin-top:2px;">'+(r.dist||'—')+' · '+(r.dur||'—')+'</div></div>').join('');
     }
     cont.innerHTML = list.map(r=>`
       <div class="rc ${r.id===this.selId?'sel':''}" data-id="${r.id}" onclick="App.selectRoute('${r.id}')">
@@ -4930,8 +4942,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         </div>
         <div class="rc-body">
           <span class="rc-badge ${r.badge||''}">${r.emoji||'🔄'} ${this._typeLabel(r.type)}</span>
-          <div class="rc-name">${r.name||'Sin nombre'}</div>
-          <div class="rc-desc">${r.desc||''}</div>
+          <div class="rc-name">${App._esc(r.name)||'Sin nombre'}</div>
+          <div class="rc-desc">${App._esc(r.desc)||''}</div>
           <div class="rc-meta">
             <div class="rc-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>${r.dist||'—'}</div>
             <div class="rc-mi"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${r.dur||'—'}</div>
@@ -5668,7 +5680,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       <div class="rli" onclick="App.showDetail('${r.id}')">
         <div class="rli-em" style="background:linear-gradient(135deg,${r.color}18,${r.color}33)">${r.emoji}</div>
         <div class="rli-info">
-          <h3>${r.name}</h3>
+          <h3>${App._esc(r.name)}</h3>
           <p>${r.dist||'—'} · ${r.dur||'—'}</p>
           <small>${r.pois?r.pois.length:0} paradas · ${this._typeLabel(r.type)}</small>
         </div>
@@ -5740,7 +5752,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         <div style="display:flex;align-items:flex-start;gap:12px;">
           <div style="width:44px;height:44px;border-radius:12px;background:${r.color||'var(--or)'}22;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">${catIcon}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:var(--dk);margin-bottom:3px;">${r.name}</div>
+            <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:var(--dk);margin-bottom:3px;">${App._esc(r.name)}</div>
             <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
               <span style="font-size:12px;color:var(--or);font-weight:600;display:flex;align-items:center;gap:3px;">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="2.5"/></svg>
@@ -5749,7 +5761,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
               ${r.dist ? `<span style="font-size:11px;color:var(--gr);">· ${r.dist}</span>` : ''}
               ${r.dur  ? `<span style="font-size:11px;color:var(--gr);">· ${r.dur}</span>`  : ''}
             </div>
-            ${r.desc ? `<div style="font-size:12px;color:var(--gr);margin-top:6px;line-height:1.5;">${r.desc}</div>` : ''}
+            ${r.desc ? `<div style="font-size:12px;color:var(--gr);margin-top:6px;line-height:1.5;">${App._esc(r.desc)}</div>` : ''}
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:16px;">
@@ -6257,7 +6269,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
                  <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.7));pointer-events:none;"></div>
                  <div style="position:absolute;top:10px;left:10px;background:rgba(255,165,0,.92);border-radius:8px;padding:3px 9px;font-size:10px;font-weight:700;color:white;">★ Principal</div>
                  <div style="position:absolute;bottom:10px;left:12px;right:12px;">
-                   <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:white;text-shadow:0 1px 4px rgba(0,0,0,.6);">${r.name||'Loop'}</div>
+                   <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:white;text-shadow:0 1px 4px rgba(0,0,0,.6);">${App._esc(r.name)||'Loop'}</div>
                    <div style="font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'} · ❤️ ${r.likes||0}</div>
                  </div>
                </div>`
@@ -6267,8 +6279,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
                </div>`
           }
           <div style="padding:11px 13px 13px;cursor:pointer;" onclick="App.showDetail('${r.id}')">
-            ${!hasImg?`<div style="font-family:var(--fH);font-size:16px;font-weight:800;color:var(--dk);margin-bottom:4px;">${r.name||'Loop'}</div>`:''}
-            ${r.desc?`<div style="font-size:12px;color:var(--md);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>`:''}
+            ${!hasImg?`<div style="font-family:var(--fH);font-size:16px;font-weight:800;color:var(--dk);margin-bottom:4px;">${App._esc(r.name)||'Loop'}</div>`:''}
+            ${r.desc?`<div style="font-size:12px;color:var(--md);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${App._esc(r.desc)}</div>`:''}
             <div style="display:flex;gap:8px;flex-wrap:wrap;">
               <span style="font-size:11px;color:var(--gr);">📍 ${r.dist||'—'}</span>
               <span style="font-size:11px;color:var(--gr);">👟 ${r.paseos||0} paseos</span>
@@ -6289,8 +6301,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         </div>
         <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:10px 11px 8px;min-width:0;">
           <div style="cursor:pointer;" onclick="App.showDetail('${r.id}')">
-            <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name||'Loop'}</div>
-            ${r.desc?`<div style="font-size:11px;color:var(--gr);margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>`:''}
+            <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${App._esc(r.name)||'Loop'}</div>
+            ${r.desc?`<div style="font-size:11px;color:var(--gr);margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${App._esc(r.desc)}</div>`:''}
           </div>
           <div>
             <div style="display:flex;gap:5px;align-items:center;margin-bottom:6px;">
@@ -6445,7 +6457,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
               onmousedown="this.style.opacity='.7'" onmouseup="this.style.opacity='1'" ontouchstart="this.style.opacity='.7'" ontouchend="this.style.opacity='1'">
               <div style="width:32px;height:32px;border-radius:8px;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">${r.emoji||icon}</div>
               <div style="flex:1;min-width:0;">
-                <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name||'Loop'}</div>
+                <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${App._esc(r.name)||'Loop'}</div>
                 <div style="font-size:10px;color:var(--gr);">${r.dist||''} ${r.dur?'· '+r.dur:''}</div>
               </div>
               <div style="font-size:11px;font-weight:700;color:${color};background:${color}18;padding:3px 8px;border-radius:8px;flex-shrink:0;">🗺️ Mapa</div>
@@ -7357,23 +7369,23 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         <div class="post-card-header">
           <div class="post-avatar">${initials}</div>
           <div style="flex:1;">
-            <div class="post-author">${p.authorName||'Looper'}</div>
-            <div class="post-time">${this._timeAgo(p.ts||0)} · ${p.city||city}</div>
+            <div class="post-author">${App._esc(p.authorName)||'Looper'}</div>
+            <div class="post-time">${this._timeAgo(p.ts||0)} · ${App._esc(p.city)||city}</div>
           </div>
           <span class="post-type-tag" style="background:${TYPE_COLOR[p.type]||'var(--gr)'}22;color:${TYPE_COLOR[p.type]||'var(--gr)'};">${TYPE_LABEL[p.type]||p.type}</span>
         </div>
-        ${p.text ? `<div class="post-body">${p.text}</div>` : ''}
+        ${p.text ? `<div class="post-body">${App._esc(p.text)}</div>` : ''}
         ${p.img  ? `<img class="post-img" src="${p.img}" loading="lazy" onerror="this.style.display='none'">` : ''}
         ${loopRef ? `<div class="post-loop-ref" onclick="App.showDetail('${loopRef.id}')">
           <span style="font-size:22px;">${loopRef.emoji||'🔄'}</span>
-          <div><div style="font-size:13px;font-weight:600;color:var(--dk);">${loopRef.name}</div>
+          <div><div style="font-size:13px;font-weight:600;color:var(--dk);">${App._esc(loopRef.name)}</div>
           <div style="font-size:11px;color:var(--gr);">${loopRef.dist||'—'} · ${loopRef.dur||'—'}</div></div>
           <svg style="margin-left:auto;" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
         </div>` : ''}
         ${p.replies && p.replies.length ? `<div class="thread-replies">${p.replies.map(r=>`
           <div class="thread-reply">
             <div class="thread-reply-avatar">${(r.authorName||'?')[0].toUpperCase()}</div>
-            <div class="thread-reply-bubble"><span style="font-weight:600;">${r.authorName||'Looper'}:</span> ${r.text}</div>
+            <div class="thread-reply-bubble"><span style="font-weight:600;">${App._esc(r.authorName)||'Looper'}:</span> ${App._esc(r.text)}</div>
           </div>`).join('')}</div>` : ''}
         <div class="thread-reply-input">
           <input id="reply-input-${p.id}" placeholder="Responder..." onkeydown="if(event.key==='Enter')App._sendReply('${p.id}')">
@@ -7451,8 +7463,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:10px 11px 8px;min-width:0;">
           <!-- Nombre + desc -->
           <div style="cursor:pointer;" onclick="App.showDetail('${r.id}')">
-            <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name||'Loop'}</div>
-            ${r.desc ? `<div style="font-size:11px;color:var(--gr);margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.desc}</div>` : ''}
+            <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${App._esc(r.name)||'Loop'}</div>
+            ${r.desc ? `<div style="font-size:11px;color:var(--gr);margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${App._esc(r.desc)}</div>` : ''}
           </div>
           <!-- Stats pequeños -->
           <div style="display:flex;gap:6px;align-items:center;margin-top:4px;flex-wrap:wrap;">
@@ -7609,7 +7621,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
               <div style="flex:1;padding:10px 12px;min-width:0;display:flex;flex-direction:column;gap:3px;">
                 <!-- Nombre + badge nuevo -->
                 <div style="display:flex;align-items:center;gap:6px;">
-                  <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${r.name||'Loop'}</div>
+                  <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;">${App._esc(r.name)||'Loop'}</div>
                   ${isNew ? `<span style="font-size:9px;font-weight:800;background:var(--or);color:white;border-radius:20px;padding:2px 7px;flex-shrink:0;">NUEVO</span>` : ''}
                 </div>
 
@@ -7757,7 +7769,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   _renderPostContentArea() {
     const area = document.getElementById('post-content-area');
     if (!area) return;
-    const loopOptions = this.routes.map(r => `<option value="${r.id}">${r.emoji||'🔄'} ${r.name}</option>`).join('');
+    const loopOptions = this.routes.map(r => `<option value="${r.id}">${r.emoji||'🔄'} ${App._esc(r.name)}</option>`).join('');
     const TEMA_CATS = ['Recomendación','Busco compañía','Estado del recorrido','Clima y condiciones','Proponer loop','Pregunta general'];
 
     if (this._postType === 'loop') {
@@ -7893,7 +7905,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     // Llenar select de loops
     const sel = document.getElementById('ev-loop-select');
     if (sel) sel.innerHTML = '<option value="">— Sin loop específico —</option>' +
-      this.routes.map(r=>`<option value="${r.id}">${r.emoji||'🔄'} ${r.name}</option>`).join('');
+      this.routes.map(r=>`<option value="${r.id}">${r.emoji||'🔄'} ${App._esc(r.name)}</option>`).join('');
     // Fecha mínima hoy
     const fechaEl = document.getElementById('ev-fecha');
     if (fechaEl) fechaEl.min = new Date().toISOString().split('T')[0];
@@ -8041,7 +8053,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     this._eventos.unshift(ev);
 
     // También publicar en feed
-    const feedPost = { id:'post_ev_'+ev.id, type:'evento', text:`📅 Nuevo evento: "${ev.name}" — ${ev.fecha} ${ev.hora}${ev.desc?' — '+ev.desc:''}`, loopId, authorId:ev.authorId, authorName:ev.authorName, city:ev.city, ts:ev.ts, likes:0, replies:[], evId:ev.id };
+    const feedPost = { id:'post_ev_'+ev.id, type:'evento', text:`📅 Nuevo evento: "${App._esc(ev.name)}" — ${ev.fecha} ${ev.hora}${ev.desc?' — '+ev.desc:''}`, loopId, authorId:ev.authorId, authorName:ev.authorName, city:ev.city, ts:ev.ts, likes:0, replies:[], evId:ev.id };
     this._feedPosts = this._feedPosts||[];
     this._feedPosts.unshift(feedPost);
     if (this._db && this._user) await this._db.collection('feed_posts').doc(feedPost.id).set(feedPost).catch(()=>{});
@@ -8168,19 +8180,19 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         }
         <div class="ev-card-body">
           ${!hasImg ? `<div class="ev-card-type">${EV_LABEL[ev.type]||ev.type}</div>` : ''}
-          <div class="ev-card-name">${ev.emoji||'📅'} ${ev.name}</div>
+          <div class="ev-card-name">${ev.emoji||'📅'} ${App._esc(ev.name)}</div>
           <div class="ev-card-meta">
             <span>📅 ${ev.fecha} ${ev.hora}</span>
             <span>👥 ${cnt}${ev.cupo ? '/'+ev.cupo : ''} personas</span>
-            <span>📍 ${ev.city||'La Paz'}</span>
+            <span>📍 ${App._esc(ev.city)||'La Paz'}</span>
             ${past ? '<span style="color:var(--gr);">Finalizado</span>' : ''}
             ${full && !past ? '<span style="color:#EF4444;font-weight:600;">🔴 Sin cupo</span>' : ''}
           </div>
-          ${ev.lugar ? `<div style="font-size:12px;color:var(--md);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${ev.lugar}</div>` : ''}
-          ${ev.desc ? `<div style="font-size:12px;color:var(--md);margin-bottom:10px;line-height:1.5;">${ev.desc}</div>` : ''}
+          ${ev.lugar ? `<div style="font-size:12px;color:var(--md);margin-bottom:8px;display:flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>${App._esc(ev.lugar)}</div>` : ''}
+          ${ev.desc ? `<div style="font-size:12px;color:var(--md);margin-bottom:10px;line-height:1.5;">${App._esc(ev.desc)}</div>` : ''}
           ${loopRef ? `<div style="display:flex;align-items:center;gap:8px;background:var(--bg2);border-radius:8px;padding:7px 10px;margin-bottom:10px;cursor:pointer;" onclick="App.showDetail('${loopRef.id}')">
             <span style="font-size:18px;">${loopRef.emoji||'🔄'}</span>
-            <div><div style="font-size:12px;font-weight:600;color:var(--dk);">${loopRef.name}</div><div style="font-size:11px;color:var(--gr);">${loopRef.dist||'—'} · ${loopRef.dur||'—'}</div></div>
+            <div><div style="font-size:12px;font-weight:600;color:var(--dk);">${App._esc(loopRef.name)}</div><div style="font-size:11px;color:var(--gr);">${loopRef.dist||'—'} · ${loopRef.dur||'—'}</div></div>
           </div>` : ''}
           ${ev.lat ? `<div id="ev-map-${ev.id}" style="height:130px;border-radius:10px;overflow:hidden;margin-bottom:10px;border:0.5px solid var(--bd);background:var(--bg0);" data-lat="${ev.lat}" data-lng="${ev.lng}">
             <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--gr);gap:6px;">
@@ -8215,7 +8227,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const r = this.routes.find(x => x.id === id);
     if (!r) return;
     const url = location.href.split('#')[0] + '#explore';
-    const text = `🔄 ${r.name} — ${r.dist||''} ${r.dur||''}\n${r.desc||''}\n${url}`;
+    const text = `🔄 ${App._esc(r.name)} — ${r.dist||''} ${r.dur||''}\n${App._esc(r.desc)||''}\n${url}`;
     if (navigator.share) {
       navigator.share({ title: r.name, text, url }).catch(()=>{});
     } else {
@@ -8330,7 +8342,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       <div class="rank-loop-item ${i===0?'pos1':''}">
         <div class="rank-loop-pos ${i===0?'gold':''}">${i+1}</div>
         <div class="rank-loop-info">
-          <div class="rank-loop-name">${r.name} ${i===0?'<span style="font-size:10px;color:#BA7517;">★</span>':''}</div>
+          <div class="rank-loop-name">${App._esc(r.name)} ${i===0?'<span style="font-size:10px;color:#BA7517;">★</span>':''}</div>
           <div class="rank-loop-meta">
             <svg width="10" height="10" viewBox="0 0 24 24" fill="${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             ${r.likes||0} likes · ${r.paseos||0} paseos
@@ -8515,7 +8527,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           <div style="background:var(--wh);border-radius:12px;padding:12px 14px;border:0.5px solid var(--bd);box-shadow:var(--sh);display:flex;gap:12px;align-items:flex-start;cursor:pointer;" onclick="App.openCiudadRemota('${c.name.replace(/'/g,"\'")}')">
             <div style="width:42px;height:42px;border-radius:11px;background:${colores.bg};display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${icon}</div>
             <div style="flex:1;min-width:0;">
-              <div style="font-size:13px;font-weight:700;color:var(--dk);line-height:1.3;">📍 En <span style="color:var(--or);">${c.name}</span> ${accion}</div>
+              <div style="font-size:13px;font-weight:700;color:var(--dk);line-height:1.3;">📍 En <span style="color:var(--or);">${App._esc(c.name)}</span> ${accion}</div>
               <div style="font-size:12px;font-weight:600;color:var(--dk);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name || 'Sin nombre'}</div>
               <div style="font-size:11px;color:var(--gr);margin-top:2px;display:flex;gap:6px;flex-wrap:wrap;">
                 <span>${lugar}</span>
@@ -8554,7 +8566,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${c.iconColor}" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
       </div>
       <div style="flex:1;min-width:0;">
-        <div class="explorar-city-name">${c.name}</div>
+        <div class="explorar-city-name">${App._esc(c.name)}</div>
         <div class="explorar-city-sub">${subLine}</div>
         ${typeIcons ? `<div style="font-size:13px;margin-top:3px;">${typeIcons}</div>` : ''}
       </div>
@@ -9138,7 +9150,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   shareQR() {
     const r=this.routes.find(x=>x.id===this._qrId);
     const text=r?`¡Mirá este loop en Urban Loop 360°!
-${r.name}
+${App._esc(r.name)}
 https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if(navigator.share){navigator.share({title:'Urban Loop 360°',text,url:`https://urbanloop360.app/loop/${this._qrId}`});}
     else{navigator.clipboard&&navigator.clipboard.writeText(text).then(()=>this.toast('🔗 Link copiado al portapapeles'));}
@@ -9232,8 +9244,8 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         <div class="adm-activity-item">
           <div class="adm-activity-dot" style="background:${r.color||'var(--or)'};"></div>
           <div style="flex:1;min-width:0;">
-            <div style="font-size:13px;font-weight:600;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}</div>
-            <div style="font-size:11px;color:var(--gr);">${r.authorName||'Anónimo'} · ${r.ciudad||r.cityId||'—'} · ${r.type||''}</div>
+            <div style="font-size:13px;font-weight:600;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${App._esc(r.name)}</div>
+            <div style="font-size:11px;color:var(--gr);">${App._esc(r.authorName)||'Anónimo'} · ${r.ciudad||r.cityId||'—'} · ${r.type||''}</div>
           </div>
           <div style="font-size:10px;color:var(--gr);">${r.createdAt ? new Date(r.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'short'}) : ''}</div>
         </div>`).join('');
@@ -9269,7 +9281,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     showStatus(`📋 ${noImg.length} loop${noImg.length !== 1 ? 's' : ''} sin imagen.${doUpload ? ' Iniciando migración...' : ' Tocá "Migrar ahora" para recuperarlas.'}`);
 
     if (!doUpload) {
-      const names = noImg.slice(0, 8).map(r => `• ${r.name} (${r.ciudad || r.cityId || '—'})`).join('\n');
+      const names = noImg.slice(0, 8).map(r => `• ${App._esc(r.name)} (${r.ciudad || r.cityId || '—'})`).join('\n');
       const extra = noImg.length > 8 ? `\n...y ${noImg.length - 8} más.` : '';
       alert(`Loops sin imagen (${noImg.length}):\n\n${names}${extra}\n\nUsá "Migrar ahora" para recuperarlas desde loop_imgs.`);
       return;
@@ -9279,7 +9291,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
 
     for (let i = 0; i < noImg.length; i++) {
       const r = noImg[i];
-      showStatus(`🔍 Procesando ${i + 1}/${noImg.length}: "${r.name}"...`);
+      showStatus(`🔍 Procesando ${i + 1}/${noImg.length}: "${App._esc(r.name)}"...`);
 
       try {
         // Buscar imagen en loop_imgs
@@ -9287,7 +9299,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
 
         if (!imgSnap.exists || !imgSnap.data()?.img) {
           notFound++;
-          console.log(`[migrate] Sin imagen en loop_imgs para: ${r.id} (${r.name})`);
+          console.log(`[migrate] Sin imagen en loop_imgs para: ${r.id} (${App._esc(r.name)})`);
           continue;
         }
 
@@ -9304,10 +9316,10 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         if (inRoutes) inRoutes.img = b64;
 
         migrated++;
-        console.log(`[migrate] ✓ ${r.name}`);
+        console.log(`[migrate] ✓ ${App._esc(r.name)}`);
       } catch(e) {
         errors++;
-        console.warn(`[migrate] Error en ${r.id} (${r.name}):`, e.message);
+        console.warn(`[migrate] Error en ${r.id} (${App._esc(r.name)}):`, e.message);
       }
     }
 
@@ -9341,9 +9353,9 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
                <div class="adm-item-thumb" style="display:none;align-items:center;justify-content:center;font-size:22px;">${r.emoji||'🔄'}</div>`
             : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--bg2);">${r.emoji||'🔄'}</div>`}
           <div class="adm-item-info">
-            <div class="adm-item-name">${noImgBadge}${r.name}</div>
+            <div class="adm-item-name">${noImgBadge}${App._esc(r.name)}</div>
             <div class="adm-item-meta">${r.ciudad||r.cityId||'—'} · ${r.type} · ${r.dist||'—'} · ❤️${r.likes||0}</div>
-            <div class="adm-item-meta">Por: ${r.authorName||'Anónimo'}</div>
+            <div class="adm-item-meta">Por: ${App._esc(r.authorName)||'Anónimo'}</div>
           </div>
         </div>
         <div class="adm-item-actions">
@@ -9471,9 +9483,9 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         <div class="adm-item-row">
           <div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${r.emoji||'🔄'}</div>
           <div class="adm-item-info">
-            <div class="adm-item-name">${r.name}</div>
-            <div class="adm-item-meta">${r.ciudad||'—'} · ${r.dist||'—'} · por ${r.authorName||'Anónimo'}</div>
-            ${r.desc ? `<div class="adm-item-meta" style="margin-top:2px;">${r.desc}</div>` : ''}
+            <div class="adm-item-name">${App._esc(r.name)}</div>
+            <div class="adm-item-meta">${r.ciudad||'—'} · ${r.dist||'—'} · por ${App._esc(r.authorName)||'Anónimo'}</div>
+            ${r.desc ? `<div class="adm-item-meta" style="margin-top:2px;">${App._esc(r.desc)}</div>` : ''}
           </div>
         </div>
         <div class="adm-item-actions">
@@ -9547,7 +9559,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
           ${p.img ? `<img class="adm-item-thumb" src="${p.img}" onerror="this.style.display='none'">` : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${p.emoji||'📸'}</div>`}
           <div class="adm-item-info">
             <div class="adm-item-name">${p.name||'Foto Loop'}</div>
-            <div class="adm-item-meta">${p.cat||''} · ${p.authorName||'Anónimo'} · ${p.ciudad||p.cityId||'—'}</div>
+            <div class="adm-item-meta">${p.cat||''} · ${App._esc(p.authorName)||'Anónimo'} · ${p.ciudad||p.cityId||'—'}</div>
             <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:${stColor};display:inline-block;margin-top:2px;">${stTxt}</span>
           </div>
         </div>
@@ -9616,12 +9628,12 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         <div class="adm-item-row">
           <div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:${ev.color||'var(--or)'}22;">${ev.emoji||'📅'}</div>
           <div class="adm-item-info">
-            <div class="adm-item-name">${ev.name}</div>
-            <div class="adm-item-meta">📅 ${ev.fecha} ${ev.hora} · ${ev.city||'—'} · ${ev.authorName||'Anónimo'}</div>
+            <div class="adm-item-name">${App._esc(ev.name)}</div>
+            <div class="adm-item-meta">📅 ${ev.fecha} ${ev.hora} · ${App._esc(ev.city)||'—'} · ${ev.authorName||'Anónimo'}</div>
             <div class="adm-item-meta">👥 ${(ev.attendees||[]).length}${ev.cupo?'/'+ev.cupo:''} · ${past?'<span style="color:var(--gr)">Finalizado</span>':'<span style="color:#10B981">Activo</span>'}</div>
           </div>
         </div>
-        ${ev.desc ? `<div style="font-size:12px;color:var(--md);">${ev.desc}</div>` : ''}
+        ${ev.desc ? `<div style="font-size:12px;color:var(--md);">${App._esc(ev.desc)}</div>` : ''}
         <div class="adm-item-actions">
           <button class="adm-btn adm-btn-red" onclick="App._admDeleteEvento('${ev.id}','${(ev.name||'').replace(/'/g,'')}')">🗑️ Cancelar evento</button>
         </div>
@@ -9896,15 +9908,15 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
           // No notificar mis propios eventos
           if (ev.authorId === this._uid) return;
           if (this._notifPerm === 'granted') {
-            new Notification(`📅 Nuevo evento: ${ev.name}`, {
-              body: `${ev.fecha} ${ev.hora} · ${ev.city||'La Paz'} — ${ev.authorName||'Un looper'} lo organiza`,
+            new Notification(`📅 Nuevo evento: ${App._esc(ev.name)}`, {
+              body: `${ev.fecha} ${ev.hora} · ${App._esc(ev.city)||'La Paz'} — ${ev.authorName||'Un looper'} lo organiza`,
               icon: ev.img || 'https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/imagendeinicio.png',
               tag: ev.id,
               data: { eventId: ev.id }
             });
           }
           // También mostrar toast in-app
-          this.toast(`📅 Nuevo evento: ${ev.name}`);
+          this.toast(`📅 Nuevo evento: ${App._esc(ev.name)}`);
         });
         this._notifLastCheck = Date.now();
       });
@@ -9921,7 +9933,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     // Notificación propia (confirmación)
     if (this._notifPerm === 'granted') {
       new Notification('✅ Evento publicado', {
-        body: `"${ev.name}" ya está visible para otros loopers`,
+        body: `"${App._esc(ev.name)}" ya está visible para otros loopers`,
         icon: 'https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/imagendeinicio.png',
         tag: 'my-event-'+ev.id
       });
@@ -10109,14 +10121,14 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
          </div>`
       : allCustom.map(r => {
           const isOwn = r.authorId === myUid;
-          const authorLabel = r.authorName ? `por ${r.authorName}` : '';
+          const authorLabel = r.authorName ? `por ${App._esc(r.authorName)}` : '';
           return `
       <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--lt);border:0.5px solid ${isOwn?'var(--or)':'var(--bd)'};border-radius:12px;transition:all .2s;">
         <div onclick="App.closeLoopModal();App.selectRoute('${r.id}');App.go('explore');"
           style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer;min-width:0;">
           <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,${r.color}22,${r.color}44);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${r.emoji}</div>
           <div style="flex:1;min-width:0;">
-            <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${r.name}${isOwn?' <span style="font-size:10px;background:var(--or);color:white;border-radius:4px;padding:1px 5px;">tuyo</span>':''}</div>
+            <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${App._esc(r.name)}${isOwn?' <span style="font-size:10px;background:var(--or);color:white;border-radius:4px;padding:1px 5px;">tuyo</span>':''}</div>
             <div style="font-size:11px;color:var(--gr);margin-top:1px;">${r.dist||'—'} · ${r.pois?r.pois.length:0} paradas${authorLabel?' · '+authorLabel:''}</div>
           </div>
         </div>
@@ -10238,7 +10250,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   async deleteRoute(id) {
     const r = this.routes.find(x=>x.id===id);
     if (!r) return;
-    if (!confirm(`¿Eliminar el loop "${r.name}"? Esta acción no se puede deshacer.`)) return;
+    if (!confirm(`¿Eliminar el loop "${App._esc(r.name)}"? Esta acción no se puede deshacer.`)) return;
     // Quitar del mapa
     if (this._layers && this._layers[id]) {
       if(this._layers && this._layers[id]) this._layers[id].forEach(lid=>{ try{ if(this.mainMap&&this.mainMap.getLayer(lid)) this.mainMap.removeLayer(lid); }catch(e){} });
