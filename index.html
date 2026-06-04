@@ -246,6 +246,8 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 }
 .admin-btn:hover { background:var(--or2); transform:translateY(-1px); }
 #menu-btn { transition: opacity .25s ease, z-index 0s; }
+#menu-btn.hidden-splash { opacity:0 !important; pointer-events:none !important; }
+#splash.active ~ #explore #menu-btn, #splash:not([style*="opacity: 0"]):not([style*="opacity:0"]) + * #menu-btn { opacity: 0; pointer-events: none; }
 
 .chips-row {
   display:flex; gap:8px; overflow-x:auto; padding:10px 0 4px;
@@ -1274,7 +1276,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
   <div id="main-map" role="application" aria-label="Mapa de loops urbanos" style="position:absolute;inset:0;width:100%;height:100%;"></div>
 
   <!-- ── TOP LEFT: Hamburger ── -->
-  <button id="menu-btn" onclick="App.toggleSidebar()" aria-label="Abrir menú" aria-expanded="false" aria-controls="side-panel" style="position:absolute;top:14px;left:14px;z-index:10;width:46px;height:46px;background:#FF5F00;border:none;border-radius:14px;box-shadow:0 4px 16px rgba(255,95,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;">
+  <button id="menu-btn" class="hidden-splash" onclick="App.toggleSidebar()" aria-label="Abrir menú" aria-expanded="false" aria-controls="side-panel" style="position:absolute;top:14px;left:14px;z-index:10;width:46px;height:46px;background:#FF5F00;border:none;border-radius:14px;box-shadow:0 4px 16px rgba(255,95,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;">
     <span style="width:18px;height:2px;background:white;border-radius:2px;display:block;"></span>
     <span style="width:18px;height:2px;background:white;border-radius:2px;display:block;"></span>
     <span style="width:18px;height:2px;background:white;border-radius:2px;display:block;"></span>
@@ -2578,9 +2580,16 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 <!-- ════════════ MODAL FOTO LOOP (compartir parada pública) ════════════ -->
 <div id="foto-loop-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;align-items:flex-end;justify-content:center;" onclick="if(event.target===this)App.closeFotoLoop()">
   <div style="background:var(--wh);border-radius:20px 20px 0 0;width:100%;max-width:480px;padding:20px 20px 36px;animation:slideUp .3s ease;max-height:92vh;overflow-y:auto;">
-    <div style="width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 18px;"></div>
-    <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);margin-bottom:4px;">📍 Foto Loop — Compartí tu parada</div>
-    <div style="font-size:12px;color:var(--gr);margin-bottom:12px;">Publicá un lugar con foto para que todos puedan encontrarlo.</div>
+    <div style="width:36px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 14px;"></div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+      <button onclick="App.closeFotoLoop()" style="width:34px;height:34px;border-radius:10px;border:0.5px solid var(--bd);background:var(--lt);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;" aria-label="Volver">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
+      </button>
+      <div>
+        <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);">📍 Foto Loop</div>
+        <div style="font-size:11px;color:var(--gr);">Compartí tu parada con foto</div>
+      </div>
+    </div>
 
     <!-- Preview foto -->
     <div id="fl-preview" style="display:none;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:4/3;background:var(--bg0);margin-bottom:12px;">
@@ -2845,6 +2854,12 @@ const App = {
       if (btn) this._fxRipple(Object.assign({}, e, { currentTarget: btn }));
     }, true);
     window.addEventListener('popstate', e => {
+      // Si el FotoLoop está abierto, cerrarlo con el botón atrás del celu
+      const fl = document.getElementById('foto-loop-overlay');
+      if (fl && fl.style.display === 'flex') {
+        App.closeFotoLoop();
+        return;
+      }
       App.go((e.state && e.state.screen) || 'explore', false);
     });
     history.replaceState({ screen: 'explore' }, '', '#explore');
@@ -2919,6 +2934,9 @@ const App = {
     sp.style.pointerEvents = 'none';
     setTimeout(() => {
       this.go('explore');
+      // Mostrar menu-btn ahora que el splash terminó
+      const mb = document.getElementById('menu-btn');
+      if (mb) mb.classList.remove('hidden-splash');
       // Inicializar sidebar según dispositivo
       const isMobile = window.innerWidth <= 768;
       this._sbApply(isMobile ? 0 : 1);
@@ -5312,6 +5330,10 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     }
     const ov = document.getElementById('foto-loop-overlay');
     if (ov) ov.style.display = 'flex';
+    // Pushear estado para que el botón atrás del celu cierre el overlay
+    if (location.protocol !== 'file:') {
+      try { history.pushState({ screen: this._currentScreen, fotoloop: true }, ''); } catch(e) {}
+    }
     document.getElementById('fl-name').value = '';
     document.getElementById('fl-desc').value = '';
     document.getElementById('fl-make-loop').checked = false;
