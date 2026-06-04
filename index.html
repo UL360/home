@@ -2610,18 +2610,29 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
       <button class="fl-cat on" data-c="lugar" onclick="App._setFLCat(this)">📍 Lugar</button>
       <button class="fl-cat" data-c="gastro" onclick="App._setFLCat(this)">🍽️ Gastro</button>
+      <button class="fl-cat" data-c="resto" onclick="App._setFLCat(this)">🥩 Resto</button>
+      <button class="fl-cat" data-c="cafe" onclick="App._setFLCat(this)">☕ Café</button>
+      <button class="fl-cat" data-c="vino" onclick="App._setFLCat(this)">🍷 Vino</button>
+      <button class="fl-cat" data-c="cerveza" onclick="App._setFLCat(this)">🍺 Cerveza</button>
+      <button class="fl-cat" data-c="coctel" onclick="App._setFLCat(this)">🍸 Cóctel</button>
+      <button class="fl-cat" data-c="vineria" onclick="App._setFLCat(this)">🍾 Viñería</button>
+      <button class="fl-cat" data-c="bar" onclick="App._setFLCat(this)">🥂 Bar</button>
+      <button class="fl-cat" data-c="boliche" onclick="App._setFLCat(this)">🪩 Boliche</button>
+      <button class="fl-cat" data-c="teatro" onclick="App._setFLCat(this)">🎭 Teatro</button>
+      <button class="fl-cat" data-c="cine" onclick="App._setFLCat(this)">🎬 Cine</button>
+      <button class="fl-cat" data-c="musica" onclick="App._setFLCat(this)">🎵 Música</button>
+      <button class="fl-cat" data-c="museo" onclick="App._setFLCat(this)">🖼️ Museo</button>
+      <button class="fl-cat" data-c="arte" onclick="App._setFLCat(this)">🎨 Arte</button>
       <button class="fl-cat" data-c="naturaleza" onclick="App._setFLCat(this)">🌿 Natural</button>
       <button class="fl-cat" data-c="rio" onclick="App._setFLCat(this)">🌊 Río</button>
       <button class="fl-cat" data-c="playa" onclick="App._setFLCat(this)">🏖️ Playa</button>
       <button class="fl-cat" data-c="parque" onclick="App._setFLCat(this)">🌳 Parque</button>
       <button class="fl-cat" data-c="plaza" onclick="App._setFLCat(this)">🏛️ Plaza</button>
-      <button class="fl-cat" data-c="museo" onclick="App._setFLCat(this)">🖼️ Museo</button>
       <button class="fl-cat" data-c="pesca" onclick="App._setFLCat(this)">🎣 Pesca</button>
       <button class="fl-cat" data-c="aventura" onclick="App._setFLCat(this)">🧗 Aventura</button>
       <button class="fl-cat" data-c="campo" onclick="App._setFLCat(this)">🌾 Campo</button>
       <button class="fl-cat" data-c="deporte" onclick="App._setFLCat(this)">⚽ Deporte</button>
       <button class="fl-cat" data-c="ciclismo" onclick="App._setFLCat(this)">🚴 Ciclismo</button>
-      <button class="fl-cat" data-c="arte" onclick="App._setFLCat(this)">🎨 Arte</button>
       <button class="fl-cat" data-c="nocturno" onclick="App._setFLCat(this)">🌙 Noche</button>
       <button class="fl-cat" data-c="perro" onclick="App._setFLCat(this)">🐕 Pet</button>
       <button class="fl-cat" data-c="foto" onclick="App._setFLCat(this)">📸 Foto</button>
@@ -4168,9 +4179,11 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       return isApproved || (isOwn && isPending);
     });
     const FL_CATS = {
-      lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',
-      plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',
-      ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'
+      lugar:'📍',gastro:'🍽️',resto:'🥩',cafe:'☕',vino:'🍷',cerveza:'🍺',
+      coctel:'🍸',vineria:'🍾',bar:'🥂',boliche:'🪩',teatro:'🎭',cine:'🎬',
+      musica:'🎵',museo:'🖼️',arte:'🎨',naturaleza:'🌿',rio:'🌊',playa:'🏖️',
+      parque:'🌳',plaza:'🏛️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',
+      ciclismo:'🚴',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'
     };
     visible.forEach(p => {
       const emoji = FL_CATS[p.cat] || p.emoji || '📍';
@@ -5449,15 +5462,20 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const cityId = _flLoc.ciudad || this._luCity || 'La Paz';
 
     const catEmojis = {
-      lugar:'📍', gastro:'🍽️', naturaleza:'🌿', rio:'🌊', playa:'🏖️', parque:'🌳',
-      plaza:'🏛️', museo:'🖼️', pesca:'🎣', aventura:'🧗', campo:'🌾', deporte:'⚽',
-      ciclismo:'🚴', arte:'🎨', nocturno:'🌙', perro:'🐕', foto:'📸', otro:'✳️'
+      lugar:'📍', gastro:'🍽️', resto:'🥩', cafe:'☕', vino:'🍷', cerveza:'🍺',
+      coctel:'🍸', vineria:'🍾', bar:'🥂', boliche:'🪩', teatro:'🎭', cine:'🎬',
+      musica:'🎵', museo:'🖼️', arte:'🎨', naturaleza:'🌿', rio:'🌊', playa:'🏖️',
+      parque:'🌳', plaza:'🏛️', pesca:'🎣', aventura:'🧗', campo:'🌾', deporte:'⚽',
+      ciclismo:'🚴', nocturno:'🌙', perro:'🐕', foto:'📸', otro:'✳️'
     };
     const catColors = {
-      lugar:'#FF5F00', gastro:'#DB2777', naturaleza:'#059669', rio:'#0891B2',
-      playa:'#0284C7', parque:'#16A34A', plaza:'#7C3AED', museo:'#9333EA',
+      lugar:'#FF5F00', gastro:'#DB2777', resto:'#B91C1C', cafe:'#92400E',
+      vino:'#7C2D8E', cerveza:'#B45309', coctel:'#0E7490', vineria:'#6B21A8',
+      bar:'#0F766E', boliche:'#4F46E5', teatro:'#9333EA', cine:'#1D4ED8',
+      musica:'#BE185D', museo:'#9333EA', arte:'#C026D3', naturaleza:'#059669',
+      rio:'#0891B2', playa:'#0284C7', parque:'#16A34A', plaza:'#7C3AED',
       pesca:'#0369A1', aventura:'#EA580C', campo:'#65A30D', deporte:'#DC2626',
-      ciclismo:'#D97706', arte:'#C026D3', nocturno:'#4F46E5', perro:'#CA8A04',
+      ciclismo:'#D97706', nocturno:'#4F46E5', perro:'#CA8A04',
       foto:'#0F766E', otro:'#6B7280'
     };
     const cat = this._fotoLoopCat;
@@ -5747,7 +5765,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
     const img  = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:')) ? r.img : null;
     const city = r.cityId || r.ciudad || 'La Paz';
-    const FL_CATS = { lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️' };
+    const FL_CATS = { lugar:'📍',gastro:'🍽️',resto:'🥩',cafe:'☕',vino:'🍷',cerveza:'🍺',coctel:'🍸',vineria:'🍾',bar:'🥂',boliche:'🪩',teatro:'🎭',cine:'🎬',musica:'🎵',museo:'🖼️',arte:'🎨',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️' };
     const catIcon = FL_CATS[r.cat||r.type] || r.emoji || '🔄';
 
     // Crear/reusar modal
@@ -6636,7 +6654,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     if (!list) return;
     if (body) body.style.padding = '0';
 
-    const FL_CATS = {lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
+    const FL_CATS = {lugar:'📍',gastro:'🍽️',resto:'🥩',cafe:'☕',vino:'🍷',cerveza:'🍺',coctel:'🍸',vineria:'🍾',bar:'🥂',boliche:'🪩',teatro:'🎭',cine:'🎬',musica:'🎵',museo:'🖼️',arte:'🎨',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
 
     const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
     const uCityLu = normCity(city);
@@ -7522,7 +7540,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
   // ─── Tab: FOTO LOOPS de la ciudad ───
   _renderComFoto(body, city) {
-    const FL_CATS = {lugar:'📍',gastro:'🍽️',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',museo:'🖼️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',arte:'🎨',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
+    const FL_CATS = {lugar:'📍',gastro:'🍽️',resto:'🥩',cafe:'☕',vino:'🍷',cerveza:'🍺',coctel:'🍸',vineria:'🍾',bar:'🥂',boliche:'🪩',teatro:'🎭',cine:'🎬',musica:'🎵',museo:'🖼️',arte:'🎨',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
     const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
     // Solo aprobados, dentro de la ciudad del usuario y en radio de 15km
     const uCity2 = normCity(city);
