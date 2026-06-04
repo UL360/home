@@ -10139,105 +10139,136 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const ov = document.getElementById('loop-modal-overlay');
     if(ov) { ov.style.display='block'; }
 
-    // Todos los loops creados (no defaults)
     const allCustom = this.routes.filter(r => !DEFAULTS.find(d => d.id === r.id));
-    const myUid = this._uid;
     const isLoggedIn = !!this._user;
 
-    const loopsHtml = allCustom.length === 0
-      ? `<div style="text-align:center;padding:22px 10px;color:var(--gr);font-size:13px;line-height:1.6;">
-           <div style="font-size:32px;margin-bottom:8px;">🌀</div>
-           <div style="font-weight:600;color:var(--md);margin-bottom:4px;">Todavía no hay loops creados</div>
-           <div>¡Sé el primero en crear uno!</div>
+    // ── Top 3 loops: orden por likes desc, empate por ts desc ──
+    const top3 = [...allCustom]
+      .sort((a,b) => {
+        const lDiff = (b.likes||0) - (a.likes||0);
+        if (lDiff !== 0) return lDiff;
+        return ((b.ts||0) > (a.ts||0) ? 1 : -1);
+      })
+      .slice(0, 3);
+
+    // ── Miniatura del loop: foto real si tiene, si no emoji ──
+    const _loopThumb = (r) => {
+      const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
+      if (hasImg) {
+        return `<div style="width:42px;height:42px;border-radius:10px;overflow:hidden;flex-shrink:0;background:var(--bg2);">${App._imgTag(r.img,'width:42px;height:42px;object-fit:cover;display:block;')}</div>`;
+      }
+      return `<div style="width:42px;height:42px;border-radius:10px;background:var(--bg2);border:0.5px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${r.emoji||'🌀'}</div>`;
+    };
+
+    // ── Últimos loopers activos (autores únicos últimos 7 días) ──
+    const ahora = Date.now();
+    const semana = 7 * 24 * 60 * 60 * 1000;
+    const recentAuthors = [...new Set(
+      [...allCustom, ...(this._fotoPosts||[])]
+        .filter(x => x.authorId && x.ts && (ahora - (x.ts?.toMillis ? x.ts.toMillis() : x.ts)) < semana)
+        .map(x => x.authorId)
+    )];
+    const loopersCount = recentAuthors.length;
+
+    // ── HTML top 3 loops ──
+    const top3Html = top3.length === 0
+      ? `<div style="text-align:center;padding:16px 10px;color:var(--gr);font-size:13px;">
+           <div style="font-size:28px;margin-bottom:6px;">🌀</div>
+           <div style="font-weight:600;color:var(--md);margin-bottom:2px;">Todavía no hay loops</div>
+           <div style="font-size:12px;">¡Sé el primero en crear uno!</div>
          </div>`
-      : allCustom.map(r => {
-          const isOwn = r.authorId === myUid;
-          const authorLabel = r.authorName ? `por ${App._esc(r.authorName)}` : '';
+      : top3.map(r => {
+          const authorLabel = r.authorName ? r.authorName.split(' ')[0] : '';
+          const isNew = r.ts && (ahora - (r.ts?.toMillis ? r.ts.toMillis() : r.ts)) < semana;
           return `
-      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--lt);border:0.5px solid ${isOwn?'var(--or)':'var(--bd)'};border-radius:12px;transition:all .2s;">
-        <div onclick="App.closeLoopModal();App.selectRoute('${r.id}');App.go('explore');"
-          style="display:flex;align-items:center;gap:12px;flex:1;cursor:pointer;min-width:0;">
-          <div style="width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,${r.color}22,${r.color}44);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">${r.emoji}</div>
-          <div style="flex:1;min-width:0;">
-            <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${App._esc(r.name)}${isOwn?' <span style="font-size:10px;background:var(--or);color:white;border-radius:4px;padding:1px 5px;">tuyo</span>':''}</div>
-            <div style="font-size:11px;color:var(--gr);margin-top:1px;">${r.dist||'—'} · ${r.pois?r.pois.length:0} paradas${authorLabel?' · '+authorLabel:''}</div>
-          </div>
+      <div onclick="App.closeLoopModal();App.selectRoute('${r.id}');App.go('explore');"
+        style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg2);border-radius:11px;cursor:pointer;transition:opacity .15s;">
+        ${_loopThumb(r)}
+        <div style="flex:1;min-width:0;">
+          <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${App._esc(r.name)}</div>
+          <div style="font-size:10px;color:var(--gr);margin-top:1px;">${r.dist||'—'} · ${r.pois?r.pois.length:0} paradas${authorLabel?' · '+App._esc(authorLabel):''}</div>
         </div>
-        ${isOwn ? `
-        <button onclick="event.stopPropagation();App.editRoute('${r.id}');" title="Editar"
-          style="width:32px;height:32px;border-radius:8px;border:0.5px solid var(--bd);background:var(--lt);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-        </button>
-        <button onclick="event.stopPropagation();App.deleteRoute('${r.id}');" title="Eliminar"
-          style="width:32px;height:32px;border-radius:8px;border:0.5px solid var(--bd);background:var(--lt);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#EF4444" stroke-width="2.2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-        </button>` : ''}
+        ${isNew ? `<span style="font-size:9px;background:var(--orL);color:var(--or);border-radius:4px;padding:2px 6px;flex-shrink:0;font-weight:600;">nuevo</span>` : `<span style="font-size:10px;color:var(--gr);flex-shrink:0;">❤️ ${r.likes||0}</span>`}
       </div>`;
         }).join('');
 
     const modalBody = document.getElementById('loop-modal');
     if (modalBody) {
       modalBody.innerHTML = `
-        <div style="width:38px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 18px;"></div>
-        <div style="font-family:var(--fH);font-size:18px;font-weight:800;color:var(--dk);margin-bottom:4px;">+ Crear Loop</div>
-        <div style="font-size:13px;color:var(--gr);margin-bottom:20px;">¿Cómo querés crear tu loop?</div>
-        <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="width:38px;height:4px;background:var(--bd);border-radius:2px;margin:0 auto 16px;"></div>
+        <div style="font-family:var(--fH);font-size:18px;font-weight:800;color:var(--dk);margin-bottom:2px;">+ Loop</div>
+        <div style="font-size:12px;color:var(--gr);margin-bottom:18px;">Creá o explorá loops</div>
+
+        <!-- ── CREAR ── -->
+        <div style="margin-bottom:4px;">
+          <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);margin-bottom:1px;">Crear loop</div>
+          <div style="font-size:11px;color:var(--gr);margin-bottom:10px;">Salí a grabar, armalo o marcá una parada</div>
           <button onclick="App.closeLoopModal();App.go('grabar');"
-            style="width:100%;height:62px;background:var(--or);color:white;border:none;border-radius:14px;font-family:var(--fH);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:14px;padding:0 18px;box-shadow:0 4px 20px rgba(255,95,0,.4);transition:all .2s;">
-            <div style="width:38px;height:38px;background:rgba(255,255,255,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="white"/></svg>
+            style="width:100%;height:58px;background:var(--or);color:white;border:none;border-radius:14px;font-family:var(--fH);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:12px;padding:0 16px;margin-bottom:8px;transition:all .2s;">
+            <div style="width:36px;height:36px;background:rgba(255,255,255,.2);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4" fill="white"/></svg>
             </div>
             <div style="text-align:left;">
               <div>Grabar con GPS</div>
-              <div style="font-size:11px;font-weight:400;opacity:.85;margin-top:1px;">Grabá tu recorrido en tiempo real</div>
+              <div style="font-size:10px;font-weight:400;opacity:.85;margin-top:1px;">Grabá tu recorrido en tiempo real</div>
             </div>
           </button>
-          <button onclick="App.closeLoopModal();App.go('crear-manual');"
-            style="width:100%;height:62px;background:var(--lt);color:var(--dk);border:1.5px solid var(--bd);border-radius:14px;font-family:var(--fH);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:14px;padding:0 18px;transition:all .2s;">
-            <div style="width:38px;height:38px;background:var(--orL);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </div>
-            <div style="text-align:left;">
-              <div>Crear manual</div>
-              <div style="font-size:11px;font-weight:400;color:var(--gr);margin-top:1px;">Dibujá el recorrido en el mapa</div>
-            </div>
-          </button>
-          <!-- Foto Loop -->
-          <button onclick="App.closeLoopModal();App.openFotoLoop();"
-            style="width:100%;height:62px;background:var(--lt);color:var(--dk);border:1.5px dashed var(--or);border-radius:14px;font-family:var(--fH);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:14px;padding:0 18px;transition:all .2s;">
-            <div style="width:38px;height:38px;background:var(--orL);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px;">📍</div>
-            <div style="text-align:left;">
-              <div style="color:var(--or);">Foto Loop</div>
-              <div style="font-size:11px;font-weight:400;color:var(--gr);margin-top:1px;">Compartí una parada con foto</div>
-            </div>
-          </button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <button onclick="App.closeLoopModal();App.go('crear-manual');"
+              style="height:54px;background:var(--lt);color:var(--dk);border:0.5px solid var(--bd);border-radius:12px;font-family:var(--fH);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;padding:0 12px;transition:all .2s;">
+              <div style="width:28px;height:28px;background:var(--orL);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </div>
+              <div style="text-align:left;"><div>Crear manual</div><div style="font-size:10px;font-weight:400;color:var(--gr);">Dibujá en el mapa</div></div>
+            </button>
+            <button onclick="App.closeLoopModal();App.openFotoLoop();"
+              style="height:54px;background:var(--lt);color:var(--or);border:1.5px dashed var(--or);border-radius:12px;font-family:var(--fH);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;padding:0 12px;transition:all .2s;">
+              <div style="width:28px;height:28px;background:var(--orL);border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;">📍</div>
+              <div style="text-align:left;"><div>Foto Loop</div><div style="font-size:10px;font-weight:400;color:var(--gr);">Marcá una parada</div></div>
+            </button>
+          </div>
         </div>
 
-        <!-- LOOPS URBANOS -->
-        <div style="margin-top:22px;">
-          <div style="font-family:var(--fH);font-size:15px;font-weight:800;color:var(--dk);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
-            <span style="display:flex;align-items:center;gap:7px;"><span>🌀</span> Loops urbanos</span>
-            <span style="font-size:12px;font-weight:500;color:var(--gr);background:var(--lt);border:0.5px solid var(--bd);border-radius:20px;padding:2px 10px;">${allCustom.length} ${allCustom.length!==1?'loops':'loop'}</span>
+        <!-- ── LOOPS URBANOS ── -->
+        <div style="margin-top:18px;padding-top:16px;border-top:0.5px solid var(--bd);">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+            <div>
+              <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);margin-bottom:1px;">Loops urbanos</div>
+              <div style="font-size:11px;color:var(--gr);">Recorridos reales, hechos por loopers</div>
+            </div>
+            <button onclick="App.closeLoopModal();App.go('loops-urbanos');"
+              style="background:none;border:none;padding:0;cursor:pointer;font-size:11px;font-weight:600;color:var(--or);white-space:nowrap;margin-top:2px;">Ver todos →</button>
           </div>
-          ${!isLoggedIn ? `<div style="background:#FEF3C7;border-radius:10px;padding:10px 12px;font-size:12px;color:#92400E;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
-            <span>🔒</span><span>Iniciá sesión para crear y guardar tus propios loops</span>
-            <button onclick="App.closeLoopModal();App.go('profile');" style="margin-left:auto;background:#FF5F00;color:white;border:none;border-radius:7px;padding:4px 10px;font-size:11px;cursor:pointer;white-space:nowrap;">Ingresar</button>
+          ${!isLoggedIn ? `<div style="background:#FEF3C7;border-radius:10px;padding:8px 12px;font-size:11px;color:#92400E;margin-bottom:8px;display:flex;align-items:center;gap:8px;">
+            <span>🔒</span><span>Iniciá sesión para crear loops</span>
+            <button onclick="App.closeLoopModal();App.go('profile');" style="margin-left:auto;background:#FF5F00;color:white;border:none;border-radius:6px;padding:3px 9px;font-size:10px;cursor:pointer;white-space:nowrap;">Ingresar</button>
           </div>` : ''}
-          <div style="display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;scrollbar-width:none;">
-            ${loopsHtml}
-          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;">${top3Html}</div>
         </div>
 
-        <!-- Estado Firebase -->
-        <div style="margin-top:14px;font-size:11px;color:var(--gr);text-align:center;padding:6px 0;">
-          ${this._db
-            ? (this._user
-              ? `☁️ Conectado como <b style="color:var(--dk)">${this._user.displayName||this._user.email?.split('@')[0]}</b>`
-              : `☁️ Firebase conectado · <span style="color:var(--or);cursor:pointer;" onclick="App.closeLoopModal();App.go('profile');">Iniciar sesión</span>`)
-            : '💾 Modo sin conexión'}
+        <!-- ── SOMOS LOOPERS ── -->
+        <div style="margin-top:16px;padding-top:16px;border-top:0.5px solid var(--bd);">
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">
+            <div>
+              <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);margin-bottom:1px;">Somos Loopers</div>
+              <div style="font-size:11px;color:var(--gr);">Gente que sale, recorre y comparte su ciudad</div>
+            </div>
+            <button onclick="App.closeLoopModal();App.go('comunidad');"
+              style="background:none;border:none;padding:0;cursor:pointer;font-size:11px;font-weight:600;color:var(--or);white-space:nowrap;margin-top:2px;">Ver comunidad →</button>
+          </div>
+          <div style="background:var(--bg2);border-radius:11px;padding:10px 12px;display:flex;align-items:center;gap:12px;">
+            <div style="font-size:24px;">👟</div>
+            <div>
+              <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);">${loopersCount > 0 ? loopersCount+' looper'+(loopersCount!==1?'s':'')+' activos esta semana' : 'Sé parte de la comunidad'}</div>
+              <div style="font-size:11px;color:var(--gr);margin-top:1px;">${this._db ? '☁️ '+this._db._databaseId?.projectId : '💾 Modo sin conexión'}</div>
+            </div>
+          </div>
         </div>
       `;
-      setTimeout(()=>modalBody.style.bottom='0', 10);
+      setTimeout(()=>{
+        modalBody.style.bottom='0';
+        this._lazyLoadFsImgs(modalBody);
+      }, 10);
     }
   },
   closeLoopModal() {
