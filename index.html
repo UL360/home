@@ -1251,7 +1251,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 <div id="splash" class="screen active">
   <!-- Imagen de fondo -->
   <img class="sp-cover" 
-    src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/imagendeinicio.png"
+    alt="Urban Loop 360 — Descubrí y grabá loops en tu ciudad" src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/imagendeinicio.png"
     crossorigin="anonymous" alt="">
   <!-- Gradiente oscuro inferior -->
   <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,transparent 25%,rgba(0,0,0,.65) 60%,rgba(0,0,0,.92) 100%);"></div>
@@ -1271,10 +1271,10 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 <div id="explore" class="screen" style="position:relative;background:transparent;">
 
   <!-- Full-screen map canvas -->
-  <div id="main-map" style="position:absolute;inset:0;width:100%;height:100%;"></div>
+  <div id="main-map" role="application" aria-label="Mapa de loops urbanos" style="position:absolute;inset:0;width:100%;height:100%;"></div>
 
   <!-- ── TOP LEFT: Hamburger ── -->
-  <button id="menu-btn" onclick="App.toggleSidebar()" style="position:absolute;top:14px;left:14px;z-index:10;width:46px;height:46px;background:#FF5F00;border:none;border-radius:14px;box-shadow:0 4px 16px rgba(255,95,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;">
+  <button id="menu-btn" onclick="App.toggleSidebar()" aria-label="Abrir menú" aria-expanded="false" aria-controls="side-panel" style="position:absolute;top:14px;left:14px;z-index:10;width:46px;height:46px;background:#FF5F00;border:none;border-radius:14px;box-shadow:0 4px 16px rgba(255,95,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;cursor:pointer;">
     <span style="width:18px;height:2px;background:white;border-radius:2px;display:block;"></span>
     <span style="width:18px;height:2px;background:white;border-radius:2px;display:block;"></span>
     <span style="width:18px;height:2px;background:white;border-radius:2px;display:block;"></span>
@@ -1288,10 +1288,10 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
   <!-- ── TOP RIGHT: Zoom + Locate ── -->
   <div style="position:absolute;top:14px;right:14px;z-index:10;display:flex;flex-direction:column;gap:6px;">
-    <button onclick="App.mapZoom(1)" style="width:40px;height:40px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#C0C0C8;">+</button>
-    <button onclick="App.mapZoom(-1)" style="width:40px;height:40px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#C0C0C8;">−</button>
+    <button onclick="App.mapZoom(1)" aria-label="Acercar mapa" style="width:40px;height:40px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#C0C0C8;">+</button>
+    <button onclick="App.mapZoom(-1)" aria-label="Alejar mapa" style="width:40px;height:40px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#C0C0C8;">−</button>
     <!-- Locate me button -->
-    <button id="locate-btn" onclick="App.toggleFollowMe()" title="Mi ubicación"
+    <button id="locate-btn" onclick="App.toggleFollowMe()" title="Mi ubicación" aria-label="Centrar en mi ubicación" aria-pressed="false"
       style="width:40px;height:40px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#C0C0C8;transition:all .2s;margin-top:4px;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
         <circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
@@ -1299,7 +1299,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       </svg>
     </button>
     <!-- Brújula / orientación -->
-    <button id="main-compass" onclick="App._toggleMapRotation()" title="Orientar mapa"
+    <button id="main-compass" onclick="App._toggleMapRotation()" title="Orientar mapa" aria-label="Orientar mapa al norte" aria-pressed="false"
       style="width:40px;height:40px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:2px;">
       <svg id="main-compass-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" style="transition:transform .3s;">
         <path d="M12 2L8 10h8L12 2z" fill="#EF4444"/>
@@ -1308,7 +1308,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       </svg>
     </button>
     <!-- Toggle 3D -->
-    <button id="btn-3d" onclick="App.toggle3D()" title="Vista 3D"
+    <button id="btn-3d" onclick="App.toggle3D()" title="Vista 3D" aria-label="Activar vista 3D" aria-pressed="false"
       style="width:40px;height:40px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#C0C0C8;font-size:11px;font-weight:700;font-family:var(--fH);transition:all .2s;margin-top:2px;">
       3D
     </button>
@@ -1320,7 +1320,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
   <div id="rt-badge" style="display:none;position:absolute;top:70px;left:14px;z-index:10;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:var(--rs);padding:7px 12px;font-size:12px;font-weight:600;align-items:center;gap:7px;max-width:calc(100% - 80px);">
     <div id="rt-dot" style="width:9px;height:9px;border-radius:50%;background:var(--or);flex-shrink:0;"></div>
     <span id="rt-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</span>
-    <button onclick="App._clearSelection()" style="background:none;border:none;color:#9CA3AF;cursor:pointer;padding:0 0 0 4px;font-size:18px;line-height:1;display:flex;align-items:center;flex-shrink:0;" title="Cerrar">✕</button>
+    <button onclick="App._clearSelection()" style="background:none;border:none;color:#9CA3AF;cursor:pointer;padding:0 0 0 4px;font-size:18px;line-height:1;display:flex;align-items:center;flex-shrink:0;" aria-label="Cerrar">✕</button>
   </div>
 
   <!-- ── SELECTOR DE CAPAS — flota sobre el mapa ── -->
@@ -1330,11 +1330,11 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
            background:rgba(30,30,38,.82);backdrop-filter:blur(8px);
            border-radius:24px;border:0.5px solid rgba(255,255,255,.1);
            box-shadow:0 4px 20px rgba(0,0,0,.45);">
-    <button id="lbtn-all"  class="layer-chip all"
+    <button id="lbtn-all"  class="layer-chip all" aria-label="Mostrar todos los loops" aria-pressed="true"
       onclick="App._setLayer('all')"  title="Ver todos los loops">🔀 Todos</button>
-    <button id="lbtn-muni" class="layer-chip"
+    <button id="lbtn-muni" class="layer-chip" aria-label="Mostrar loops municipales" aria-pressed="false"
       onclick="App._setLayer('muni')" title="Solo loops de la ciudad">🏙️ Ciudad</button>
-    <button id="lbtn-com"  class="layer-chip"
+    <button id="lbtn-com"  class="layer-chip" aria-label="Mostrar loops de la comunidad" aria-pressed="false"
       onclick="App._setLayer('com')"  title="Solo loops de loopers">👟 Loopers</button>
   </div>
 
@@ -1342,7 +1342,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
   <div id="btm-panel" style="display:none;">
     <div id="cards-scroll" style="display:none;"></div>
     <span id="panel-ct" style="display:none;"></span>
-    <input type="text" id="srch-hidden" style="display:none;">
+    <input type="text" id="srch-hidden" style="display:none;" aria-hidden="true">
   </div>
 
 </div>
@@ -1351,10 +1351,10 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 <div id="side-overlay" onclick="App.closeSidePanel()"></div>
 
 <!-- ════════════ SIDEBAR COLAPSABLE ════════════ -->
-<div id="side-panel" class="sb-rail">
+<div id="side-panel" role="navigation" aria-label="Menú principal" class="sb-rail">
 
   <!-- Toggle -->
-  <button id="sb-toggle-btn" onclick="App.toggleSidebar()" title="Menú">
+  <button id="sb-toggle-btn" onclick="App.toggleSidebar()" title="Menú" aria-label="Contraer menú" aria-expanded="true" aria-controls="side-panel">
     <span></span><span></span><span></span>
   </button>
 
@@ -1370,13 +1370,13 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
         <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:var(--dk);">Urban <span style="color:var(--or);">Loop</span> <span style="font-size:11px;color:var(--gr);font-weight:400;">360°</span></div>
         <div style="font-size:11px;color:var(--gr);margin-top:1px;" id="side-city-name">📍 La Paz, Entre Ríos</div>
       </div>
-      <button onclick="App.toggleTheme()" id="theme-toggle-btn" title="Día/Noche"
+      <button onclick="App.toggleTheme()" id="theme-toggle-btn" title="Día/Noche" aria-label="Cambiar tema día/noche" aria-pressed="false"
         style="width:32px;height:32px;background:var(--lt);border:0.5px solid var(--bd);border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;transition:all .2s;flex-shrink:0;">☀️</button>
     </div>
     <!-- Buscador -->
     <div style="margin-top:10px;background:var(--bg2);border:0.5px solid var(--bd);border-radius:var(--rs);height:36px;display:flex;align-items:center;gap:8px;padding:0 10px;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input type="text" id="srch" placeholder="Buscar loops..."
+      <input type="text" id="srch" placeholder="Buscar loops..." aria-label="Buscar loops" role="searchbox"
         style="border:none;outline:none;font-family:var(--fB);font-size:12px;color:var(--dk);flex:1;background:transparent;"
         oninput="App._onSrch(this.value)">
     </div>
@@ -1387,44 +1387,44 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <!-- PRINCIPAL -->
     <span class="sb-section-label">Principal</span>
-    <button class="sb-nav-btn" id="sb-btn-explore" onclick="App.sideNav('explore')">
+    <button class="sb-nav-btn" id="sb-btn-explore" onclick="App.sideNav('explore')" aria-label="Explorar mapa" role="menuitem">
       <span class="sb-icon">🗺️</span><span class="sb-label">Mapa</span>
     </button>
-    <button class="sb-nav-btn" id="sb-btn-loops-urbanos" onclick="App.sideNav('loops-urbanos')">
+    <button class="sb-nav-btn" id="sb-btn-loops-urbanos" onclick="App.sideNav('loops-urbanos')" aria-label="Ver loops urbanos" role="menuitem">
       <span class="sb-icon">🔄</span><span class="sb-label">Loops Urbanos</span>
     </button>
-    <button class="sb-nav-btn" id="sb-btn-explorar-ciudades" onclick="App.sideNav('explorar-ciudades')">
+    <button class="sb-nav-btn" id="sb-btn-explorar-ciudades" onclick="App.sideNav('explorar-ciudades')" aria-label="Explorar ciudades" role="menuitem">
       <span class="sb-icon">🔍</span><span class="sb-label">Explorar ciudades</span>
     </button>
 
     <!-- COMUNIDAD -->
     <div class="sb-divider"></div>
     <span class="sb-section-label">Comunidad</span>
-    <button class="sb-nav-btn" id="sb-btn-comunidad" onclick="App.sideNav('comunidad')">
+    <button class="sb-nav-btn" id="sb-btn-comunidad" onclick="App.sideNav('comunidad')" aria-label="Ver comunidad" role="menuitem">
       <span class="sb-icon">👥</span><span class="sb-label">Somos Loopers</span>
     </button>
-    <button class="sb-nav-btn" id="sb-btn-eventos" onclick="App.sideNav('eventos')">
+    <button class="sb-nav-btn" id="sb-btn-eventos" onclick="App.sideNav('eventos')" aria-label="Ver eventos" role="menuitem">
       <span class="sb-icon">📅</span><span class="sb-label">Eventos</span>
       
     </button>
-    <button class="sb-nav-btn" id="sb-btn-ranking" onclick="App.sideNav('ranking')">
+    <button class="sb-nav-btn" id="sb-btn-ranking" onclick="App.sideNav('ranking')" aria-label="Ver ranking" role="menuitem">
       <span class="sb-icon">🏆</span><span class="sb-label">Ranking</span>
     </button>
 
     <!-- MIS COSAS -->
     <div class="sb-divider"></div>
     <span class="sb-section-label">Mis cosas</span>
-    <button class="sb-nav-btn" id="sb-btn-saved" onclick="App.sideNav('saved')">
+    <button class="sb-nav-btn" id="sb-btn-saved" onclick="App.sideNav('saved')" aria-label="Ver guardados" role="menuitem">
       <span class="sb-icon">🔖</span><span class="sb-label">Guardados</span>
     </button>
-    <button class="sb-nav-btn" id="sb-btn-profile" onclick="App.sideNav('profile')">
+    <button class="sb-nav-btn" id="sb-btn-profile" onclick="App.sideNav('profile')" aria-label="Ver perfil" role="menuitem">
       <span class="sb-icon">👤</span><span class="sb-label">Perfil</span>
     </button>
 
     <!-- ADMINISTRACIÓN -->
     <div class="sb-divider"></div>
     <span class="sb-section-label">Administración</span>
-    <button class="sb-nav-btn" id="sb-btn-admin" onclick="App.sideNav('admin')">
+    <button class="sb-nav-btn" id="sb-btn-admin" onclick="App.sideNav('admin')" aria-label="Panel de administración" role="menuitem">
       <span class="sb-icon">🛡️</span><span class="sb-label">Panel Admin</span>
     </button>
 
@@ -1531,8 +1531,8 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
           Continuar con Google
         </button>
         <div style="font-size:12px;color:var(--gr);margin:6px 0;">— o con email —</div>
-        <input id="auth-email" type="email" placeholder="tu@email.com" class="fi" style="margin-bottom:8px;width:100%;box-sizing:border-box;">
-        <input id="auth-pass" type="password" placeholder="Contraseña (mín. 6 caracteres)" class="fi" style="margin-bottom:12px;width:100%;box-sizing:border-box;">
+        <input id="auth-email" type="email" placeholder="tu@email.com" aria-label="Correo electrónico" class="fi" style="margin-bottom:8px;width:100%;box-sizing:border-box;">
+        <input id="auth-pass" type="password" placeholder="Contraseña (mín. 6 caracteres)" aria-label="Contraseña" class="fi" style="margin-bottom:12px;width:100%;box-sizing:border-box;">
         <div style="display:flex;gap:8px;">
           <button onclick="App.loginEmail()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--or);color:white;font-size:13px;font-weight:600;cursor:pointer;">Iniciar sesión</button>
           <button onclick="App.registerEmail()" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--or);background:transparent;color:var(--or);font-size:13px;font-weight:600;cursor:pointer;">Registrarse</button>
@@ -1692,15 +1692,15 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px;">
             <div>
               <label style="font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:3px;">PAÍS</label>
-              <input type="text" class="fi" id="adm-pais" placeholder="Argentina" value="Argentina" style="font-size:12px;padding:8px 10px;">
+              <input type="text" class="fi" id="adm-pais" placeholder="Argentina" aria-label="País" value="Argentina" style="font-size:12px;padding:8px 10px;">
             </div>
             <div>
               <label style="font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:3px;">PROVINCIA</label>
-              <input type="text" class="fi" id="adm-provincia" placeholder="Entre Ríos" value="Entre Ríos" style="font-size:12px;padding:8px 10px;">
+              <input type="text" class="fi" id="adm-provincia" placeholder="Entre Ríos" aria-label="Provincia" value="Entre Ríos" style="font-size:12px;padding:8px 10px;">
             </div>
           </div>
           <label style="font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:3px;">CIUDAD</label>
-          <select class="fi" id="adm-city" style="font-size:13px;">
+          <select class="fi" id="adm-city" aria-label="Ciudad" style="font-size:13px;">
             <option value="">🔍 Auto-detectando...</option>
             <option value="La Paz">📍 La Paz</option>
             <option value="Santa Elena">📍 Santa Elena</option>
@@ -1723,7 +1723,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
           </div>
         </div>
         <div class="fg"><label class="fl">Tipo de loop</label>
-          <select class="fi" id="adm-type">
+          <select class="fi" id="adm-type" aria-label="Tipo de loop">
             <option value="trad">☕ Tradicional</option><option value="pesca">🎣 Pesca</option>
             <option value="gastro">🍽️ Gastronómica</option><option value="atardecer">🌅 Atardecer</option>
             <option value="running">🏃 Running</option><option value="mtb">🚵 MTB</option>
@@ -1774,8 +1774,8 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <!-- ── LOOPS ── -->
     <div id="adm-tab-loops" class="adm-panel" style="display:none;">
       <div style="display:flex;gap:8px;margin-bottom:12px;">
-        <input id="adm-loops-q" type="text" class="fi" placeholder="Buscar loop..." style="flex:1;" oninput="App._admRenderLoops()">
-        <select class="fi" id="adm-loops-city" style="width:120px;" onchange="App._admRenderLoops()">
+        <input id="adm-loops-q" type="text" class="fi" placeholder="Buscar loop..." aria-label="Buscar loop" style="flex:1;" oninput="App._admRenderLoops()">
+        <select class="fi" id="adm-loops-city" aria-label="Filtrar por ciudad" style="width:120px;" onchange="App._admRenderLoops()">
           <option value="">Todas</option>
           <option value="La Paz">La Paz</option><option value="Paraná">Paraná</option>
           <option value="Concordia">Concordia</option><option value="Gualeguaychú">Gualeguaychú</option>
@@ -1787,7 +1787,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <!-- ── FOTOLOOPS ── -->
     <div id="adm-tab-fotoloops" class="adm-panel" style="display:none;">
       <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
-        <select class="fi" id="adm-fl-filter" style="width:140px;" onchange="App._admRenderFotoloops()">
+        <select class="fi" id="adm-fl-filter" aria-label="Filtrar foto loops" style="width:140px;" onchange="App._admRenderFotoloops()">
           <option value="all">Todos</option>
           <option value="pending">⏳ Pendientes</option>
           <option value="approved">✅ Aprobados</option>
@@ -1898,7 +1898,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       <div id="grab-cover-section" style="display:none;margin-top:10px;background:rgba(0,0,0,.35);border-radius:12px;padding:12px;">
         <div style="font-size:12px;font-weight:600;color:white;margin-bottom:8px;">📷 Foto de portada del loop</div>
         <div id="grab-cover-preview" style="display:none;position:relative;border-radius:10px;overflow:hidden;aspect-ratio:16/9;margin-bottom:8px;">
-          <img id="grab-cover-thumb" style="width:100%;height:100%;object-fit:cover;" src="" alt="">
+          <img id="grab-cover-thumb" style="width:100%;height:100%;object-fit:cover;" src="" alt="Preview de portada del loop grabado">
           <button onclick="App._clearGrabCover()" style="position:absolute;top:6px;right:6px;width:24px;height:24px;border-radius:50%;background:rgba(0,0,0,.7);border:none;color:white;font-size:15px;line-height:1;cursor:pointer;">×</button>
           <div id="grab-cover-size" style="position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.6);color:white;font-size:10px;padding:2px 7px;border-radius:8px;"></div>
         </div>
@@ -1946,19 +1946,19 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     </div>
     <div>
       <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">NOMBRE DEL LOOP *</label>
-      <input type="text" id="cm-name" class="fi" placeholder="ej. Loop del Arroyo Las Tunas…" style="font-size:14px;">
+      <input type="text" id="cm-name" class="fi" placeholder="ej. Loop del Arroyo Las Tunas…" aria-label="Nombre del loop" style="font-size:14px;">
     </div>
 
     <!-- Descripción -->
     <div>
       <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">DESCRIPCIÓN</label>
-      <textarea id="cm-desc" class="fi" rows="2" placeholder="Describí la experiencia de este loop..." style="font-size:13px;resize:none;"></textarea>
+      <textarea id="cm-desc" class="fi" rows="2" placeholder="Describí la experiencia de este loop..." aria-label="Descripción del loop" style="font-size:13px;resize:none;"></textarea>
     </div>
 
     <!-- Tipo -->
     <div>
       <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">TIPO</label>
-      <select id="cm-type" class="fi" style="font-size:13px;">
+      <select id="cm-type" class="fi" aria-label="Tipo de actividad" style="font-size:13px;">
         <option value="trad">☕ Tradicional</option>
         <option value="running">🏃 Running</option>
         <option value="mtb">🚵 MTB</option>
@@ -2010,7 +2010,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <div>
       <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">FOTO DE PORTADA (opcional)</label>
       <div id="cm-img-preview" style="display:none;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:var(--bg0);margin-bottom:8px;">
-        <img id="cm-img-thumb" style="width:100%;height:100%;object-fit:cover;" src="" alt="">
+        <img id="cm-img-thumb" style="width:100%;height:100%;object-fit:cover;" src="" alt="Preview de imagen del post">
         <button onclick="App._cmClearImg()" style="position:absolute;top:8px;right:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.6);border:none;color:white;font-size:18px;cursor:pointer;">×</button>
       </div>
       <div style="display:flex;gap:8px;">
@@ -2143,17 +2143,17 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <!-- Nombre -->
     <div class="fg" style="margin-bottom:12px;">
       <label class="fl">Nombre del evento *</label>
-      <input type="text" class="fi" id="ev-name" placeholder="ej. Salida grupal costanera sábado">
+      <input type="text" class="fi" id="ev-name" placeholder="ej. Salida grupal costanera sábado" aria-label="Nombre del evento">
     </div>
     <!-- Descripción -->
     <div class="fg" style="margin-bottom:12px;">
       <label class="fl">Descripción</label>
-      <textarea class="fi" id="ev-desc" rows="2" placeholder="Contá de qué se trata el evento..."></textarea>
+      <textarea class="fi" id="ev-desc" rows="2" placeholder="Contá de qué se trata el evento..." aria-label="Descripción del evento"></textarea>
     </div>
     <!-- Loop asociado -->
     <div class="fg" style="margin-bottom:12px;">
       <label class="fl">Loop asociado (opcional)</label>
-      <select class="fi" id="ev-loop-select">
+      <select class="fi" id="ev-loop-select" aria-label="Loop asociado al evento">
         <option value="">— Sin loop específico —</option>
       </select>
     </div>
@@ -2161,17 +2161,17 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
       <div class="fg">
         <label class="fl">Fecha *</label>
-        <input type="date" class="fi" id="ev-fecha">
+        <input type="date" class="fi" id="ev-fecha" aria-label="Fecha del evento">
       </div>
       <div class="fg">
         <label class="fl">Hora *</label>
-        <input type="time" class="fi" id="ev-hora" value="08:00">
+        <input type="time" class="fi" id="ev-hora" value="08:00" aria-label="Hora del evento">
       </div>
     </div>
     <!-- Cupo -->
     <div class="fg" style="margin-bottom:14px;">
       <label class="fl">Cupo máximo</label>
-      <input type="number" class="fi" id="ev-cupo" placeholder="ej. 20 (vacío = ilimitado)" min="1">
+      <input type="number" class="fi" id="ev-cupo" placeholder="ej. 20 (vacío = ilimitado)" aria-label="Cupo máximo de participantes" min="1">
     </div>
 
     <!-- ── FOTO DEL EVENTO ── -->
@@ -2196,7 +2196,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <!-- ── PUNTO DE ENCUENTRO (mapa) ── -->
     <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.6px;margin-bottom:8px;">PUNTO DE ENCUENTRO</div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-      <input id="ev-lugar" type="text" class="fi" placeholder="ej. Costanera norte, Plaza San Martín..." style="flex:1;">
+      <input id="ev-lugar" type="text" class="fi" placeholder="ej. Costanera norte, Plaza San Martín..." aria-label="Lugar del evento" style="flex:1;">
       <button onclick="App._evUseMyLocation()" style="flex-shrink:0;height:44px;padding:0 12px;background:var(--orL);border:none;border-radius:var(--rs);color:var(--or);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">📍 Mi ubicación</button>
     </div>
     <div id="ev-map" style="height:190px;border-radius:12px;border:1.5px solid var(--bd);overflow:hidden;background:var(--bg0);margin-bottom:6px;"></div>
@@ -2396,7 +2396,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <!-- Buscador -->
     <div style="display:flex;align-items:center;gap:8px;background:var(--lt);border-radius:10px;padding:9px 12px;border:1.5px solid var(--bd);">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input id="explorar-search" type="text" placeholder="Buscá ciudad, provincia o país…"
+      <input id="explorar-search" type="text" placeholder="Buscá ciudad, provincia o país…" aria-label="Buscar ciudad, provincia o país"
         style="border:none;outline:none;font-family:var(--fB);font-size:14px;color:var(--dk);background:transparent;flex:1;"
         oninput="App._filterExplorar(this.value)">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" stroke-width="2" style="cursor:pointer;" onclick="document.getElementById('explorar-search').value='';App._filterExplorar('')"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -2566,7 +2566,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     </label>
 
     <!-- Descripción -->
-    <textarea id="fs-desc" placeholder="¿Qué es este lugar? Contale a los demás..." style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:80px;font-family:var(--fS);margin-bottom:14px;"></textarea>
+    <textarea id="fs-desc" placeholder="¿Qué es este lugar? Contale a los demás..." aria-label="Descripción del foto spot" style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:80px;font-family:var(--fS);margin-bottom:14px;"></textarea>
 
     <div style="display:flex;gap:10px;">
       <button onclick="App.closeFotoStop()" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--bd);background:var(--lt);font-size:14px;font-weight:600;color:var(--md);cursor:pointer;">Cancelar</button>
@@ -2602,8 +2602,8 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       </label>
     </div>
 
-    <input id="fl-name" type="text" placeholder="Nombre del lugar (ej: Costanera Norte, Bar El Viejo)" class="fi" style="margin-bottom:10px;width:100%;box-sizing:border-box;">
-    <textarea id="fl-desc" placeholder="Contales a los demás por qué vale la pena parar acá..." style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:60px;font-family:var(--fS);margin-bottom:10px;"></textarea>
+    <input id="fl-name" type="text" placeholder="Nombre del lugar (ej: Costanera Norte, Bar El Viejo)" aria-label="Nombre del lugar" class="fi" style="margin-bottom:10px;width:100%;box-sizing:border-box;">
+    <textarea id="fl-desc" placeholder="Contales a los demás por qué vale la pena parar acá..." aria-label="Descripción del lugar" style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:60px;font-family:var(--fS);margin-bottom:10px;"></textarea>
 
     <!-- Categorías / Etiquetas -->
     <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">Etiqueta</div>
@@ -2789,7 +2789,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
   </button>
 </div>
 
-<div id="toast"></div>
+<div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
 <!-- LEAFLET -->
 <script>
@@ -10011,6 +10011,11 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
 
     if (!sp) return;
     sp.classList.remove('sb-rail','sb-open');
+
+    // Actualizar aria-expanded para accesibilidad
+    var sbToggleBtn = document.getElementById('sb-toggle-btn');
+    if (menuBtn)     menuBtn.setAttribute('aria-expanded',     state > 0 ? 'true' : 'false');
+    if (sbToggleBtn) sbToggleBtn.setAttribute('aria-expanded', state === 2 ? 'true' : 'false');
 
     if (state === 0) {
       if (so) so.classList.remove('show');
