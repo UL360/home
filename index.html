@@ -51,6 +51,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <!-- Firebase SDKs compat — v9.23.0 estable -->
+<!-- ── SRI (Subresource Integrity) ──────────────────────────────
+     Para agregar integridad a los scripts externos, calculá los hashes
+     desde tu computadora con este comando (requiere curl y openssl):
+
+     curl -s URL | openssl dgst -sha384 -binary | openssl base64 -A
+
+     Ejemplo para firebase-app-compat.js:
+     curl -s https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js | openssl dgst -sha384 -binary | openssl base64 -A
+
+     Luego agregás integrity="sha384-HASH_AQUI" crossorigin="anonymous"
+     a cada <script> o <link>.
+     ──────────────────────────────────────────────────────────────── -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
