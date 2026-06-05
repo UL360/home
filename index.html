@@ -854,8 +854,7 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 .grab-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg1);border-bottom:0.5px solid var(--bd);flex-shrink:0;}
 .grab-hdr h2{font-family:var(--fH);font-size:17px;font-weight:700;color:#F5F5F5;}
 .grab-back{background:none;border:none;cursor:pointer;color:#8A8A98;font-size:14px;display:flex;align-items:center;gap:5px;font-family:var(--fB);}
-.grab-type-row{display:flex;gap:8px;overflow-x:auto;padding:10px 16px;flex-shrink:0;background:#1C1C1E;border-bottom:0.5px solid #2C2C2E;scrollbar-width:none;}
-.grab-type-row::-webkit-scrollbar{display:none;}
+.grab-type-row{display:flex;gap:7px;flex-wrap:wrap;padding:10px 16px 12px;flex-shrink:0;background:#1C1C1E;border-bottom:0.5px solid #2C2C2E;}
 .grab-type-chip{flex-shrink:0;height:30px;padding:0 12px;border-radius:20px;border:0.5px solid #2C2C2E;background:#1C1C1E;font-size:12px;font-weight:500;color:#8A8A98;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .2s;white-space:nowrap;}
 .grab-type-chip.on{background:var(--or);border-color:var(--or);color:var(--wh);}
 .grab-map-wrap{flex:1;position:relative;min-height:0;overflow:hidden;}
@@ -1863,6 +1862,31 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <div class="grab-type-chip" data-t="salidas">🎉 Salidas</div>
     <div class="grab-type-chip" data-t="trabajo">💼 Trabajo</div>
     <div class="grab-type-chip" data-t="vacaciones">🏖️ Vacaciones</div>
+    <div class="grab-type-chip" data-t="lugar">📍 Lugar</div>
+    <div class="grab-type-chip" data-t="resto">🥩 Resto</div>
+    <div class="grab-type-chip" data-t="cafe">☕ Café</div>
+    <div class="grab-type-chip" data-t="vino">🍷 Vino</div>
+    <div class="grab-type-chip" data-t="cerveza">🍺 Cerveza</div>
+    <div class="grab-type-chip" data-t="coctel">🍸 Cóctel</div>
+    <div class="grab-type-chip" data-t="vineria">🍾 Viñería</div>
+    <div class="grab-type-chip" data-t="bar">🥂 Bar</div>
+    <div class="grab-type-chip" data-t="boliche">🪩 Boliche</div>
+    <div class="grab-type-chip" data-t="teatro">🎭 Teatro</div>
+    <div class="grab-type-chip" data-t="cine">🎬 Cine</div>
+    <div class="grab-type-chip" data-t="musica">🎵 Música</div>
+    <div class="grab-type-chip" data-t="museo">🖼️ Museo</div>
+    <div class="grab-type-chip" data-t="arte">🎨 Arte</div>
+    <div class="grab-type-chip" data-t="naturaleza">🌿 Natural</div>
+    <div class="grab-type-chip" data-t="rio">🌊 Río</div>
+    <div class="grab-type-chip" data-t="playa">🏖️ Playa</div>
+    <div class="grab-type-chip" data-t="parque">🌳 Parque</div>
+    <div class="grab-type-chip" data-t="plaza">🏛️ Plaza</div>
+    <div class="grab-type-chip" data-t="aventura">🧗 Aventura</div>
+    <div class="grab-type-chip" data-t="campo">🌾 Campo</div>
+    <div class="grab-type-chip" data-t="deporte">⚽ Deporte</div>
+    <div class="grab-type-chip" data-t="nocturno">🌙 Noche</div>
+    <div class="grab-type-chip" data-t="foto">📸 Foto</div>
+    <div class="grab-type-chip" data-t="otro">✳️ Otro</div>
   </div>
   <div class="grab-map-wrap">
     <div id="grab-map" style="width:100%;height:100%;"></div>
@@ -2661,6 +2685,15 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <div id="fl-option-loop" style="background:var(--bg0);border-radius:12px;padding:10px 12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
       <input type="checkbox" id="fl-make-loop" style="width:18px;height:18px;accent-color:var(--or);">
       <label for="fl-make-loop" style="font-size:12px;color:var(--dk);cursor:pointer;line-height:1.4;">Crear también un <b>mini-loop</b> para llegar a este lugar</label>
+    </div>
+
+    <!-- Proponer al municipio -->
+    <div style="background:var(--c-viola);border:1px solid var(--c-viola-b);border-radius:12px;padding:11px 13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;">
+      <input type="checkbox" id="fl-municipio" style="width:18px;height:18px;accent-color:var(--or);flex-shrink:0;margin-top:2px;">
+      <label for="fl-municipio" style="font-size:12px;color:var(--dk);cursor:pointer;line-height:1.5;">
+        🏛 <b>Proponer al municipio</b><br>
+        <span style="color:var(--gr);font-size:11px;">La parada se envía al municipio para revisión <i>y también</i> se publica en el mapa y en Somos Loopers.</span>
+      </label>
     </div>
 
     <div style="display:flex;gap:10px;">
@@ -4409,7 +4442,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const hints = {
       private: '🔒 Solo vos podés ver este loop.',
       public:  '👥 Visible para todos los loopers de tu ciudad.',
-      pending: '🏛 Se enviará al municipio para revisión y aprobación.'
+      pending: '🏛 Se enviará al municipio para revisión y <b>también</b> se publicará en el mapa y en Somos Loopers.'
     };
     const h = document.getElementById('vopt-hint');
     if (h) h.textContent = hints[vis] || '';
@@ -5541,6 +5574,12 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         }
 
         await this._db.collection('fotoloops').doc(stopId).set(stopData);
+
+        // Si el usuario quiere proponer al municipio, guardar también en pending
+        if (document.getElementById('fl-municipio')?.checked) {
+          const pendingData = { ...stopData, type: 'fotoloop_municipio', proposedAt: Date.now() };
+          await this._db.collection('loops_municipio_pending').doc('fl-' + stopId).set(pendingData);
+        }
       }
 
       // Mini-loop (sin arrays anidados)
@@ -5576,7 +5615,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       this._fotoPosts.unshift(localPost);
       this._drawFotoStopsOnMap();   // ← actualizar mapa
       this._addPts(30, 'Parada publicada');
-      this._showSaveSuccess(name, `🌐 Publicado en ${cityId}`);
+      const toMuni = document.getElementById('fl-municipio')?.checked;
+      this._showSaveSuccess(name, toMuni ? `🏛 Propuesta al municipio + publicado en ${cityId}` : `🌐 Publicado en ${cityId}`);
       // FX
       this._fxBurst(document.getElementById('foto-loop-overlay'), 12);
       setTimeout(() => this._fxPts(30), 180);
@@ -7086,7 +7126,10 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       if (this._db) {
         if (vis === 'pending') {
           await this._db.collection('loops_municipio_pending').doc(loopId).set(loopData);
-          this.toast('🏛 Propuesta enviada al municipio para revisión');
+          // También publicar en la comunidad y en el mapa como looper
+          const publicData = { ...loopData, visibility: 'public', source: 'comunidad' };
+          await this._db.collection('loops').doc(loopId).set(publicData);
+          this.toast('🏛 Propuesta enviada al municipio + publicado en Somos Loopers');
         } else {
           await this._db.collection('loops').doc(loopId).set(loopData);
           this.toast(vis === 'public' ? '✅ Loop publicado en la comunidad' : '🔒 Loop guardado como privado');
@@ -7094,11 +7137,11 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       }
 
       // Agregar a routes locales con la URL ya resuelta
-      if (vis !== 'pending') {
+      if (vis !== 'private') {
         const loopForMap = { ...loopData, pts: this._cmPts, img: loopData._imgPreview || loopData.img };
         delete loopForMap._imgPreview;
         this.routes.push(loopForMap);
-        if (vis === 'public') this.routesCom.push(loopForMap);
+        this.routesCom.push(loopForMap);
         if (this.mainMap) this._drawRoute(loopForMap);
         this._renderCards('', this._activeFilter || 'all');
       }
@@ -8950,7 +8993,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const m     = Math.floor(this.grabSecs/60);
     const s     = this.grabSecs % 60;
     const t     = this.grabType||'running';
-    const emoji = {running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',perro:'🐕',pesca:'🎣',atardecer:'🌅',gastro:'🍽️',trad:'☕',relax:'🧘',salidas:'🎉',trabajo:'💼',vacaciones:'🏖️'}[t]||'🔄';
+    const emoji = {running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',perro:'🐕',pesca:'🎣',atardecer:'🌅',gastro:'🍽️',trad:'☕',relax:'🧘',salidas:'🎉',trabajo:'💼',vacaciones:'🏖️',lugar:'📍',resto:'🥩',cafe:'☕',vino:'🍷',cerveza:'🍺',coctel:'🍸',vineria:'🍾',bar:'🥂',boliche:'🪩',teatro:'🎭',cine:'🎬',musica:'🎵',museo:'🖼️',arte:'🎨',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',aventura:'🧗',campo:'🌾',deporte:'⚽',nocturno:'🌙',foto:'📸',otro:'✳️'}[t]||'🔄';
     const autoName = `${emoji} Loop ${new Date().toLocaleDateString('es-AR',{day:'2-digit',month:'short'})}`;
 
     // Crear modal dinámico
@@ -9017,6 +9060,14 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           <button onclick="App._cancelGrabSave()" style="flex:1;padding:13px;border-radius:12px;border:1px solid var(--bd);background:var(--bg2);color:var(--gr);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--fH);">Descartar</button>
           <button id="gsm-save-btn" onclick="App._confirmGrabSave()" style="flex:2;padding:13px;border-radius:12px;border:none;background:var(--or);color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--fH);box-shadow:0 4px 14px rgba(255,95,0,.4);">☁️ Guardar Loop</button>
         </div>
+        <!-- Proponer al municipio -->
+        <div style="background:rgba(90,60,140,.15);border:1px solid rgba(183,148,244,.3);border-radius:12px;padding:11px 13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;margin-top:14px;">
+          <input type="checkbox" id="gsm-municipio" style="width:18px;height:18px;accent-color:#FF5F00;flex-shrink:0;margin-top:2px;">
+          <label for="gsm-municipio" style="font-size:12px;color:var(--dk);cursor:pointer;line-height:1.5;">
+            🏛 <b>Proponer al municipio</b><br>
+            <span style="color:var(--gr);font-size:11px;">El loop se envía al municipio para revisión <i>y también</i> se publica en el mapa y en Somos Loopers.</span>
+          </label>
+        </div>
       </div>`;
   },
 
@@ -9064,7 +9115,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     loc.ciudad = city; loc.provincia = grabProv; loc.pais = grabPais;
 
     const t = this.grabType||'running';
-    const types={running:{emoji:'🏃',color:'#7C3AED',badge:'bsport'},mtb:{emoji:'🚵',color:'#16A34A',badge:'bmtb'},ciclismo:{emoji:'🚴',color:'#0891B2',badge:'brelax'},caminata:{emoji:'🥾',color:'#D97706',badge:'btrab'},paseo:{emoji:'🌳',color:'#059669',badge:'bg'},perro:{emoji:'🐕',color:'#D97706',badge:'btrab'},pesca:{emoji:'🎣',color:'#0E7490',badge:'btrab'},atardecer:{emoji:'🌅',color:'#7C3AED',badge:'ba'},gastro:{emoji:'🍽️',color:'#B45309',badge:'bg'},trad:{emoji:'☕',color:'#92400E',badge:'bg'},relax:{emoji:'🧘',color:'#0891B2',badge:'brelax'},salidas:{emoji:'🎉',color:'#7C3AED',badge:'bsport'},trabajo:{emoji:'💼',color:'#D97706',badge:'btrab'},vacaciones:{emoji:'🏖️',color:'#DB2777',badge:'ba'}};
+    const types={running:{emoji:'🏃',color:'#7C3AED',badge:'bsport'},mtb:{emoji:'🚵',color:'#16A34A',badge:'bmtb'},ciclismo:{emoji:'🚴',color:'#0891B2',badge:'brelax'},caminata:{emoji:'🥾',color:'#D97706',badge:'btrab'},paseo:{emoji:'🌳',color:'#059669',badge:'bg'},perro:{emoji:'🐕',color:'#D97706',badge:'btrab'},pesca:{emoji:'🎣',color:'#0E7490',badge:'btrab'},atardecer:{emoji:'🌅',color:'#7C3AED',badge:'ba'},gastro:{emoji:'🍽️',color:'#B45309',badge:'bg'},trad:{emoji:'☕',color:'#92400E',badge:'bg'},relax:{emoji:'🧘',color:'#0891B2',badge:'brelax'},salidas:{emoji:'🎉',color:'#7C3AED',badge:'bsport'},trabajo:{emoji:'💼',color:'#D97706',badge:'btrab'},vacaciones:{emoji:'🏖️',color:'#DB2777',badge:'ba'},lugar:{emoji:'📍',color:'#FF5F00',badge:'bg'},resto:{emoji:'🥩',color:'#B91C1C',badge:'bg'},cafe:{emoji:'☕',color:'#92400E',badge:'bg'},vino:{emoji:'🍷',color:'#7C2D8E',badge:'bg'},cerveza:{emoji:'🍺',color:'#B45309',badge:'bg'},coctel:{emoji:'🍸',color:'#0E7490',badge:'bg'},vineria:{emoji:'🍾',color:'#6B21A8',badge:'bg'},bar:{emoji:'🥂',color:'#0F766E',badge:'bg'},boliche:{emoji:'🪩',color:'#4F46E5',badge:'ba'},teatro:{emoji:'🎭',color:'#9333EA',badge:'ba'},cine:{emoji:'🎬',color:'#1D4ED8',badge:'ba'},musica:{emoji:'🎵',color:'#BE185D',badge:'ba'},museo:{emoji:'🖼️',color:'#9333EA',badge:'ba'},arte:{emoji:'🎨',color:'#C026D3',badge:'ba'},naturaleza:{emoji:'🌿',color:'#059669',badge:'bg'},rio:{emoji:'🌊',color:'#0891B2',badge:'bg'},playa:{emoji:'🏖️',color:'#0284C7',badge:'bg'},parque:{emoji:'🌳',color:'#16A34A',badge:'bg'},plaza:{emoji:'🏛️',color:'#7C3AED',badge:'bg'},aventura:{emoji:'🧗',color:'#EA580C',badge:'bsport'},campo:{emoji:'🌾',color:'#65A30D',badge:'bg'},deporte:{emoji:'⚽',color:'#DC2626',badge:'bsport'},nocturno:{emoji:'🌙',color:'#4F46E5',badge:'ba'},foto:{emoji:'📸',color:'#0F766E',badge:'ba'},otro:{emoji:'✳️',color:'#6B7280',badge:'bg'}};
     const c = types[t]||{emoji:'🏃',color:'#7C3AED',badge:'bsport'};
     const dist = this._calcDist(this.grabPts);
     const m = Math.floor(this.grabSecs/60), s = this.grabSecs%60;
@@ -9120,9 +9171,18 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     this._fxGrabDone(r.name);
     setTimeout(() => this._fxPts(25 + (this._grabStopPois||[]).length * 10), 300);
 
+    const toMuni = document.getElementById('gsm-municipio')?.checked;
+
     try {
       await this._saveData();
-      this._showSaveSuccess(r.name, `☁️ Subido a ${city}`);
+      // Si se propone al municipio, guardar en pending además de en la colección normal
+      if (toMuni && this._db) {
+        await this._db.collection('loops_municipio_pending').doc(r.id).set({...r, proposedAt: Date.now()});
+        this._addPts(15, 'Propuesta al municipio');
+        this._showSaveSuccess(r.name, `🏛 Propuesta al municipio + publicado en ${city}`);
+      } else {
+        this._showSaveSuccess(r.name, `☁️ Subido a ${city}`);
+      }
     } catch(e) {
       this.toast(`⚠️ Guardado local (${e.message.slice(0,40)})`);
     }
