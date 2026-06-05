@@ -6345,31 +6345,58 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const userLng = this._lastLng || null;
 
     // ── 1. Loops de la ciudad exacta ──
+    // Usar igualdad ESTRICTA de nombre. Si hay GPS, verificar también que esté
+    // dentro de 35 km — evita que loops de otras ciudades guardados con ciudad
+    // incorrecta aparezcan en la lista local.
+    const seenIds = new Set();
     const localLoops = this.routes.filter(r => {
       if (r.type==='fotostop') return false;
       const rCity = normCity(r.cityId||r.ciudad||'');
       if (!rCity) return false;
-      return rCity===uCity||(rCity.length>3&&uCity.includes(rCity))||(uCity.length>3&&rCity.includes(uCity));
+
+      const nameMatch = rCity === uCity;
+      const coords = getCoords(r);
+
+      // Si hay GPS del usuario y GPS del loop, usar distancia como árbitro
+      if (coords && userLat && userLng) {
+        const dist = haversine(userLat, userLng, coords.lat, coords.lng);
+        if (dist > 35) return false; // más de 35 km → no es local sin importar el nombre
+        if (dist <= 35 && nameMatch) { seenIds.add(r.id); return true; }
+        // dentro de 20 km y sin nombre match → igual incluir (loop bien geoposicionado)
+        if (dist <= 20) { seenIds.add(r.id); return true; }
+        return false;
+      }
+
+      // Sin GPS: solo igualdad estricta de nombre
+      if (nameMatch) { seenIds.add(r.id); return true; }
+      return false;
     });
+
     const scored = localLoops.map(r=>({...r,_score:(r.likes||0)*2+(r.paseos||0)}));
     if (this._luFilter==='populares') scored.sort((a,b)=>b._score-a._score);
 
-    // ── 2. Loops aledaños — misma provincia, otras ciudades, ordenadas por distancia ──
+    // ── 2. Loops aledaños — misma provincia, otras ciudades, ordenados por distancia ──
+    // Excluir los que ya aparecen como locales (por seenIds)
     const nearbyMap = {};
     this.routes.forEach(r => {
       if (r.type==='fotostop') return;
+      if (seenIds.has(r.id)) return; // ya está en lista local
       const rCity = normCity(r.cityId||r.ciudad||'');
-      if (!rCity||rCity===uCity) return;
+      if (!rCity) return;
       const rProv = normCity(r.provincia||'');
       const uProv = normCity(this._luProv||'');
       if (uProv && rProv && !rProv.includes(uProv) && !uProv.includes(rProv)) return;
       const coords = getCoords(r);
       let dist = 9999;
       if (userLat&&userLng&&coords) dist = haversine(userLat,userLng,coords.lat,coords.lng);
-      const displayCity = r.ciudad||r.cityId||rCity;
-      if (!nearbyMap[displayCity]) nearbyMap[displayCity]={loops:[],dist};
-      nearbyMap[displayCity].loops.push(r);
-      if (dist<nearbyMap[displayCity].dist) nearbyMap[displayCity].dist=dist;
+      // Si GPS dice que está a más de 200 km → omitir de aledaños
+      if (dist < 200) {
+        const displayCity = r.ciudad||r.cityId||rCity;
+        const key = normCity(displayCity);
+        if (!nearbyMap[key]) nearbyMap[key]={label:displayCity,loops:[],dist};
+        nearbyMap[key].loops.push(r);
+        if (dist<nearbyMap[key].dist) nearbyMap[key].dist=dist;
+      }
     });
     const nearbyCities = Object.entries(nearbyMap).sort((a,b)=>a[1].dist-b[1].dist);
 
@@ -6379,62 +6406,56 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const renderCard = (r,isHero) => {
       const color  = TC[r.type]||r.color||'#FF5F00';
       const liked  = (this.likes||[]).includes(r.id);
-      const hasImg = r.img&&(r.img.startsWith('data:')||r.img.startsWith('http')||r.img.startsWith('firestore:'));
-      const typePill = (TYPE_LBL[r.type]||'🔄')+' '+(TYPE_NAME[r.type]||r.type||'Loop');
+      const hasImg = r.img&&(r.img.startsWith('data:')||r.img.startsWith('http')||r.img.startsWith('blob:')||r.img.startsWith('firestore:'));
+      const typePill = (TYPE_LBL[r.type]||r.emoji||'🔄')+' '+(TYPE_NAME[r.type]||r.type||'Loop');
 
       if (isHero) {
         return `<div class="lu-card" style="padding:0;overflow:hidden;border-radius:16px;border:0.5px solid var(--bd);box-shadow:0 4px 20px rgba(0,0,0,.12);">
-          ${hasImg
-            ? `<div style="width:100%;height:160px;overflow:hidden;position:relative;cursor:pointer;" onclick="App._openImgViewer('${r.id}')">
-                 ${App._imgTag(r.img,"width:100%;height:100%;object-fit:cover;display:block;")}
-                 <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.7));pointer-events:none;"></div>
-                 <div style="position:absolute;top:10px;left:10px;background:rgba(255,165,0,.92);border-radius:8px;padding:3px 9px;font-size:10px;font-weight:700;color:white;">★ Principal</div>
-                 <div style="position:absolute;bottom:10px;left:12px;right:12px;">
-                   <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:white;text-shadow:0 1px 4px rgba(0,0,0,.6);">${App._esc(r.name)||'Loop'}</div>
-                   <div style="font-size:11px;color:rgba(255,255,255,.8);margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'} · ❤️ ${r.likes||0}</div>
-                 </div>
-               </div>`
-            : `<div style="width:100%;height:100px;background:linear-gradient(135deg,${color}18,${color}44);display:flex;align-items:center;justify-content:center;font-size:52px;cursor:pointer;position:relative;" onclick="App.showDetail('${r.id}')">
-                 ${r.emoji||'🔄'}
-                 <div style="position:absolute;top:10px;left:10px;background:rgba(255,165,0,.92);border-radius:8px;padding:3px 9px;font-size:10px;font-weight:700;color:white;">★ Principal</div>
-               </div>`
-          }
-          <div style="padding:11px 13px 13px;cursor:pointer;" onclick="App.showDetail('${r.id}')">
-            ${!hasImg?`<div style="font-family:var(--fH);font-size:16px;font-weight:800;color:var(--dk);margin-bottom:4px;">${App._esc(r.name)||'Loop'}</div>`:''}
-            ${r.desc?`<div style="font-size:12px;color:var(--md);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${App._esc(r.desc)}</div>`:''}
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <span style="font-size:11px;color:var(--gr);">📍 ${r.dist||'—'}</span>
-              <span style="font-size:11px;color:var(--gr);">👟 ${r.paseos||0} paseos</span>
-              ${r.pois?.length?`<span style="font-size:11px;color:var(--gr);">📌 ${r.pois.length} paradas</span>`:''}
+          <div style="width:100%;height:170px;overflow:hidden;position:relative;cursor:pointer;background:linear-gradient(135deg,${color}28,${color}66);" onclick="App._openImgViewer('${r.id}')">
+            ${hasImg ? App._imgTag(r.img,'width:100%;height:100%;object-fit:cover;display:block;') : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:56px;">${r.emoji||'🔄'}</div>`}
+            <div style="position:absolute;inset:0;background:linear-gradient(to bottom,transparent 35%,rgba(0,0,0,.72));pointer-events:none;"></div>
+            <div style="position:absolute;top:10px;left:10px;background:rgba(255,165,0,.92);border-radius:8px;padding:3px 9px;font-size:10px;font-weight:700;color:white;">★ Principal</div>
+            <div style="position:absolute;bottom:10px;left:12px;right:12px;">
+              <div style="font-family:var(--fH);font-size:17px;font-weight:800;color:white;text-shadow:0 1px 4px rgba(0,0,0,.6);">${App._esc(r.name)||'Loop'}</div>
+              <div style="font-size:11px;color:rgba(255,255,255,.8);margin-top:3px;display:flex;gap:10px;">
+                <span>📍 ${r.dist||'—'}</span><span>⏱ ${r.dur||'—'}</span><span>❤️ ${r.likes||0}</span><span>👟 ${r.paseos||0}</span>
+              </div>
             </div>
-            <div style="display:flex;gap:8px;margin-top:10px;">
-              <button onclick="event.stopPropagation();App.likeLoop('${r.id}');App._renderLoopsUrbanos()" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid ${liked?color:'var(--bd)'};background:${liked?color+'18':'var(--bg2)'};color:${liked?color:'var(--md)'};font-size:12px;font-weight:600;cursor:pointer;">${liked?'❤️ Gustó':'🤍 Me gusta'}</button>
-              <button onclick="event.stopPropagation();App.selectRoute('${r.id}');App.go('explore')" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid var(--bd);background:var(--bg2);color:var(--md);font-size:12px;font-weight:600;cursor:pointer;">🗺️ Ver en mapa</button>
+          </div>
+          <div style="padding:11px 13px 13px;background:var(--wh);">
+            ${r.desc?`<div style="font-size:12px;color:var(--md);line-height:1.5;margin-bottom:9px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${App._esc(r.desc)}</div>`:''}
+            <div style="display:flex;gap:8px;">
+              <button onclick="event.stopPropagation();App.likeLoop('${r.id}');App._renderLoopsUrbanos()" style="flex:1;padding:9px;border-radius:9px;border:0.5px solid ${liked?color:'var(--bd)'};background:${liked?color+'18':'var(--bg2)'};color:${liked?color:'var(--md)'};font-size:12px;font-weight:600;cursor:pointer;">${liked?'❤️ Gustó':'🤍 Me gusta'}</button>
+              <button onclick="event.stopPropagation();App.selectRoute('${r.id}');App.go('explore')" style="flex:1;padding:9px;border-radius:9px;border:0.5px solid var(--bd);background:var(--bg2);color:var(--md);font-size:12px;font-weight:600;cursor:pointer;">🗺️ Ver en mapa</button>
             </div>
           </div>
         </div>`;
       }
 
-      return `<div class="lu-card" style="padding:0;overflow:hidden;border-radius:14px;border:0.5px solid var(--bd);box-shadow:var(--sh);display:flex;height:110px;" >
-        <div style="width:40%;flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(135deg,${color}28,${color}55);cursor:pointer;" onclick="App.showDetail('${r.id}')">
-          ${hasImg?`${App._imgTag(r.img,"position:absolute;inset:0;width:100%;height:100%;object-fit:cover;")}`:`<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:36px;">${r.emoji||'🔄'}</div>`}
-          <div style="position:absolute;bottom:5px;left:5px;right:5px;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);border-radius:20px;padding:2px 7px;font-size:9px;font-weight:700;color:white;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${typePill}</div>
-        </div>
-        <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:10px 11px 8px;min-width:0;">
-          <div style="cursor:pointer;" onclick="App.showDetail('${r.id}')">
-            <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${App._esc(r.name)||'Loop'}</div>
-            ${r.desc?`<div style="font-size:11px;color:var(--gr);margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${App._esc(r.desc)}</div>`:''}
+      // Mini card con foto visible
+      return `<div class="lu-card" style="padding:0;overflow:hidden;border-radius:14px;border:0.5px solid var(--bd);box-shadow:var(--sh);">
+        <div style="display:flex;height:120px;">
+          <div style="width:38%;flex-shrink:0;position:relative;overflow:hidden;background:linear-gradient(135deg,${color}28,${color}55);cursor:pointer;" onclick="App.showDetail('${r.id}')">
+            ${hasImg ? App._imgTag(r.img,'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;') : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:38px;">${r.emoji||'🔄'}</div>`}
+            <div style="position:absolute;bottom:5px;left:5px;right:5px;background:rgba(0,0,0,.6);border-radius:20px;padding:2px 7px;font-size:9px;font-weight:700;color:white;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${typePill}</div>
           </div>
-          <div>
-            <div style="display:flex;gap:5px;align-items:center;margin-bottom:6px;">
-              <span style="font-size:10px;color:var(--gr);">${r.dist||'—'}</span>
-              <span style="font-size:10px;color:var(--gr);">·</span>
-              <span style="font-size:10px;color:var(--gr);">${r.dur||'—'}</span>
-              <span style="font-size:10px;color:${liked?color:'var(--gr)'};margin-left:auto;">❤️ ${r.likes||0}</span>
+          <div style="flex:1;display:flex;flex-direction:column;justify-content:space-between;padding:10px 11px 9px;min-width:0;background:var(--wh);">
+            <div style="cursor:pointer;" onclick="App.showDetail('${r.id}')">
+              <div style="font-family:var(--fH);font-size:13px;font-weight:800;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${App._esc(r.name)||'Loop'}</div>
+              ${r.desc?`<div style="font-size:11px;color:var(--gr);margin-top:2px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${App._esc(r.desc)}</div>`:''}
             </div>
-            <div style="display:flex;gap:5px;">
-              <button onclick="event.stopPropagation();App.likeLoop('${r.id}');App._renderLoopsUrbanos()" style="flex:1;height:26px;border-radius:7px;border:0.5px solid ${liked?color:'var(--bd)'};background:${liked?color+'18':'var(--bg2)'};color:${liked?color:'var(--gr)'};font-size:11px;font-weight:600;cursor:pointer;">${liked?'❤️ Liked':'🤍 Like'}</button>
-              <button onclick="event.stopPropagation();App.selectRoute('${r.id}');App.go('explore')" style="flex:1;height:26px;border-radius:7px;border:0.5px solid var(--bd);background:var(--bg2);color:var(--gr);font-size:11px;font-weight:600;cursor:pointer;">🗺️ Mapa</button>
+            <div>
+              <div style="display:flex;gap:6px;align-items:center;margin-bottom:7px;flex-wrap:wrap;">
+                <span style="font-size:10px;color:var(--gr);">${r.dist||'—'}</span>
+                <span style="font-size:10px;color:var(--gr);">·</span>
+                <span style="font-size:10px;color:var(--gr);">${r.dur||'—'}</span>
+                ${r.pois?.length?`<span style="font-size:10px;color:var(--gr);">· 📌 ${r.pois.length}</span>`:''}
+                <span style="font-size:10px;color:${liked?color:'var(--gr)'};margin-left:auto;">❤️ ${r.likes||0}</span>
+              </div>
+              <div style="display:flex;gap:5px;">
+                <button onclick="event.stopPropagation();App.likeLoop('${r.id}');App._renderLoopsUrbanos()" style="flex:1;height:28px;border-radius:7px;border:0.5px solid ${liked?color:'var(--bd)'};background:${liked?color+'18':'var(--bg2)'};color:${liked?color:'var(--gr)'};font-size:11px;font-weight:600;cursor:pointer;">${liked?'❤️ Liked':'🤍 Like'}</button>
+                <button onclick="event.stopPropagation();App.selectRoute('${r.id}');App.go('explore')" style="flex:1;height:28px;border-radius:7px;border:0.5px solid var(--bd);background:var(--bg2);color:var(--gr);font-size:11px;font-weight:600;cursor:pointer;">🗺️ Mapa</button>
+              </div>
             </div>
           </div>
         </div>
@@ -6445,37 +6466,42 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
     // ── Sección ciudad local ──
     if (!scored.length) {
-      html += `<div style="text-align:center;padding:48px 20px;">
-        <div style="font-size:40px;margin-bottom:12px;">🌀</div>
+      html += `<div style="text-align:center;padding:52px 20px;">
+        <div style="font-size:42px;margin-bottom:14px;">🌀</div>
         <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);margin-bottom:6px;">Sin loops en ${city}</div>
-        <p style="font-size:13px;color:var(--gr);line-height:1.6;">Sé el primero en crear un loop.</p>
+        <p style="font-size:13px;color:var(--gr);line-height:1.6;">Sé el primero en grabar un loop.</p>
       </div>`;
     } else {
-      html += scored.map((r,i) => renderCard(r, i===0)).join('');
+      html += `<div style="padding:14px 14px 0;">`;
+      html += scored.map((r,i) => renderCard(r, i===0)).join('<div style="height:10px;"></div>');
+      html += `</div>`;
     }
 
     // ── Sección loops aledaños ──
     if (nearbyCities.length > 0) {
-      html += `<div style="margin:24px 0 10px;padding:0 2px;display:flex;align-items:center;gap:8px;">
+      html += `<div style="margin:20px 14px 10px;display:flex;align-items:center;gap:8px;">
         <div style="flex:1;height:1px;background:var(--bd);"></div>
-        <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);letter-spacing:.5px;white-space:nowrap;">📍 LOOPS ALEDAÑOS</div>
+        <div style="font-family:var(--fH);font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.6px;white-space:nowrap;">📍 LOOPS ALEDAÑOS</div>
         <div style="flex:1;height:1px;background:var(--bd);"></div>
       </div>`;
 
-      nearbyCities.forEach(([cityName, {loops, dist}]) => {
+      nearbyCities.forEach(([, {label, loops, dist}]) => {
         const distLabel = dist<9999 ? `${Math.round(dist)} km` : '';
-        html += `<div style="margin-bottom:20px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 2px;">
-            <div style="font-family:var(--fH);font-size:14px;font-weight:800;color:var(--dk);">📍 ${cityName}</div>
+        html += `<div style="padding:0 14px;margin-bottom:20px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;">
+            <div style="font-family:var(--fH);font-size:14px;font-weight:800;color:var(--dk);">📍 ${label}</div>
             ${distLabel?`<div style="font-size:11px;color:var(--or);background:var(--orL);padding:3px 10px;border-radius:20px;font-weight:600;">${distLabel}</div>`:''}
           </div>
-          ${loops.map(r=>renderCard(r,false)).join('')}
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            ${loops.map(r=>renderCard(r,false)).join('')}
+          </div>
         </div>`;
       });
     }
 
     list.innerHTML = html;
-    setTimeout(() => this._lazyLoadFsImgs(list), 50);
+    // Llamar lazy load con delay suficiente para que el DOM esté pintado
+    setTimeout(() => this._lazyLoadFsImgs(list), 100);
   },
 
   _renderLuExplorar() {
