@@ -1685,6 +1685,30 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <!-- ── CREAR LOOP ── -->
     <div id="adm-tab-crear-loop" class="adm-panel" style="display:none;">
+      <!-- ── Método de creación: OBLIGATORIO ── -->
+      <div class="ac" style="border:1.5px solid var(--or);background:var(--orL);">
+        <div class="act" style="color:var(--or);">⚙️ Método de creación <span style="font-size:11px;font-weight:600;color:var(--or);background:rgba(255,95,0,.18);padding:2px 8px;border-radius:20px;margin-left:6px;">OBLIGATORIO</span></div>
+        <div id="adm-method-btns" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <button type="button" class="adm-method-btn" data-method="fotoloop" onclick="App._selectCreationMethod('fotoloop',this)"
+            style="padding:12px 6px;border-radius:12px;border:2px solid var(--bd);background:var(--wh);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s;font-family:var(--fB);">
+            <span style="font-size:22px;">📸</span>
+            <span style="font-size:11px;font-weight:700;color:var(--md);line-height:1.2;text-align:center;">FotoLoop</span>
+          </button>
+          <button type="button" class="adm-method-btn" data-method="grabar" onclick="App._selectCreationMethod('grabar',this)"
+            style="padding:12px 6px;border-radius:12px;border:2px solid var(--bd);background:var(--wh);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s;font-family:var(--fB);">
+            <span style="font-size:22px;">🔴</span>
+            <span style="font-size:11px;font-weight:700;color:var(--md);line-height:1.2;text-align:center;">Grabar Loop</span>
+          </button>
+          <button type="button" class="adm-method-btn" data-method="manual" onclick="App._selectCreationMethod('manual',this)"
+            style="padding:12px 6px;border-radius:12px;border:2px solid var(--bd);background:var(--wh);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;transition:all .2s;font-family:var(--fB);">
+            <span style="font-size:22px;">✏️</span>
+            <span style="font-size:11px;font-weight:700;color:var(--md);line-height:1.2;text-align:center;">Crear Manual</span>
+          </button>
+        </div>
+        <div id="adm-method-hint" style="font-size:11px;color:var(--or);text-align:center;margin-top:8px;display:none;">
+          ✅ Método seleccionado
+        </div>
+      </div>
       <div class="ac">
         <div class="act">📝 Información del loop</div>
         <div class="fg"><label class="fl">Nombre *</label><input type="text" class="fi" id="adm-name" placeholder="ej. Loop del Arroyo Las Tunas…"></div>
@@ -5231,6 +5255,24 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     if (thumb) thumb.src = '';
     if (input) input.value = '';
   },
+  // Selector obligatorio de método de creación en admin crear-loop
+  _admCreationMethod: null,
+  _selectCreationMethod(method, btn) {
+    this._admCreationMethod = method;
+    const labels = { fotoloop:'📸 FotoLoop', grabar:'🔴 Grabar Loop', manual:'✏️ Crear Manual' };
+    document.querySelectorAll('.adm-method-btn').forEach(b => {
+      const active = b === btn;
+      b.style.borderColor = active ? 'var(--or)' : 'var(--bd)';
+      b.style.background  = active ? 'var(--orL)' : 'var(--wh)';
+      b.style.transform   = active ? 'scale(1.04)' : 'scale(1)';
+      b.style.boxShadow   = active ? '0 0 0 2px var(--or)' : 'none';
+      const lbl = b.querySelector('span:last-child');
+      if (lbl) lbl.style.color = active ? 'var(--or)' : 'var(--md)';
+    });
+    const hint = document.getElementById('adm-method-hint');
+    if (hint) { hint.style.display = 'block'; hint.textContent = `✅ ${labels[method] || method}`; }
+  },
+
   _loadAdmImgPreview(r) {
     // Soporte para base64 (data:) y URLs de Storage (http/https)
     const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
@@ -6134,6 +6176,12 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const name = document.getElementById('adm-name').value.trim();
     const desc = document.getElementById('adm-desc').value.trim();
     const type = document.getElementById('adm-type').value;
+    const creationMethod = this._admCreationMethod || '';
+    if (!creationMethod) {
+      const methodBox = document.getElementById('adm-method-btns');
+      if (methodBox) { methodBox.style.animation='none'; void methodBox.offsetWidth; methodBox.style.animation='fx-wiggle .45s ease'; setTimeout(()=>{methodBox.style.animation='';},500); }
+      this.toast('⚠️ Elegí un método de creación'); return;
+    }
     if (!name) { this.toast('⚠️ Ingresá un nombre'); return; }
     if (this.aPts.length<2) { this.toast('⚠️ Necesitás al menos 2 puntos en el mapa'); return; }
     const cfg = {trad:{color:'#FF5F00',emoji:'☕',badge:'bt'},pesca:{color:'#2563EB',emoji:'🎣',badge:'bp'},gastro:{color:'#16A34A',emoji:'🍽️',badge:'bg'},atardecer:{color:'#DB2777',emoji:'🌅',badge:'ba'},otra:{color:'#6B7280',emoji:'🗺️',badge:'bt'},running:{color:'#7C3AED',emoji:'🏃',badge:'bsport'},mtb:{color:'#16A34A',emoji:'🚵',badge:'bmtb'},ciclismo:{color:'#0891B2',emoji:'🚴',badge:'brelax'},caminata:{color:'#D97706',emoji:'🥾',badge:'btrab'},paseo:{color:'#059669',emoji:'🌳',badge:'bg'},relax:{color:'#0891B2',emoji:'🧘',badge:'brelax'},trabajo:{color:'#D97706',emoji:'💼',badge:'btrab'},vacaciones:{color:'#DB2777',emoji:'🏖️',badge:'ba'},salidas:{color:'#7C3AED',emoji:'🎉',badge:'bsport'},perro:{color:'#D97706',emoji:'🐕',badge:'btrab'}}[type]||{color:'#6B7280',emoji:'🗺️',badge:'bt'};
@@ -6227,9 +6275,10 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           pais:      (document.getElementById('adm-pais')?.value      || this._admLoc?.pais      || 'Argentina').trim(),
           authorId: this._uid,
           authorName: this._user ? (this._user.displayName || this._user.email?.split('@')[0] || 'Anónimo') : 'Anónimo',
-          createdAt: Date.now()
+          createdAt: Date.now(),
+          creationMethod: creationMethod
         };
-        console.log(`[saveRoute] "${name}" → ${r.ciudad}, ${r.provincia}, ${r.pais} (author=${r.authorId})`);
+        console.log(`[saveRoute] "${name}" → ${r.ciudad}, ${r.provincia}, ${r.pais} (author=${r.authorId}, method=${creationMethod})`);
         this.routes.push(r);
         await this._saveData();
         if (this.mainMap) this._drawRoute(r);
@@ -6253,6 +6302,14 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       document.getElementById('adm-name').value='';
       document.getElementById('adm-desc').value='';
       this._clearAdmImg();
+      // Reset method selector
+      this._admCreationMethod = null;
+      document.querySelectorAll('.adm-method-btn').forEach(b => {
+        b.style.borderColor='var(--bd)'; b.style.background='var(--wh)';
+        b.querySelector('span:last-child').style.color='var(--md)';
+      });
+      const hint = document.getElementById('adm-method-hint');
+      if (hint) hint.style.display='none';
       const wasEditing = !!this._editingId;
       this._editingId = null;
       if(btn) { btn.disabled = false; btn.textContent = wasEditing ? '💾 Actualizar Loop' : 'Guardar Loop 🚀'; }
