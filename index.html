@@ -854,7 +854,8 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 .grab-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--bg1);border-bottom:0.5px solid var(--bd);flex-shrink:0;}
 .grab-hdr h2{font-family:var(--fH);font-size:17px;font-weight:700;color:#F5F5F5;}
 .grab-back{background:none;border:none;cursor:pointer;color:#8A8A98;font-size:14px;display:flex;align-items:center;gap:5px;font-family:var(--fB);}
-.grab-type-row{display:flex;gap:7px;flex-wrap:wrap;padding:10px 16px 12px;flex-shrink:0;background:#1C1C1E;border-bottom:0.5px solid #2C2C2E;}
+.grab-type-row{display:flex;gap:8px;overflow-x:auto;padding:10px 16px;flex-shrink:0;background:#1C1C1E;border-bottom:0.5px solid #2C2C2E;scrollbar-width:none;}
+.grab-type-row::-webkit-scrollbar{display:none;}
 .grab-type-chip{flex-shrink:0;height:30px;padding:0 12px;border-radius:20px;border:0.5px solid #2C2C2E;background:#1C1C1E;font-size:12px;font-weight:500;color:#8A8A98;cursor:pointer;display:flex;align-items:center;gap:4px;transition:all .2s;white-space:nowrap;}
 .grab-type-chip.on{background:var(--or);border-color:var(--or);color:var(--wh);}
 .grab-map-wrap{flex:1;position:relative;min-height:0;overflow:hidden;}
@@ -1042,8 +1043,9 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 /* Brújula activa */
 #main-compass.rotating { background: #FF5F00 !important; border-color: #FF5F00 !important; }
 /* fl-cat chip más compacto con las nuevas etiquetas */
-.fl-cat { padding: 5px 10px; border-radius: 20px; border: 1px solid var(--bd); background: var(--lt); font-size: 12px; color: var(--md); cursor: pointer; font-family: var(--fB); font-weight: 500; transition: all .15s; white-space: nowrap; }
+.fl-cat { padding: 5px 10px; border-radius: 20px; border: 1px solid var(--bd); background: var(--lt); font-size: 12px; color: var(--md); cursor: pointer; font-family: var(--fB); font-weight: 500; transition: all .15s; white-space: nowrap; flex-shrink: 0; }
 .fl-cat.on { background: var(--orL); border-color: var(--or); color: var(--or); font-weight: 600; }
+.fl-cat-scroll::-webkit-scrollbar { display: none; }
 .maplibregl-popup-content { background: var(--wh) !important; color: var(--dk) !important; border-radius: var(--rs) !important; box-shadow: var(--shL) !important; font-family: var(--fB) !important; font-size: 13px !important; padding: 10px 14px !important; }
 .maplibregl-popup-tip { display: none; }
 /* Popup bajo los controles custom (z-index 10) */
@@ -2640,7 +2642,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <!-- Categorías / Etiquetas -->
     <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">Etiqueta</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+    <div style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:3px;margin-bottom:12px;" class="fl-cat-scroll">
       <button class="fl-cat on" data-c="lugar" onclick="App._setFLCat(this)">📍 Lugar</button>
       <button class="fl-cat" data-c="gastro" onclick="App._setFLCat(this)">🍽️ Gastro</button>
       <button class="fl-cat" data-c="resto" onclick="App._setFLCat(this)">🥩 Resto</button>
@@ -2688,12 +2690,10 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     </div>
 
     <!-- Proponer al municipio -->
-    <div style="background:var(--c-viola);border:1px solid var(--c-viola-b);border-radius:12px;padding:11px 13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;">
-      <input type="checkbox" id="fl-municipio" style="width:18px;height:18px;accent-color:var(--or);flex-shrink:0;margin-top:2px;">
-      <label for="fl-municipio" style="font-size:12px;color:var(--dk);cursor:pointer;line-height:1.5;">
-        🏛 <b>Proponer al municipio</b><br>
-        <span style="color:var(--gr);font-size:11px;">La parada se envía al municipio para revisión <i>y también</i> se publica en el mapa y en Somos Loopers.</span>
-      </label>
+    <div style="background:var(--c-viola);border:1px solid var(--c-viola-b);border-radius:12px;padding:10px 13px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+      <input type="checkbox" id="fl-municipio" style="width:18px;height:18px;accent-color:var(--or);flex-shrink:0;">
+      <label for="fl-municipio" style="font-size:13px;color:var(--dk);cursor:pointer;font-weight:600;flex:1;">🏛 Proponer al municipio</label>
+      <span style="font-size:10px;color:var(--gr);text-align:right;line-height:1.3;">Se comparte en la<br>comunidad + revisión oficial</span>
     </div>
 
     <div style="display:flex;gap:10px;">
@@ -5607,6 +5607,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         if (this.mainMap) this._drawRoute(loopForMap);
       }
 
+      const toMuni = document.getElementById('fl-municipio')?.checked;
       this.closeFotoLoop();
       // Guardar en lista local para preview inmediato — usar base64 (imgData) para mostrar sin reload
       if (!this._fotoPosts) this._fotoPosts = [];
@@ -5615,8 +5616,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       this._fotoPosts.unshift(localPost);
       this._drawFotoStopsOnMap();   // ← actualizar mapa
       this._addPts(30, 'Parada publicada');
-      const toMuni = document.getElementById('fl-municipio')?.checked;
-      this._showSaveSuccess(name, toMuni ? `🏛 Propuesta al municipio + publicado en ${cityId}` : `🌐 Publicado en ${cityId}`);
+      if (toMuni) this._addPts(15, 'Propuesta al municipio');
+      this._showSaveSuccess(name, toMuni ? `🏛 Propuesto al municipio · publicado en ${cityId}` : `🌐 Publicado en ${cityId}`);
       // FX
       this._fxBurst(document.getElementById('foto-loop-overlay'), 12);
       setTimeout(() => this._fxPts(30), 180);
@@ -9061,12 +9062,10 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           <button id="gsm-save-btn" onclick="App._confirmGrabSave()" style="flex:2;padding:13px;border-radius:12px;border:none;background:var(--or);color:white;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--fH);box-shadow:0 4px 14px rgba(255,95,0,.4);">☁️ Guardar Loop</button>
         </div>
         <!-- Proponer al municipio -->
-        <div style="background:rgba(90,60,140,.15);border:1px solid rgba(183,148,244,.3);border-radius:12px;padding:11px 13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;margin-top:14px;">
-          <input type="checkbox" id="gsm-municipio" style="width:18px;height:18px;accent-color:#FF5F00;flex-shrink:0;margin-top:2px;">
-          <label for="gsm-municipio" style="font-size:12px;color:var(--dk);cursor:pointer;line-height:1.5;">
-            🏛 <b>Proponer al municipio</b><br>
-            <span style="color:var(--gr);font-size:11px;">El loop se envía al municipio para revisión <i>y también</i> se publica en el mapa y en Somos Loopers.</span>
-          </label>
+        <div style="background:rgba(90,60,140,.15);border:1px solid rgba(183,148,244,.3);border-radius:12px;padding:10px 13px;margin-bottom:14px;display:flex;align-items:center;gap:10px;margin-top:14px;">
+          <input type="checkbox" id="gsm-municipio" style="width:18px;height:18px;accent-color:#FF5F00;flex-shrink:0;">
+          <label for="gsm-municipio" style="font-size:13px;color:var(--dk);cursor:pointer;font-weight:600;flex:1;">🏛 Proponer al municipio</label>
+          <span style="font-size:10px;color:var(--gr);text-align:right;line-height:1.3;">Se publica en la<br>comunidad + revisión oficial</span>
         </div>
       </div>`;
   },
