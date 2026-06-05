@@ -1918,7 +1918,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
         </button>
       </div>
       <!-- Botón parada foto — solo visible mientras graba -->
-      <button id="grab-foto-btn" onclick="App.openFotoStop()" style="display:none;margin-top:10px;width:100%;padding:11px;border-radius:12px;border:1.5px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:white;font-size:13px;font-weight:600;cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px;">
+      <button id="grab-foto-btn" onclick="App.openFotoStop()" style="margin-top:10px;width:100%;padding:11px;border-radius:12px;border:1.5px solid rgba(255,255,255,.3);background:rgba(0,0,0,.45);color:white;font-size:13px;font-weight:600;cursor:pointer;display:none;align-items:center;justify-content:center;gap:8px;">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         📸 Agregar parada con foto
       </button>
@@ -2594,7 +2594,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     </label>
 
     <!-- Descripción -->
-    <textarea id="fs-desc" placeholder="¿Qué es este lugar? Contale a los demás..." aria-label="Descripción del foto spot" style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:80px;font-family:var(--fS);margin-bottom:14px;"></textarea>
+    <textarea id="fs-desc" placeholder="¿Qué es este lugar? Contale a los demás..." aria-label="Descripción del foto spot" style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:80px;font-family:var(--fB);margin-bottom:14px;"></textarea>
 
     <div style="display:flex;gap:10px;">
       <button onclick="App.closeFotoStop()" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--bd);background:var(--lt);font-size:14px;font-weight:600;color:var(--md);cursor:pointer;">Cancelar</button>
@@ -2638,7 +2638,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     </div>
 
     <input id="fl-name" type="text" placeholder="Nombre del lugar (ej: Costanera Norte, Bar El Viejo)" aria-label="Nombre del lugar" class="fi" style="margin-bottom:10px;width:100%;box-sizing:border-box;">
-    <textarea id="fl-desc" placeholder="Contales a los demás por qué vale la pena parar acá..." aria-label="Descripción del lugar" style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:60px;font-family:var(--fS);margin-bottom:10px;"></textarea>
+    <textarea id="fl-desc" placeholder="Contales a los demás por qué vale la pena parar acá..." aria-label="Descripción del lugar" style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:60px;font-family:var(--fB);margin-bottom:10px;"></textarea>
 
     <!-- Categorías / Etiquetas -->
     <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">Etiqueta</div>
@@ -2987,7 +2987,7 @@ const App = {
   _onbStep: 0,
   _onbActive: false,
   _onbShow() {
-    const seen = localStorage.getItem('ul360_onb_seen');
+    const seen = App._ls('get','ul360_onb_seen');
     if (seen) return;
     this._onbOpen();
   },
@@ -3000,7 +3000,7 @@ const App = {
     this._onbRender();
   },
   _onbReset() {
-    localStorage.removeItem('ul360_onb_seen');
+    App._ls('del','ul360_onb_seen');
     this._onbOpen();
   },
   _onbRender() {
@@ -3022,7 +3022,7 @@ const App = {
     else this._onbClose();
   },
   _onbClose() {
-    localStorage.setItem('ul360_onb_seen', '1');
+    App._ls('set','ul360_onb_seen','1');
     this._onbActive = false;
     const ov = document.getElementById('onboarding-overlay');
     if (ov) ov.style.display = 'none';
@@ -3508,7 +3508,7 @@ const App = {
 
     // Fallback localStorage
     try {
-      const raw = localStorage.getItem('ul360_routes');
+      const raw = this._ls('get','ul360_routes');
       const custom = raw ? JSON.parse(raw) : [];
       const merged = [...DEFAULTS, ...custom.filter(c => !DEFAULTS.find(d=>d.id===c.id))];
       this.routes = merged.map(r => {
@@ -3533,7 +3533,7 @@ const App = {
 
     if (!this._db) {
       console.warn('[_saveData] Sin Firebase, guardando en localStorage');
-      localStorage.setItem('ul360_routes', JSON.stringify(custom));
+      App._ls('set','ul360_routes',JSON.stringify(custom));
       return;
     }
 
@@ -3548,7 +3548,7 @@ const App = {
     if (mine.length === 0) {
       console.warn('[_saveData] No hay loops propios para guardar (authorId no coincide con uid)');
       // Backup local igual
-      localStorage.setItem('ul360_routes', JSON.stringify(custom));
+      App._ls('set','ul360_routes',JSON.stringify(custom));
       return;
     }
 
@@ -3629,8 +3629,17 @@ const App = {
     }
 
     // Backup local siempre
-    localStorage.setItem('ul360_routes', JSON.stringify(custom));
+    App._ls('set','ul360_routes',JSON.stringify(custom));
     console.log('[_saveData] ✅ Todo guardado correctamente');
+  },
+
+  // ── Safe localStorage — no rompe en incógnito ni con storage lleno ──
+  _ls(op, key, val) {
+    try {
+      if (op==='get') return localStorage.getItem(key);
+      if (op==='set') { localStorage.setItem(key, val); return true; }
+      if (op==='del') { localStorage.removeItem(key); return true; }
+    } catch(e) { console.warn('[storage]', op, key, e.message); return null; }
   },
 
   async _savePts() {
@@ -3643,8 +3652,8 @@ const App = {
         return;
       } catch(e) { console.warn('Error guardando pts:', e); }
     }
-    localStorage.setItem('ul360_pts',   this.pts);
-    localStorage.setItem('ul360_likes', JSON.stringify(this.likes||[]));
+    this._ls('set', 'ul360_pts',   this.pts);
+    this._ls('set', 'ul360_likes', JSON.stringify(this.likes||[]));
   },
   _addPts(n, reason) {
     this.pts = (this.pts||0) + n;
@@ -4022,7 +4031,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           max_tokens: 120,
           messages: [{ role: 'user', content: prompt }]
         }),
-        signal: AbortSignal.timeout(8000)
+        signal: this._abortSignal(8000)
       });
       if (!resp.ok) throw new Error(`API ${resp.status}`);
       const data = await resp.json();
@@ -4579,7 +4588,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
     try {
       const url = `https://router.project-osrm.org/route/v1/${mode.osrm}/${uLL.lng},${uLL.lat};${loopStartCoord[0]},${loopStartCoord[1]}?overview=full&geometries=geojson&steps=true&annotations=false`;
-      const resp = await fetch(url, { signal: AbortSignal.timeout(6000) });
+      const resp = await fetch(url, { signal: this._abortSignal(6000) });
       const data = await resp.json();
 
       // Quitar provisional
@@ -4966,7 +4975,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const i = this.favs.indexOf(this.selId);
     if (i>-1) { this.favs.splice(i,1); this.toast('Eliminado de guardados'); }
     else { this.favs.push(this.selId); this.toast('❤️ Guardado en favoritos'); }
-    localStorage.setItem('ul360_favs', JSON.stringify(this.favs));
+    this._ls('set','ul360_favs',JSON.stringify(this.favs));
     this.showDetail(this.selId);
   },
 
@@ -5324,6 +5333,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   saveFotoStop() {
     const desc = document.getElementById('fs-desc')?.value?.trim();
     if (!this._fotoStopImg && !desc) return this.toast('⚠️ Agregá una foto o descripción');
+    if (!this._grabStopPois) this._grabStopPois = [];
     // Obtener posición actual del GPS
     const pos = this.grabPts.length ? this.grabPts[this.grabPts.length - 1] : null;
     const poi = {
@@ -5370,6 +5380,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     document.getElementById('fl-name').value = '';
     document.getElementById('fl-desc').value = '';
     document.getElementById('fl-make-loop').checked = false;
+    const flMuni = document.getElementById('fl-municipio');
+    if (flMuni) flMuni.checked = false;
     this._fotoLoopCat = 'lugar';
     this._flLat = null; this._flLng = null;
     document.querySelectorAll('.fl-cat').forEach(b => b.classList.toggle('on', b.dataset.c === 'lugar'));
@@ -6277,7 +6289,9 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     if (!pts||pts.length<2) return 0;
     let t=0;
     for (let i=1;i<pts.length;i++) {
-      const [a,b]=pts[i-1],[c,d]=pts[i];
+      const p0=pts[i-1], p1=pts[i];
+      const a=Array.isArray(p0)?p0[0]:p0.lat, b=Array.isArray(p0)?p0[1]:p0.lng;
+      const c=Array.isArray(p1)?p1[0]:p1.lat, d=Array.isArray(p1)?p1[1]:p1.lng;
       const R=6371,dL=(c-a)*Math.PI/180,dG=(d-b)*Math.PI/180;
       const x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dG/2)**2;
       t+=R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
@@ -6555,7 +6569,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       const TC = { running:'#EF4444',mtb:'#16A34A',ciclismo:'#2563EB',caminata:'#D97706',perro:'#DB2777',paseo:'#0891B2',pesca:'#0E7490',atardecer:'#7C3AED',gastro:'#B45309',trad:'#92400E',relax:'#6B7280' };
       const TYPE_LBL  = {trad:'☕',pesca:'🎣',gastro:'🍽️',atardecer:'🌅',running:'🏃',mtb:'🚵',ciclismo:'🚴',caminata:'🥾',paseo:'🌳',relax:'🧘',trabajo:'💼',vacaciones:'🏖️',salidas:'🎉',otra:'🗺️'};
       const loopsSublist = totalLoops > 1 ? `
-        <div id="${cardId}-loops" style="display:none;border-top:0.5px solid var(--bd);padding:8px 12px 10px;display:none;flex-direction:column;gap:6px;">
+        <div id="${cardId}-loops" style="display:none;border-top:0.5px solid var(--bd);padding:8px 12px 10px;flex-direction:column;gap:6px;">
           ${data.loops.map(r => {
             const color = TC[r.type]||r.color||'#FF5F00';
             const icon = TYPE_LBL[r.type]||'🔄';
@@ -7276,6 +7290,14 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   // ── Función principal: detectar País/Provincia/Ciudad desde coordenadas ──
   // Usa BigDataCloud → fallback tabla local
   // Cache 30min / 500m para no spamear la API
+  // ── AbortSignal compatible con Safari < 17 ──
+  _abortSignal(ms) {
+    if (typeof AbortSignal.timeout === 'function') return AbortSignal.timeout(ms);
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), ms);
+    return ctrl.signal;
+  },
+
   async _detectLocation(lat, lng) {
     // 1. Cache: si está a menos de 500m y tiene menos de 30min, reusar
     if (this._geoCache) {
@@ -7287,7 +7309,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     try {
       const res  = await fetch(
         `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=es`,
-        { signal: AbortSignal.timeout(5000) }
+        { signal: this._abortSignal(5000) }
       );
       const data = await res.json();
       const rawCiudad = data.city || data.locality || '';
@@ -8346,6 +8368,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   },
 
   likeLoop(id) {
+    if (!this._user) return this.toast('⚠️ Iniciá sesión para dar like');
     this.likes = this.likes || [];
     const r = this.routes.find(x => x.id === id);
     if (!r) return;
@@ -8371,6 +8394,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   },
 
   likeFotoLoop(id) {
+    if (!this._user) return this.toast('⚠️ Iniciá sesión para dar like');
     this.likes = this.likes || [];
     const post = (this._fotoPosts || []).find(x => x.id === id);
     if (!post) return;
@@ -8398,7 +8422,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         .catch(() => {});
     }
     this._savePts();
-    localStorage.setItem('ul360_likes', JSON.stringify(this.likes));
+    this._ls('set','ul360_likes',JSON.stringify(this.likes));
   },
 
   // ══════════════════════════════════════════
@@ -9174,7 +9198,6 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
     try {
       await this._saveData();
-      // Si se propone al municipio, guardar en pending además de en la colección normal
       if (toMuni && this._db) {
         await this._db.collection('loops_municipio_pending').doc(r.id).set({...r, proposedAt: Date.now()});
         this._addPts(15, 'Propuesta al municipio');
@@ -9195,6 +9218,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
   _cancelGrabSave() {
     // Descartar grabación
+    this._releaseWakeLock();
     this.grabPts=[]; this.grabSecs=0; this.grabState='idle';
     this._grabStopPois=[]; this._grabCoverB64=null;
     this._closeGrabSaveModal();
@@ -9226,7 +9250,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     if(fotoBtn) fotoBtn.style.display = (this.grabState==='recording'||this.grabState==='paused') ? 'flex' : 'none';
     // Mostrar sección portada solo en idle (antes de iniciar, para preparar)
     const coverSec = document.getElementById('grab-cover-section');
-    if(coverSec) coverSec.style.display = this.grabState==='idle' ? 'block' : 'none';
+    if(coverSec) coverSec.style.display = (this.grabState==='idle' && !this.grabPts.length) ? 'block' : 'none';
     if(!btns) return;
     if(this.grabState==='idle'||this.grabState==='done') {
       btns.innerHTML='<button class="grab-btn start" onclick="App.grabToggle()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>Iniciar</button>';
@@ -10444,7 +10468,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   },
   _debugClearStorage() {
     if (!confirm('¿Borrar TODOS los loops guardados? Esto no se puede deshacer.')) return;
-    localStorage.removeItem('ul360_routes');
+    App._ls('del','ul360_routes');
     this._loadData();
     this.closeLoopModal();
     setTimeout(()=>this.openLoopModal(), 200);
@@ -10482,7 +10506,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   toggleTheme() {
     const goingDark = document.body.classList.contains('day');
     document.body.classList.toggle('day', !goingDark);
-    localStorage.setItem('ul360_theme', goingDark ? 'dark' : 'light');
+    try{localStorage.setItem('ul360_theme',goingDark?'dark':'light');}catch(e){}
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) btn.textContent = goingDark ? '☀️' : '🌙';
 
@@ -10713,7 +10737,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
 
 document.addEventListener('DOMContentLoaded',()=>{
   // Arrancar en modo claro por defecto
-  const saved = localStorage.getItem('ul360_theme');
+  let saved; try{saved=localStorage.getItem('ul360_theme');}catch(e){}
   if (saved === 'dark') {
     document.body.classList.remove('day');
   } else {
