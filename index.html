@@ -7661,30 +7661,18 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   // ─── Tab: FOTO LOOPS de la ciudad ───
   _renderComFoto(body, city) {
     const FL_CATS = {lugar:'📍',gastro:'🍽️',resto:'🥩',cafe:'☕',vino:'🍷',cerveza:'🍺',coctel:'🍸',vineria:'🍾',bar:'🥂',boliche:'🪩',teatro:'🎭',cine:'🎬',musica:'🎵',museo:'🖼️',arte:'🎨',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
-    const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
-    const uCity2 = normCity(city);
-    const uProv2 = normCity(this._luProv || '');
-    // Aprobados + los del propio usuario (para preview inmediato tras publicar)
+    // FotoLoops: mostrar TODOS los aprobados (red social, no filtro local)
+    // + los del usuario actual aunque estén pendientes (preview inmediato)
     const myUid = this._auth && this._auth.currentUser ? this._auth.currentUser.uid : null;
     const posts = (this._fotoPosts||[]).filter(p => {
       const isApproved = p.status === 'approved';
       const isMine = myUid && p.uid === myUid;
-      if (!isApproved && !isMine) return false;
-      if (city === 'all') return true;
-      const pCity = normCity(p.cityId || p.ciudad || '');
-      const pProv = normCity(p.provincia || '');
-      if (!pCity) return uProv2 && pProv && pProv === uProv2;
-      const cityMatch = pCity === uCity2 ||
-        (pCity.length > 3 && uCity2.includes(pCity)) ||
-        (uCity2.length > 3 && pCity.includes(uCity2));
-      const provMatch = uProv2 && pProv && pProv === uProv2 &&
-        this._isNearCity(p.cityId || p.ciudad || city, 15);
-      return cityMatch || provMatch;
-    });
+      return isApproved || isMine;
+    }).sort((a,b) => (b.ts||0) - (a.ts||0));
     if (posts.length === 0) {
       body.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--gr);">
         <div style="font-size:40px;margin-bottom:12px;">📸</div>
-        <div style="font-size:14px;font-weight:600;">Sin Foto Loops en ${city === 'all' ? 'la región' : city}</div>
+        <div style="font-size:14px;font-weight:600;">Todavía no hay Foto Loops</div>
         <div style="font-size:12px;margin-top:6px;">¡Subí el primero!</div>
         <button onclick="App.openFotoLoop()" style="margin-top:14px;background:var(--or);border:none;border-radius:10px;padding:10px 20px;color:white;font-size:13px;font-weight:700;cursor:pointer;">+ Agregar Foto Loop</button>
       </div>`;
