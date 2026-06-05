@@ -1796,6 +1796,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
           <option value="approved">✅ Aprobados</option>
           <option value="rejected">❌ Rechazados</option>
         </select>
+        <button onclick="App._admFLAprobarTodos()" class="adm-btn adm-btn-green" style="white-space:nowrap;">✅ Aprobar pendientes</button>
         <span id="adm-fl-count" style="font-size:12px;color:var(--gr);margin-left:auto;"></span>
       </div>
       <div id="adm-fl-list" style="display:flex;flex-direction:column;gap:8px;"></div>
@@ -7606,7 +7607,6 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       const lkCt   = (r.likes||0) + (liked?1:0);
       const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
       const color  = r.color || '#FF5F00';
-      const isFL   = r.type === 'fotoloop';
       const typeTxt = (TYPE_LBL[r.type]||'🔄') + ' ' + (TYPE_NAME[r.type]||r.type||'Loop');
       return `
       <div style="background:var(--wh);border-radius:14px;overflow:hidden;border:0.5px solid var(--bd);box-shadow:var(--sh);display:flex;height:110px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='var(--shL)'" onmouseout="this.style.boxShadow='var(--sh)'">
@@ -7669,7 +7669,6 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const posts = (this._fotoPosts||[]).filter(p => {
       const isApproved = p.status === 'approved';
       const isMine = myUid && p.uid === myUid;
-      // Mostrar si aprobado o es del usuario actual
       if (!isApproved && !isMine) return false;
       if (city === 'all') return true;
       const pCity = normCity(p.cityId || p.ciudad || '');
@@ -9521,7 +9520,21 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   // ── Loops ──
   _admRenderLoops() {
     const q    = (document.getElementById('adm-loops-q')?.value||'').toLowerCase();
-    const city = document.getElementById('adm-loops-city')?.value||'';
+    const cityEl = document.getElementById('adm-loops-city');
+    const city = cityEl?.value || '';
+
+    // Poblar dinámicamente las ciudades del select
+    if (cityEl) {
+      const cities = [...new Set(
+        this.routes
+          .filter(r => r.type !== 'fotostop' && (r.cityId || r.ciudad))
+          .map(r => r.cityId || r.ciudad)
+      )].sort();
+      const current = cityEl.value;
+      cityEl.innerHTML = `<option value="">Todas</option>` +
+        cities.map(c => `<option value="${App._esc(c)}"${c===current?' selected':''}>${App._esc(c)}</option>`).join('');
+    }
+
     const list = this.routes.filter(r =>
       r.type !== 'fotostop' &&
       (!q    || r.name?.toLowerCase().includes(q)) &&
@@ -9536,8 +9549,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       return `<div class="adm-item">
         <div class="adm-item-row">
           ${hasImg
-            ? `<img class="adm-item-thumb" src="${r.img}" onerror="this.style.display='none';this.nextSibling.style.display='flex'">
-               <div class="adm-item-thumb" style="display:none;align-items:center;justify-content:center;font-size:22px;">${r.emoji||'🔄'}</div>`
+            ? App._imgTag(r.img, 'width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;')
             : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--bg2);">${r.emoji||'🔄'}</div>`}
           <div class="adm-item-info">
             <div class="adm-item-name">${noImgBadge}${App._esc(r.name)}</div>
@@ -9556,6 +9568,8 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         </div>
       </div>`;
     }).join('');
+    // Cargar imágenes firestore: en thumbnails
+    setTimeout(() => this._lazyLoadFsImgs(document.getElementById('adm-tab-loops')), 50);
   },
 
   async _admDeleteLoop(id, name) {
@@ -9743,7 +9757,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       const stTxt   = {approved:'✅ Aprobado',rejected:'❌ Rechazado',pending:'⏳ Pendiente'}[st]||st;
       return `<div class="adm-item">
         <div class="adm-item-row">
-          ${p.img ? `<img class="adm-item-thumb" src="${p.img}" onerror="this.style.display='none'">` : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${p.emoji||'📸'}</div>`}
+          ${p.img ? App._imgTag(p.img,'width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;','adm-item-thumb') : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${p.emoji||'📸'}</div>`}
           <div class="adm-item-info">
             <div class="adm-item-name">${p.name||'Foto Loop'}</div>
             <div class="adm-item-meta">${p.cat||''} · ${App._esc(p.authorName)||'Anónimo'} · ${p.ciudad||p.cityId||'—'}</div>
@@ -9758,6 +9772,8 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         </div>
       </div>`;
     }).join('');
+    // Cargar imágenes firestore: en thumbnails
+    setTimeout(() => this._lazyLoadFsImgs(document.getElementById('adm-tab-fotoloops')), 50);
   },
 
   async _admFLStatus(id, status) {
@@ -9772,6 +9788,23 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (this.mainMap) this._drawFotoStopsOnMap();
     this._admRenderFotoloops();
     this.toast(status==='approved' ? '✅ Foto loop aprobado — aparece en el mapa' : '❌ Foto loop rechazado — removido del mapa');
+  },
+
+  async _admFLAprobarTodos() {
+    const pendientes = (this._fotoPosts||[]).filter(p => (p.status||'pending') === 'pending');
+    if (pendientes.length === 0) { this.toast('✅ No hay FotoLoops pendientes'); return; }
+    if (!confirm(`¿Aprobar los ${pendientes.length} FotoLoop${pendientes.length!==1?'s':''} pendientes?`)) return;
+    this.toast(`⏳ Aprobando ${pendientes.length}...`);
+    let ok = 0;
+    for (const p of pendientes) {
+      p.status = 'approved';
+      if (this._db) {
+        try { await this._db.collection('fotoloops').doc(p.id).update({status:'approved'}); ok++; } catch(e){}
+      }
+    }
+    if (this.mainMap) this._drawFotoStopsOnMap();
+    this._admRenderFotoloops();
+    this.toast(`✅ ${ok} FotoLoop${ok!==1?'s':''} aprobados`);
   },
 
   async _admDeleteFL(id) {
