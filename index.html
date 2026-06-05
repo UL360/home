@@ -9020,6 +9020,12 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">NOMBRE DEL LOOP *</label>
           <input id="gsm-name" type="text" value="${autoName}" style="width:100%;box-sizing:border-box;padding:11px 13px;border:1.5px solid var(--bd);border-radius:11px;font-size:14px;font-family:var(--fH);font-weight:600;background:var(--bg0);color:var(--dk);">
         </div>
+        <!-- Proponer al municipio — visible sin scrollear -->
+        <div style="background:rgba(90,60,140,.15);border:1px solid rgba(183,148,244,.3);border-radius:12px;padding:10px 13px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+          <input type="checkbox" id="gsm-municipio" style="width:18px;height:18px;accent-color:#FF5F00;flex-shrink:0;">
+          <label for="gsm-municipio" style="font-size:13px;color:var(--dk);cursor:pointer;font-weight:600;flex:1;">🏛 Proponer al municipio</label>
+          <span style="font-size:10px;color:var(--gr);text-align:right;line-height:1.3;">Se publica en la<br>comunidad + revisión oficial</span>
+        </div>
         <!-- Descripción -->
         <div style="margin-bottom:12px;">
           <label style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;display:block;margin-bottom:5px;">DESCRIPCIÓN (opcional)</label>
@@ -9056,12 +9062,6 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
               <input type="file" accept="image/*" style="display:none" onchange="App._handleGrabModalImg(this)">
             </label>
           </div>
-        </div>
-        <!-- Proponer al municipio -->
-        <div style="background:rgba(90,60,140,.15);border:1px solid rgba(183,148,244,.3);border-radius:12px;padding:10px 13px;margin-bottom:14px;display:flex;align-items:center;gap:10px;">
-          <input type="checkbox" id="gsm-municipio" style="width:18px;height:18px;accent-color:#FF5F00;flex-shrink:0;">
-          <label for="gsm-municipio" style="font-size:13px;color:var(--dk);cursor:pointer;font-weight:600;flex:1;">🏛 Proponer al municipio</label>
-          <span style="font-size:10px;color:var(--gr);text-align:right;line-height:1.3;">Se publica en la<br>comunidad + revisión oficial</span>
         </div>
         <div style="display:flex;gap:10px;">
           <button onclick="App._cancelGrabSave()" style="flex:1;padding:13px;border-radius:12px;border:1px solid var(--bd);background:var(--bg2);color:var(--gr);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--fH);">Descartar</button>
