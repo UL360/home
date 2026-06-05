@@ -1315,6 +1315,12 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       style="width:40px;height:40px;background:#1C1C1E;border:0.5px solid #2C2C2E;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#C0C0C8;font-size:11px;font-weight:700;font-family:var(--fH);transition:all .2s;margin-top:2px;">
       3D
     </button>
+    <!-- Toggle Satelital -->
+    <button id="sat-toggle-btn" onclick="App.toggleSatellite()" title="Vista satélite" aria-label="Alternar vista satélite" aria-pressed="false"
+      style="width:40px;height:40px;background:var(--wh);border:0.5px solid #2C2C2E;border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--dk);transition:all .2s;margin-top:2px;">
+      <span class="sat-icon" style="font-size:16px;line-height:1;">🛰️</span>
+      <span class="sat-lbl" style="font-size:8px;font-weight:700;font-family:var(--fB);line-height:1;">Satélite</span>
+    </button>
     <!-- GPS accuracy badge -->
     <div id="gps-badge" style="text-align:center;font-size:9px;font-weight:600;color:#5A5A68;font-family:var(--fB);line-height:1.2;padding:2px 0;">GPS</div>
   </div>
@@ -3754,8 +3760,34 @@ const App = {
   },
 
   // ── MAIN MAP (MapLibre GL JS) ──
-  _ML_STYLE_DARK:  'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=kS5YiQh2kB23jvnE6cpy',
-  _ML_STYLE_LIGHT: 'https://api.maptiler.com/maps/streets-v2/style.json?key=kS5YiQh2kB23jvnE6cpy',
+  _ML_STYLE_DARK:      'https://api.maptiler.com/maps/streets-v2-dark/style.json?key=kS5YiQh2kB23jvnE6cpy',
+  _ML_STYLE_LIGHT:     'https://api.maptiler.com/maps/streets-v2/style.json?key=kS5YiQh2kB23jvnE6cpy',
+  _ML_STYLE_SATELLITE: 'https://api.maptiler.com/maps/satellite/style.json?key=kS5YiQh2kB23jvnE6cpy',
+  _isSatellite: false,
+
+  toggleSatellite() {
+    this._isSatellite = !this._isSatellite;
+    const btn = document.getElementById('sat-toggle-btn');
+    const redraw = () => {
+      this.mainMap && this.mainMap.once('styledata', () => {
+        setTimeout(() => {
+          this.mainMap.on('styleimagemissing', (e) => { const empty={width:1,height:1,data:new Uint8Array(4)}; if(!this.mainMap.hasImage(e.id))this.mainMap.addImage(e.id,empty); });
+          this.routes.forEach(r => this._drawRoute(r));
+          this._drawFotoStopsOnMap();
+        }, 200);
+      });
+    };
+    if (this._isSatellite) {
+      if (this.mainMap) this.mainMap.setStyle(this._ML_STYLE_SATELLITE);
+      if (btn) { btn.title='Vista normal'; btn.style.background='var(--or)'; btn.style.color='#fff'; btn.querySelector('.sat-icon').textContent='🗺️'; btn.querySelector('.sat-lbl').textContent='Normal'; }
+      redraw();
+    } else {
+      const isDark = !document.body.classList.contains('day');
+      if (this.mainMap) this.mainMap.setStyle(isDark ? this._ML_STYLE_DARK : this._ML_STYLE_LIGHT);
+      if (btn) { btn.title='Vista satélite'; btn.style.background='var(--wh)'; btn.style.color='var(--dk)'; btn.querySelector('.sat-icon').textContent='🛰️'; btn.querySelector('.sat-lbl').textContent='Satélite'; }
+      redraw();
+    }
+  },
 
   _initMainMap() {
     this._activeFilter = this._activeFilter || 'all';
@@ -10626,7 +10658,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) btn.textContent = goingDark ? '☀️' : '🌙';
 
-    if (this.mainMap) {
+    if (this.mainMap && !this._isSatellite) {
       const newStyle = goingDark ? this._ML_STYLE_DARK : this._ML_STYLE_LIGHT;
       this.mainMap.setStyle(newStyle);
       // Re-agregar rutas y edificios 3D tras cambio de estilo
