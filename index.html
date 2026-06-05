@@ -7576,8 +7576,11 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       if (r.type === 'fotostop') return false;
       const rCity = normCity(r.cityId || r.ciudad || '');
       const rProv = normCity(r.provincia || '');
-      if (!rCity) return false;
       if (city === 'all') return true;
+      // Sin ciudad asignada: incluir si misma provincia
+      if (!rCity) {
+        return uProv && rProv && rProv === uProv;
+      }
       // Match flexible: exacto o contiene (cubre "La Paz" vs "La Paz de Gualeguay")
       const cityMatch = rCity === uCity ||
         (rCity.length > 3 && uCity.includes(rCity)) ||
@@ -7603,6 +7606,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       const lkCt   = (r.likes||0) + (liked?1:0);
       const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
       const color  = r.color || '#FF5F00';
+      const isFL   = r.type === 'fotoloop';
       const typeTxt = (TYPE_LBL[r.type]||'🔄') + ' ' + (TYPE_NAME[r.type]||r.type||'Loop');
       return `
       <div style="background:var(--wh);border-radius:14px;overflow:hidden;border:0.5px solid var(--bd);box-shadow:var(--sh);display:flex;height:110px;transition:box-shadow .2s;" onmouseover="this.style.boxShadow='var(--shL)'" onmouseout="this.style.boxShadow='var(--sh)'">
@@ -7650,20 +7654,27 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         </div>
       </div>`;
     }).join('') + `</div>`;
+    // Cargar imágenes firestore: lazy
+    setTimeout(() => this._lazyLoadFsImgs(document.getElementById('comunidad')), 50);
   },
 
   // ─── Tab: FOTO LOOPS de la ciudad ───
   _renderComFoto(body, city) {
     const FL_CATS = {lugar:'📍',gastro:'🍽️',resto:'🥩',cafe:'☕',vino:'🍷',cerveza:'🍺',coctel:'🍸',vineria:'🍾',bar:'🥂',boliche:'🪩',teatro:'🎭',cine:'🎬',musica:'🎵',museo:'🖼️',arte:'🎨',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️'};
     const normCity = c => (c||'').replace(/ciudad aut[oó]noma de /i,'').replace(/partido de /i,'').trim().toLowerCase();
-    // Solo aprobados, dentro de la ciudad del usuario y en radio de 15km
     const uCity2 = normCity(city);
     const uProv2 = normCity(this._luProv || '');
+    // Aprobados + los del propio usuario (para preview inmediato tras publicar)
+    const myUid = this._auth && this._auth.currentUser ? this._auth.currentUser.uid : null;
     const posts = (this._fotoPosts||[]).filter(p => {
-      if (p.status !== 'approved') return false;
+      const isApproved = p.status === 'approved';
+      const isMine = myUid && p.uid === myUid;
+      // Mostrar si aprobado o es del usuario actual
+      if (!isApproved && !isMine) return false;
       if (city === 'all') return true;
       const pCity = normCity(p.cityId || p.ciudad || '');
       const pProv = normCity(p.provincia || '');
+      if (!pCity) return uProv2 && pProv && pProv === uProv2;
       const cityMatch = pCity === uCity2 ||
         (pCity.length > 3 && uCity2.includes(pCity)) ||
         (uCity2.length > 3 && pCity.includes(uCity2));
@@ -7687,12 +7698,13 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         onmousedown="this.style.transform='scale(.97)'" onmouseup="this.style.transform=''"
         ontouchstart="this.style.transform='scale(.97)'" ontouchend="this.style.transform=''">
         ${p.img && (p.img.startsWith('data:') || p.img.startsWith('http') || p.img.startsWith('firestore:'))
-          ? `<div style="aspect-ratio:4/3;overflow:hidden;"><img src="${p.img}" style="width:100%;height:100%;object-fit:cover;display:block;" loading="lazy" onerror="this.parentElement.innerHTML='<div style=\'aspect-ratio:4/3;background:var(--orL);display:flex;align-items:center;justify-content:center;font-size:36px;\'>${FL_CATS[p.cat]||'📍'}</div>'"></div>`
+          ? `<div style="aspect-ratio:4/3;overflow:hidden;">${App._imgTag(p.img,'width:100%;height:100%;object-fit:cover;display:block;')}</div>`
           : `<div style="aspect-ratio:4/3;background:linear-gradient(135deg,var(--orL),var(--bg2));display:flex;align-items:center;justify-content:center;font-size:36px;">${FL_CATS[p.cat]||'📍'}</div>`
         }
         <div style="padding:8px 10px 10px;">
           <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.name||'Foto Loop'}</div>
           <div style="font-size:11px;color:var(--or);font-weight:600;margin-top:2px;">${FL_CATS[p.cat]||'📍'} ${p.cat||'lugar'}</div>
+          ${p.status !== 'approved' ? `<div style="font-size:10px;color:var(--gr);background:var(--bg2);border-radius:6px;padding:2px 6px;margin-top:3px;display:inline-block;">⏳ pendiente</div>` : ''}
           ${p.authorName ? `<div style="font-size:10px;color:var(--gr);margin-top:3px;">por ${p.authorName.split(' ')[0]}</div>` : ''}
           <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
             <button onclick="event.stopPropagation();App.likeFotoLoop('${p.id}');App._renderComunidad()"
