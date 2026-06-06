@@ -1658,10 +1658,16 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       <button class="adm-tab" data-tab="propuestas" onclick="App._admTab('propuestas',this)">
         <span class="adm-tab-ic">🏛</span>Propuestas comunidad
       </button>
+      <button class="adm-tab" data-tab="negocios" onclick="App._admTab('negocios',this)">
+        <span class="adm-tab-ic">🏪</span>Negocios
+      </button>
     </div>
 
     <!-- ── PROPUESTAS COMUNIDAD ── -->
     <div id="adm-tab-propuestas" class="adm-panel" style="display:none;"></div>
+
+    <!-- ── NEGOCIOS ── -->
+    <div id="adm-tab-negocios" class="adm-panel" style="display:none;"></div>
 
     <!-- ── DASHBOARD ── -->
     <div id="adm-tab-dashboard" class="adm-panel">
@@ -9586,6 +9592,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (tab === 'reportes')    this._admRenderReportes();
     if (tab === 'notifs')      this._admRenderNotifHistory();
     if (tab === 'propuestas')  this._admRenderPropuestas();
+    if (tab === 'negocios')    this._admRenderNegocios();
   },
 
   // ── Dashboard ──
@@ -10981,6 +10988,297 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     // Burst desde el centro
     this._fxBurst(el, 18);
     setTimeout(() => el.remove(), 2800);
+  },
+
+
+  // ══════════════════════════════════════════
+  // 🏪 NEGOCIOS — CRUD completo
+  // ══════════════════════════════════════════
+
+  _negocioEditId: null,   // null = nuevo, string = editar existente
+
+  async _admRenderNegocios() {
+    const el = document.getElementById('adm-tab-negocios');
+    if (!el) return;
+
+    el.innerHTML = `<div style="text-align:center;padding:20px;color:var(--gr);font-size:13px;">Cargando negocios...</div>`;
+
+    let lista = [];
+    if (this._db) {
+      try {
+        const snap = await this._db.collection('negocios').orderBy('nombre').get();
+        lista = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      } catch(e) { console.warn('negocios:', e); lista = []; }
+    }
+
+    const RUBROS = ['Restaurante / Parrilla','Almacén / Proveeduría','Hospedaje / Camping','Guía de pesca','Alquiler de botes / Kayaks','Bar / Cervecería','Café / Panadería','Servicio náutico','Turismo aventura','Otro'];
+    const PLANES = ['Básico (gratis)','Destacado','Premium'];
+
+    el.innerHTML = `
+      <div style="padding:14px;display:flex;flex-direction:column;gap:14px;">
+
+        <!-- Botón nuevo -->
+        <button onclick="App._negocioFormAbrir(null)"
+          style="width:100%;padding:13px;background:var(--or);color:white;border:none;border-radius:12px;font-family:var(--fH);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+          🏪 + Agregar negocio
+        </button>
+
+        <!-- Filtro rápido -->
+        <input id="neg-search" type="text" placeholder="🔍 Buscar negocio..." oninput="App._negocioFiltrar()"
+          style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--dk);font-size:13px;font-family:var(--fH);box-sizing:border-box;">
+
+        <!-- Lista -->
+        <div id="neg-lista" style="display:flex;flex-direction:column;gap:8px;">
+          ${lista.length === 0
+            ? `<div style="text-align:center;padding:40px 20px;color:var(--gr);">
+                <div style="font-size:36px;margin-bottom:10px;">🏪</div>
+                <div style="font-size:14px;font-weight:600;">Sin negocios todavía</div>
+                <div style="font-size:12px;margin-top:6px;">Usá el botón de arriba para agregar el primero.</div>
+               </div>`
+            : lista.map(n => App._negocioCard(n)).join('')
+          }
+        </div>
+      </div>
+
+      <!-- MODAL FORMULARIO -->
+      <div id="neg-modal-bg" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;align-items:flex-end;justify-content:center;"
+           onclick="if(event.target===this)App._negocioFormCerrar()">
+        <div id="neg-modal" style="background:var(--wh);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-sizing:border-box;">
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+            <div id="neg-form-title" style="font-family:var(--fH);font-size:17px;font-weight:800;color:var(--dk);">Nuevo negocio</div>
+            <button onclick="App._negocioFormCerrar()" style="width:32px;height:32px;border-radius:50%;border:1px solid var(--bd);background:var(--bg2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;">×</button>
+          </div>
+
+          <!-- Foto del negocio -->
+          <div style="margin-bottom:14px;">
+            <div style="font-size:11px;font-weight:700;color:var(--gr);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Foto del local</div>
+            <div id="neg-foto-preview" style="width:100%;height:130px;border-radius:12px;border:1.5px dashed var(--bd);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;" onclick="document.getElementById('neg-foto-input').click()">
+              <div style="text-align:center;color:var(--gr);">
+                <div style="font-size:28px;">📷</div>
+                <div style="font-size:12px;margin-top:4px;">Tocar para agregar foto</div>
+              </div>
+            </div>
+            <input type="file" id="neg-foto-input" accept="image/*" style="display:none" onchange="App._negocioHandleImg(this)">
+          </div>
+
+          <!-- Campos -->
+          ${[
+            ['neg-nombre',   'text',   'Nombre del negocio *',     'Ej: La Posta del Pescador'],
+            ['neg-rubro',    'select', 'Rubro *',                  ''],
+            ['neg-ciudad',   'text',   'Ciudad / Localidad',       'Ej: La Paz, Santa Elena…'],
+            ['neg-direccion','text',   'Dirección',                'Ej: Av. Costanera 120'],
+            ['neg-tel',      'text',   'Teléfono / WhatsApp',      'Ej: 3437-123456'],
+            ['neg-web',      'text',   'Sitio web o Instagram',    'Ej: @laposta o https://...'],
+            ['neg-horario',  'text',   'Horario',                  'Ej: Lun–Vie 9–18, Sáb 9–13'],
+            ['neg-desc',     'textarea','Descripción breve',       'Contá qué ofrece el negocio…'],
+            ['neg-plan',     'select', 'Plan',                     ''],
+            ['neg-lat',      'text',   'Latitud GPS (opcional)',   'Ej: -30.7456'],
+            ['neg-lng',      'text',   'Longitud GPS (opcional)',  'Ej: -59.6423'],
+            ['neg-activo',   'check',  'Publicado en el mapa',     ''],
+          ].map(([id, tipo, lbl, ph]) => {
+            if (tipo === 'select' && id === 'neg-rubro')
+              return `<div style="margin-bottom:10px;">
+                <div style="font-size:11px;font-weight:700;color:var(--gr);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">${lbl}</div>
+                <select id="${id}" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--dk);font-size:13px;font-family:var(--fH);">
+                  ${RUBROS.map(r => `<option value="${r}">${r}</option>`).join('')}
+                </select></div>`;
+            if (tipo === 'select' && id === 'neg-plan')
+              return `<div style="margin-bottom:10px;">
+                <div style="font-size:11px;font-weight:700;color:var(--gr);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">${lbl}</div>
+                <select id="${id}" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--dk);font-size:13px;font-family:var(--fH);">
+                  ${PLANES.map(p => `<option value="${p}">${p}</option>`).join('')}
+                </select></div>`;
+            if (tipo === 'textarea')
+              return `<div style="margin-bottom:10px;">
+                <div style="font-size:11px;font-weight:700;color:var(--gr);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">${lbl}</div>
+                <textarea id="${id}" rows="3" placeholder="${ph}" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--dk);font-size:13px;font-family:var(--fH);resize:vertical;box-sizing:border-box;"></textarea></div>`;
+            if (tipo === 'check')
+              return `<div style="margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+                <input type="checkbox" id="${id}" checked style="width:18px;height:18px;accent-color:var(--or);cursor:pointer;">
+                <label for="${id}" style="font-size:13px;font-weight:600;color:var(--dk);cursor:pointer;">${lbl}</label></div>`;
+            return `<div style="margin-bottom:10px;">
+              <div style="font-size:11px;font-weight:700;color:var(--gr);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">${lbl}</div>
+              <input type="${tipo}" id="${id}" placeholder="${ph}" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg2);color:var(--dk);font-size:13px;font-family:var(--fH);box-sizing:border-box;"></div>`;
+          }).join('')}
+
+          <!-- Notas internas (solo admin) -->
+          <div style="margin-bottom:16px;">
+            <div style="font-size:11px;font-weight:700;color:var(--gr);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">📋 Notas internas (solo vos las ves)</div>
+            <textarea id="neg-notas" rows="2" placeholder="Ej: Contacté a Juan el 3/6, interesado en plan destacado…"
+              style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:rgba(255,95,0,.05);color:var(--dk);font-size:13px;font-family:var(--fH);resize:vertical;box-sizing:border-box;"></textarea>
+          </div>
+
+          <!-- Botones -->
+          <div style="display:flex;gap:10px;">
+            <button onclick="App._negocioFormCerrar()" style="flex:1;padding:13px;border-radius:12px;border:1.5px solid var(--bd);background:var(--bg2);font-family:var(--fH);font-size:14px;font-weight:600;color:var(--gr);cursor:pointer;">Cancelar</button>
+            <button onclick="App._negocioGuardar()" style="flex:2;padding:13px;border-radius:12px;border:none;background:var(--or);color:white;font-family:var(--fH);font-size:14px;font-weight:700;cursor:pointer;">💾 Guardar negocio</button>
+          </div>
+
+        </div>
+      </div>`;
+
+    this._negociosCache = lista;
+  },
+
+  _negocioCard(n) {
+    const planColor = n.plan === 'Premium' ? '#A78BFA' : n.plan === 'Destacado' ? '#FF5F00' : '#9898B8';
+    const imgHtml = n.img
+      ? `<img src="${n.img}" style="width:52px;height:52px;object-fit:cover;border-radius:10px;flex-shrink:0;" loading="lazy">`
+      : `<div style="width:52px;height:52px;border-radius:10px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🏪</div>`;
+    return `
+      <div class="adm-item" style="position:relative;">
+        <div class="adm-item-row" style="align-items:flex-start;gap:10px;">
+          ${imgHtml}
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <div class="adm-item-name">${App._esc(n.nombre||'Sin nombre')}</div>
+              <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;background:${planColor}20;color:${planColor};">${n.plan||'Básico'}</span>
+              ${n.activo === false ? `<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:var(--bg2);color:var(--gr);">⚫ Inactivo</span>` : `<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:#22C55E20;color:#16A34A;">🟢 Activo</span>`}
+            </div>
+            <div class="adm-item-meta">${App._esc(n.rubro||'')} ${n.ciudad ? '· '+App._esc(n.ciudad) : ''}</div>
+            ${n.tel ? `<div class="adm-item-meta">📞 ${App._esc(n.tel)}</div>` : ''}
+            ${n.notas ? `<div style="font-size:11px;color:var(--or);margin-top:3px;font-style:italic;">📋 ${App._esc(n.notas)}</div>` : ''}
+          </div>
+        </div>
+        <div class="adm-item-actions" style="margin-top:8px;">
+          <button class="adm-btn" onclick="App._negocioFormAbrir('${n.id}')" style="background:var(--bg2);border:1px solid var(--bd);color:var(--dk);">✏️ Editar</button>
+          <button class="adm-btn adm-btn-red" onclick="App._negocioEliminar('${n.id}','${App._esc(n.nombre||'')}')">🗑 Eliminar</button>
+        </div>
+      </div>`;
+  },
+
+  _negocioFiltrar() {
+    const q = (document.getElementById('neg-search')?.value || '').toLowerCase();
+    const lista = (this._negociosCache || []).filter(n =>
+      (n.nombre||'').toLowerCase().includes(q) ||
+      (n.rubro||'').toLowerCase().includes(q) ||
+      (n.ciudad||'').toLowerCase().includes(q)
+    );
+    const el = document.getElementById('neg-lista');
+    if (el) el.innerHTML = lista.length ? lista.map(n => App._negocioCard(n)).join('') : `<div style="text-align:center;padding:30px;color:var(--gr);font-size:13px;">Sin resultados</div>`;
+  },
+
+  _negocioFormAbrir(id) {
+    this._negocioEditId = id;
+    this._negocioImgData = null;
+    const modal = document.getElementById('neg-modal-bg');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const n = id ? (this._negociosCache||[]).find(x => x.id === id) : null;
+    const title = document.getElementById('neg-form-title');
+    if (title) title.textContent = n ? `Editar: ${n.nombre||'Negocio'}` : 'Nuevo negocio';
+
+    const set = (elId, val) => { const e = document.getElementById(elId); if (e) { if (e.type === 'checkbox') e.checked = val !== false; else e.value = val || ''; } };
+    if (n) {
+      set('neg-nombre',    n.nombre);
+      set('neg-rubro',     n.rubro);
+      set('neg-ciudad',    n.ciudad);
+      set('neg-direccion', n.direccion);
+      set('neg-tel',       n.tel);
+      set('neg-web',       n.web);
+      set('neg-horario',   n.horario);
+      set('neg-desc',      n.desc);
+      set('neg-plan',      n.plan);
+      set('neg-lat',       n.lat);
+      set('neg-lng',       n.lng);
+      set('neg-notas',     n.notas);
+      const chk = document.getElementById('neg-activo');
+      if (chk) chk.checked = n.activo !== false;
+      // Foto preview
+      const prev = document.getElementById('neg-foto-preview');
+      if (prev && n.img) prev.innerHTML = `<img src="${n.img}" style="width:100%;height:100%;object-fit:cover;">`;
+    } else {
+      ['neg-nombre','neg-ciudad','neg-direccion','neg-tel','neg-web','neg-horario','neg-desc','neg-lat','neg-lng','neg-notas'].forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
+      const prev = document.getElementById('neg-foto-preview');
+      if (prev) prev.innerHTML = `<div style="text-align:center;color:var(--gr);"><div style="font-size:28px;">📷</div><div style="font-size:12px;margin-top:4px;">Tocar para agregar foto</div></div>`;
+    }
+  },
+
+  _negocioFormCerrar() {
+    const modal = document.getElementById('neg-modal-bg');
+    if (modal) modal.style.display = 'none';
+    this._negocioEditId = null;
+    this._negocioImgData = null;
+  },
+
+  _negocioHandleImg(input) {
+    const file = input.files?.[0];
+    if (!file) return;
+    this._compressImg(file, b64 => {
+      this._negocioImgData = b64;
+      const prev = document.getElementById('neg-foto-preview');
+      if (prev) prev.innerHTML = `<img src="${b64}" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">`;
+    });
+  },
+
+  async _negocioGuardar() {
+    const get = id => document.getElementById(id)?.value?.trim() || '';
+    const nombre = get('neg-nombre');
+    if (!nombre) return this.toast('⚠️ El nombre es obligatorio');
+
+    const data = {
+      nombre,
+      rubro:     get('neg-rubro'),
+      ciudad:    get('neg-ciudad'),
+      direccion: get('neg-direccion'),
+      tel:       get('neg-tel'),
+      web:       get('neg-web'),
+      horario:   get('neg-horario'),
+      desc:      get('neg-desc'),
+      plan:      get('neg-plan') || 'Básico (gratis)',
+      lat:       parseFloat(get('neg-lat')) || null,
+      lng:       parseFloat(get('neg-lng')) || null,
+      notas:     get('neg-notas'),
+      activo:    document.getElementById('neg-activo')?.checked !== false,
+      updatedAt: Date.now(),
+    };
+
+    // Imagen: si hay nueva imagen comprimida la subimos
+    if (this._negocioImgData) {
+      try {
+        const id = this._negocioEditId || ('neg-' + Date.now());
+        const ref = await this._uploadImg(this._negocioImgData, `negocios/${id}.jpg`);
+        data.img = ref;
+      } catch(e) {
+        // Fallback: guardar base64 directo si falla Storage
+        data.img = this._negocioImgData;
+      }
+    } else if (this._negocioEditId) {
+      // Mantener imagen existente
+      const existing = (this._negociosCache||[]).find(x => x.id === this._negocioEditId);
+      if (existing?.img) data.img = existing.img;
+    }
+
+    if (!this._db) return this.toast('❌ Firebase no disponible');
+
+    try {
+      if (this._negocioEditId) {
+        await this._db.collection('negocios').doc(this._negocioEditId).update(data);
+        this.toast('✅ Negocio actualizado');
+      } else {
+        data.createdAt = Date.now();
+        await this._db.collection('negocios').doc().set(data);
+        this.toast('✅ Negocio guardado');
+      }
+      this._negocioFormCerrar();
+      this._admRenderNegocios();
+    } catch(e) {
+      this.toast('❌ Error: ' + e.message);
+    }
+  },
+
+  async _negocioEliminar(id, nombre) {
+    if (!confirm(`¿Eliminar "${nombre}"? Esta acción no se puede deshacer.`)) return;
+    if (!this._db) return this.toast('❌ Firebase no disponible');
+    try {
+      await this._db.collection('negocios').doc(id).delete();
+      this.toast('🗑 Negocio eliminado');
+      this._admRenderNegocios();
+    } catch(e) {
+      this.toast('❌ Error: ' + e.message);
+    }
   },
 
   toast(msg) {
