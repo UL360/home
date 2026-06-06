@@ -5907,13 +5907,23 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   },
 
   // ── Visor de imagen / lightbox ──
-  _openImgViewer(id, mode) {
+  async _openImgViewer(id, mode) {
     // Buscar en fotoPosts o en routes
     const r = (this._fotoPosts||[]).find(x=>x.id===id)
            || this.routes.find(x=>x.id===id);
     if (!r) return;
 
-    const img  = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:')) ? r.img : null;
+    // Resolver imagen: si es firestore: la cargamos async antes de mostrar
+    let resolvedImg = r.imgData || null; // base64 en memoria tiene prioridad
+    if (!resolvedImg) {
+      if (r.img && (r.img.startsWith('data:') || r.img.startsWith('http'))) {
+        resolvedImg = r.img;
+      } else if (r.img && r.img.startsWith('firestore:')) {
+        this._showImgViewerSpinner(r);          // spinner mientras carga
+        resolvedImg = await this._resolveImg(r.img).catch(() => '');
+      }
+    }
+    const img  = resolvedImg || null;
     const city = r.cityId || r.ciudad || 'La Paz';
     const FL_CATS = { lugar:'📍',gastro:'🍽️',resto:'🥩',cafe:'☕',vino:'🍷',cerveza:'🍺',coctel:'🍸',vineria:'🍾',bar:'🥂',boliche:'🪩',teatro:'🎭',cine:'🎬',musica:'🎵',museo:'🖼️',arte:'🎨',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️' };
     const catIcon = FL_CATS[r.cat||r.type] || r.emoji || '🔄';
@@ -5971,6 +5981,27 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         </div>
       </div>`;
 
+    modal.style.display = 'flex';
+  },
+
+  _showImgViewerSpinner(r) {
+    const FL_CATS = { lugar:'📍',gastro:'🍽️',resto:'🥩',cafe:'☕',vino:'🍷',cerveza:'🍺',coctel:'🍸',vineria:'🍾',bar:'🥂',boliche:'🪩',teatro:'🎭',cine:'🎬',musica:'🎵',museo:'🖼️',arte:'🎨',naturaleza:'🌿',rio:'🌊',playa:'🏖️',parque:'🌳',plaza:'🏛️',pesca:'🎣',aventura:'🧗',campo:'🌾',deporte:'⚽',ciclismo:'🚴',nocturno:'🌙',perro:'🐕',foto:'📸',otro:'✳️' };
+    const catIcon = FL_CATS[r.cat||r.type] || r.emoji || '📸';
+    let modal = document.getElementById('img-viewer-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'img-viewer-modal';
+      modal.style.cssText = 'position:fixed;inset:0;z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,.88);backdrop-filter:blur(6px);padding:0;animation:fadeInModal .2s ease;';
+      document.body.appendChild(modal);
+    }
+    modal.onclick = (e) => { if (e.target === modal) this._closeImgViewer(); };
+    modal.innerHTML = `
+      <button onclick="App._closeImgViewer()" style="position:absolute;top:16px;right:16px;width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.15);border:none;color:white;font-size:22px;font-weight:300;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:2;">×</button>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+        <div style="font-size:48px;">${catIcon}</div>
+        <div style="width:36px;height:36px;border:3px solid rgba(255,255,255,0.2);border-top-color:#FF5F00;border-radius:50%;animation:spin .8s linear infinite;"></div>
+        <div style="font-size:13px;color:rgba(255,255,255,.5);">Cargando imagen…</div>
+      </div>`;
     modal.style.display = 'flex';
   },
 
