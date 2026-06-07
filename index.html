@@ -2305,69 +2305,85 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 <div id="ranking" class="screen" style="background:var(--bg0);">
 
   <!-- Header -->
-  <div style="padding:14px 16px 12px;background:var(--wh);border-bottom:1px solid var(--bd);flex-shrink:0;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+  <div style="flex-shrink:0;background:var(--wh);border-bottom:1px solid var(--bd);">
+    <div style="padding:14px 16px 10px;display:flex;align-items:center;gap:10px;">
       <button class="scr-back-btn" onclick="App.go('explore')" title="Volver al mapa">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--md)" stroke-width="2.2"><path d="M19 12H5m0 0l7-7m-7 7l7 7"/></svg>
       </button>
       <div style="flex:1;">
         <h1 style="font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);">Ranking</h1>
-        <p style="font-size:11px;color:var(--gr);margin-top:1px;">Loop Principal · estadísticas municipales</p>
+        <p style="font-size:11px;color:var(--gr);margin-top:1px;" id="rank-subtitle">Loops · estadísticas en tiempo real</p>
       </div>
-      <div style="display:flex;gap:6px;">
-        <button onclick="App.rankSetPeriod('semanal',this)" style="background:var(--lt);border:0.5px solid var(--bd);border-radius:8px;padding:5px 10px;font-size:11px;color:var(--md);cursor:pointer;">Semanal</button>
-        <button onclick="App.rankSetPeriod('mensual',this)" id="rank-period-mensual" style="background:var(--or);border:none;border-radius:8px;padding:5px 10px;font-size:11px;color:white;font-weight:600;cursor:pointer;">Mensual</button>
+      <!-- Filtro período -->
+      <div style="display:flex;gap:4px;">
+        <button id="rank-p-sem" onclick="App.rankSetPeriod('semanal',this)" style="background:var(--lt);border:0.5px solid var(--bd);border-radius:8px;padding:4px 9px;font-size:10px;color:var(--md);cursor:pointer;white-space:nowrap;">7 días</button>
+        <button id="rank-p-men" onclick="App.rankSetPeriod('mensual',this)" style="background:var(--or);border:none;border-radius:8px;padding:4px 9px;font-size:10px;color:white;font-weight:700;cursor:pointer;white-space:nowrap;">30 días</button>
+        <button id="rank-p-tod" onclick="App.rankSetPeriod('todo',this)" style="background:var(--lt);border:0.5px solid var(--bd);border-radius:8px;padding:4px 9px;font-size:10px;color:var(--md);cursor:pointer;white-space:nowrap;">Todo</button>
       </div>
+    </div>
+    <!-- Tabs categoría -->
+    <div style="display:flex;border-top:0.5px solid var(--bd);">
+      <button id="rank-tab-loopers"   onclick="App.rankSetTab('loopers',this)"   class="com-tab on"  style="flex:1;font-size:11px;padding:10px 4px;">👟 Loopers</button>
+      <button id="rank-tab-loops"    onclick="App.rankSetTab('loops',this)"    class="com-tab"     style="flex:1;font-size:11px;padding:10px 4px;">🔄 Loops</button>
+      <button id="rank-tab-foto"     onclick="App.rankSetTab('foto',this)"     class="com-tab"     style="flex:1;font-size:11px;padding:10px 4px;">📸 Foto</button>
+      <button id="rank-tab-comercios" onclick="App.rankSetTab('comercios',this)" class="com-tab"  style="flex:1;font-size:11px;padding:10px 4px;">🏪 Comercios</button>
+      <button id="rank-tab-todo"     onclick="App.rankSetTab('todo',this)"     class="com-tab"     style="flex:1;font-size:11px;padding:10px 4px;">🌐 Todo</button>
     </div>
   </div>
 
+  <!-- Cuerpo scrollable -->
   <div class="rank-body" id="rank-body" style="flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:12px;">
 
-    <!-- Loop Principal card -->
+    <!-- Card #1 destacado (loops y fotoloops) -->
     <div id="rank-principal-card" style="background:var(--wh);border-radius:14px;border:2px solid #EF9F27;padding:14px;box-shadow:0 4px 20px rgba(239,159,39,.18);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:8px;">
-          <span style="font-size:20px;">★</span>
+          <span style="font-size:20px;" id="rank-principal-emoji">★</span>
           <div>
-            <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);" id="rank-principal-name">Loop Costanera</div>
-            <div style="font-size:11px;color:var(--gr);">Loop Principal del mes</div>
+            <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);" id="rank-principal-name">—</div>
+            <div style="font-size:11px;color:var(--gr);" id="rank-principal-sub">Nº1 del período</div>
           </div>
         </div>
-        <span style="background:#FAEEDA;color:#633806;font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;">★ PRINCIPAL</span>
+        <span style="background:#FAEEDA;color:#633806;font-size:10px;font-weight:700;padding:3px 10px;border-radius:10px;" id="rank-principal-badge">🥇 PRIMERO</span>
       </div>
       <div style="background:var(--lt);border-radius:10px;padding:10px 12px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-          <span style="font-size:11px;color:var(--gr);">Score total</span>
-          <span style="font-size:13px;font-weight:700;color:var(--dk);" id="rank-principal-score">0 pts</span>
+          <span style="font-size:11px;color:var(--gr);" id="rank-principal-score-lbl">Score total</span>
+          <span style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);" id="rank-principal-score">—</span>
         </div>
         <div style="height:6px;background:var(--bd);border-radius:3px;margin-bottom:8px;">
-          <div id="rank-principal-bar" style="height:6px;width:90%;background:#BA7517;border-radius:3px;transition:width .5s;"></div>
+          <div id="rank-principal-bar" style="height:6px;width:0%;background:#BA7517;border-radius:3px;transition:width .6s;"></div>
         </div>
-        <div style="display:flex;gap:14px;">
+        <div style="display:flex;gap:14px;" id="rank-principal-stats">
           <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--or)" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--or)" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             <span id="rank-principal-likes">0</span> likes
           </span>
           <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3"/></svg>
-            <span id="rank-principal-paseos">0</span> paseos
+            👟 <span id="rank-principal-paseos">0</span> paseos
+          </span>
+        </div>
+        <!-- Stats especiales Comercios -->
+        <div style="display:none;gap:14px;" id="rank-principal-stats-neg">
+          <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
+            ⭐ <span id="rank-principal-stars">0</span> estrellas prom.
+          </span>
+          <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
+            💬 <span id="rank-principal-votes">0</span> valoraciones
           </span>
         </div>
       </div>
-      <div style="font-size:11px;color:var(--gr);text-align:center;padding:4px 0;">
-        Fórmula: <code style="background:var(--lt);padding:1px 6px;border-radius:4px;color:var(--dk);font-size:11px;">score = (likes × 2) + paseos</code>
-      </div>
     </div>
 
-    <!-- Ranking list -->
+    <!-- Lista principal -->
     <div>
-      <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);letter-spacing:.5px;margin-bottom:8px;">TODOS LOS LOOPS</div>
+      <div style="font-family:var(--fH);font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.6px;margin-bottom:8px;text-transform:uppercase;" id="rank-list-title">Todos los loops</div>
       <div id="rank-loops-list" style="display:flex;flex-direction:column;gap:7px;"></div>
     </div>
 
-    <!-- Tu posición personal -->
-    <div style="background:var(--wh);border-radius:12px;padding:14px;border:2px solid var(--or);">
-      <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);margin-bottom:10px;letter-spacing:.5px;">TU POSICIÓN</div>
+    <!-- Tu posición personal (solo tabs que puntúan) -->
+    <div id="rank-my-pos" style="background:var(--wh);border-radius:12px;padding:14px;border:2px solid var(--or);">
+      <div style="font-family:var(--fH);font-size:11px;font-weight:700;color:var(--gr);margin-bottom:10px;letter-spacing:.5px;text-transform:uppercase;">Tu posición</div>
       <div style="display:flex;align-items:center;gap:12px;">
         <div class="pts-avatar" id="pts-avatar" style="width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:white;background:var(--or);flex-shrink:0;">VL</div>
         <div style="flex:1;">
@@ -2387,7 +2403,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <!-- Cómo ganar puntos -->
     <div style="background:var(--wh);border-radius:12px;padding:14px;">
-      <div style="font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);margin-bottom:10px;letter-spacing:.5px;">CÓMO GANAR PUNTOS</div>
+      <div style="font-family:var(--fH);font-size:11px;font-weight:700;color:var(--gr);margin-bottom:10px;letter-spacing:.5px;text-transform:uppercase;">Cómo ganar puntos</div>
       <div class="earn-grid">
         <div class="earn-item"><div class="earn-em">📍</div><div class="earn-info"><div class="earn-action">Publicar loop</div><div class="earn-pts">+50 pts</div></div></div>
         <div class="earn-item"><div class="earn-em">🗺️</div><div class="earn-info"><div class="earn-action">Agregar POI</div><div class="earn-pts">+15 pts</div></div></div>
@@ -8936,73 +8952,382 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   // MÓDULO 3 — RANKING MUNICIPAL
   // ══════════════════════════════════════════
   _rankPeriod: 'mensual',
+  _rankTab: 'loopers',
 
-  _renderRanking() {
+  async _renderRanking() {
     this._updatePtsDisplay();
 
-    let loops = [...this.routes];
-    if (!loops.length) {
-      // demos para que la pantalla no esté vacía
-      loops = [
-        { id:'demo1', name:'Loop Costanera', likes:248, paseos:1200, dist:'4.2 km', cityId:'La Paz' },
-        { id:'demo2', name:'Loop Arroyo',    likes:141, paseos:830,  dist:'2.8 km', cityId:'La Paz' },
-        { id:'demo3', name:'Loop Centro',    likes:89,  paseos:510,  dist:'1.5 km', cityId:'La Paz' },
-      ];
-    }
+    const list     = document.getElementById('rank-loops-list');
+    const pCard    = document.getElementById('rank-principal-card');
+    const pName    = document.getElementById('rank-principal-name');
+    const pScore   = document.getElementById('rank-principal-score');
+    const pScLbl   = document.getElementById('rank-principal-score-lbl');
+    const pLikes   = document.getElementById('rank-principal-likes');
+    const pPaseos  = document.getElementById('rank-principal-paseos');
+    const pBar     = document.getElementById('rank-principal-bar');
+    const pEmoji   = document.getElementById('rank-principal-emoji');
+    const pSub     = document.getElementById('rank-principal-sub');
+    const pBadge   = document.getElementById('rank-principal-badge');
+    const pStats   = document.getElementById('rank-principal-stats');
+    const pStNeg   = document.getElementById('rank-principal-stats-neg');
+    const pStars   = document.getElementById('rank-principal-stars');
+    const pVotes   = document.getElementById('rank-principal-votes');
+    const listTitle= document.getElementById('rank-list-title');
+    const subtitle = document.getElementById('rank-subtitle');
 
-    const scored = loops.map(r => ({
-      ...r,
-      _score: (r.likes||0) * 2 + (r.paseos||0)
-    })).sort((a, b) => b._score - a._score);
+    if (list) list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--gr);font-size:13px;">⏳ Cargando ranking...</div>';
 
-    const top = scored[0];
-    const maxScore = top ? top._score || 1 : 1;
+    const now   = Date.now();
+    const msDay = 86400000;
+    const since = this._rankPeriod === 'semanal' ? now - 7 * msDay
+                : this._rankPeriod === 'mensual'  ? now - 30 * msDay
+                : 0;
 
-    // Card Loop Principal
-    const pName  = document.getElementById('rank-principal-name');
-    const pScore = document.getElementById('rank-principal-score');
-    const pLikes = document.getElementById('rank-principal-likes');
-    const pPaseos= document.getElementById('rank-principal-paseos');
-    const pBar   = document.getElementById('rank-principal-bar');
-    if (top && pName) {
-      pName.textContent  = top.name;
-      pScore.textContent = `${top._score.toLocaleString()} pts`;
-      pLikes.textContent = top.likes || 0;
-      pPaseos.textContent= top.paseos || 0;
-      if (pBar) pBar.style.width = '92%';
-    }
+    const tab = this._rankTab;
 
-    // Lista ranking
-    const list = document.getElementById('rank-loops-list');
-    if (!list) return;
-    list.innerHTML = scored.map((r, i) => {
-      const pct = Math.round((r._score / maxScore) * 100);
-      const colors = ['#BA7517','#534AB7','#1D9E75','var(--gr)','var(--gr)'];
-      const color = colors[i] || 'var(--gr)';
-      return `
-      <div class="rank-loop-item ${i===0?'pos1':''}">
-        <div class="rank-loop-pos ${i===0?'gold':''}">${i+1}</div>
-        <div class="rank-loop-info">
-          <div class="rank-loop-name">${App._esc(r.name)} ${i===0?'<span style="font-size:10px;color:#BA7517;">★</span>':''}</div>
-          <div class="rank-loop-meta">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            ${r.likes||0} likes · ${r.paseos||0} paseos
+    /* ── helper: fetch colección con filtro opcional de fecha ── */
+    const _fetchCol = async (col) => {
+      const items = [];
+      if (!this._db) return items;
+      try {
+        let q = this._db.collection(col);
+        if (since > 0 && col !== 'negocios') q = q.where('createdAt', '>=', since);
+        const snap = await q.get();
+        snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+      } catch(e) {
+        try {
+          const snap2 = await this._db.collection(col).get();
+          snap2.forEach(doc => {
+            const d = doc.data();
+            if (col === 'negocios' || since === 0 || (d.createdAt||0) >= since)
+              items.push({ id: doc.id, ...d });
+          });
+        } catch(e2) { console.warn('[Ranking]', col, e2.message); }
+      }
+      return items;
+    };
+
+    const medals     = ['🥇','🥈','🥉'];
+    const posClasses = ['gold','silver','bronze','other'];
+    const barColors  = ['#BA7517','#64748B','#C2410C','#534AB7','#1D9E75'];
+
+    /* ── renderizado genérico loops / fotoloops ── */
+    const _renderLoopList = (scored) => {
+      const top   = scored[0];
+      const maxSc = top ? (top._score||1) : 1;
+
+      if (pCard)  pCard.style.display  = scored.length ? '' : 'none';
+      if (pStats) pStats.style.display = '';
+      if (pStNeg) pStNeg.style.display = 'none';
+
+      if (top && pName) {
+        if (pEmoji) pEmoji.textContent  = top.emoji || (tab==='foto'?'📸':'🔄');
+        pName.textContent               = top.name  || '—';
+        if (pSub)   pSub.textContent   = 'Nº1 del período';
+        if (pBadge) pBadge.textContent = '🥇 PRIMERO';
+        if (pScLbl) pScLbl.textContent = 'Score = (likes × 2) + paseos';
+        pScore.textContent              = (top._score||0).toLocaleString() + ' pts';
+        if (pLikes)  pLikes.textContent  = (top.likes||0).toLocaleString();
+        if (pPaseos) pPaseos.textContent = (top.paseos||0).toLocaleString();
+        setTimeout(() => { if (pBar) pBar.style.width = '92%'; }, 60);
+      }
+
+      if (!list) return;
+      if (!scored.length) {
+        list.innerHTML = '<div style="text-align:center;padding:28px;color:var(--gr);font-size:13px;">Sin resultados en este período.</div>';
+        return;
+      }
+
+      list.innerHTML = scored.map((r, i) => {
+        const pct   = Math.round((r._score / maxSc) * 100);
+        const posC  = posClasses[i] || 'other';
+        const color = barColors[i]  || 'var(--gr)';
+        const medal = medals[i]     || (i + 1);
+        const city  = r.cityId || r.ciudad || '';
+        const dist  = r.dist   || '—';
+        const emj   = r.emoji  || (tab==='foto'?'📸':'🔄');
+        return `
+        <div class="rank-loop-item ${i===0?'pos1':''}" style="cursor:pointer;" onclick="App.go('detail','${App._esc(r.id)}')">
+          <div class="rank-loop-pos ${posC}">${medal}</div>
+          <div class="rank-loop-info">
+            <div class="rank-loop-name">${App._esc(emj+' '+(r.name||'Sin nombre'))}</div>
+            <div class="rank-loop-meta" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+              <span style="color:${i===0?'#BA7517':'var(--gr)'};display:flex;align-items:center;gap:2px;">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                ${(r.likes||0).toLocaleString()}
+              </span>
+              <span style="color:var(--gr);">· 👟 ${(r.paseos||0).toLocaleString()} · 📍 ${App._esc(dist)}${city?' · '+App._esc(city):''}</span>
+            </div>
+            <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:${pct}%;background:${color};"></div></div>
           </div>
-          <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:${pct}%;background:${color};"></div></div>
-        </div>
-        <div class="rank-loop-score">${r._score}</div>
-      </div>`;
-    }).join('');
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--or);">${(r._score||0).toLocaleString()}</div>
+            <div style="font-size:9px;color:var(--gr);margin-top:1px;">pts</div>
+          </div>
+        </div>`;
+      }).join('');
+    };
+
+    /* ── renderizado Comercios por valoración ── */
+    const _renderComerciosList = (negocios) => {
+      const scored = negocios
+        .filter(n => n.activo !== false)
+        .map(n => {
+          const cnt = n.ratingCount || 0;
+          const avg = cnt > 0 ? (n.rating||0) / cnt : 0;
+          return { ...n, _avg: avg, _cnt: cnt };
+        })
+        .sort((a, b) => b._avg - a._avg || b._cnt - a._cnt);
+
+      const top = scored[0];
+
+      if (pCard)  pCard.style.display  = scored.length ? '' : 'none';
+      if (pStats) pStats.style.display = 'none';
+      if (pStNeg) pStNeg.style.display = '';
+
+      if (top && pName) {
+        if (pEmoji) pEmoji.textContent  = top.emoji || '🏪';
+        pName.textContent               = top.nombre || top.name || '—';
+        if (pSub)   pSub.textContent   = 'Comercio mejor valorado';
+        if (pBadge) pBadge.textContent = '⭐ TOP';
+        if (pScLbl) pScLbl.textContent = 'Valoración promedio';
+        pScore.textContent = top._avg.toFixed(1) + ' ★ (' + top._cnt + ' votos)';
+        if (pStars) pStars.textContent = top._avg.toFixed(1);
+        if (pVotes) pVotes.textContent = top._cnt.toLocaleString();
+        setTimeout(() => { if (pBar) pBar.style.width = Math.round((top._avg/5)*100)+'%'; }, 60);
+      }
+
+      if (!list) return;
+      if (!scored.length) {
+        list.innerHTML = '<div style="text-align:center;padding:28px;color:var(--gr);font-size:13px;">Sin comercios disponibles.</div>';
+        return;
+      }
+
+      list.innerHTML = scored.map((n, i) => {
+        const medal  = medals[i]     || (i + 1);
+        const posC   = posClasses[i] || 'other';
+        const color  = barColors[i]  || 'var(--gr)';
+        const pct    = Math.round((n._avg / 5) * 100);
+        const emj    = n.emoji  || '🏪';
+        const nombre = n.nombre || n.name || 'Sin nombre';
+        const cat    = n.categoria || n.cat || '';
+        const fullS  = Math.floor(n._avg);
+        const halfS  = (n._avg - fullS) >= 0.5 ? 1 : 0;
+        const emptyS = 5 - fullS - halfS;
+        const starsHtml = '<span style="color:#FBBF24;font-size:12px;">'+'★'.repeat(fullS)+(halfS?'<span style="opacity:.4">★</span>':'')+'</span>'
+                        + '<span style="color:var(--bd);font-size:12px;">'+'★'.repeat(emptyS)+'</span>';
+        return `
+        <div class="rank-loop-item ${i===0?'pos1':''}">
+          <div class="rank-loop-pos ${posC}">${medal}</div>
+          <div class="rank-loop-info">
+            <div class="rank-loop-name">${App._esc(emj+' '+nombre)}${cat?' <span style="font-size:10px;color:var(--gr);">· '+App._esc(cat)+'</span>':''}</div>
+            <div class="rank-loop-meta" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+              ${starsHtml}
+              <span style="font-size:10px;color:var(--gr);">${n._avg.toFixed(1)} · ${n._cnt} valoracion${n._cnt!==1?'es':''}</span>
+            </div>
+            <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:${pct}%;background:${color};"></div></div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:#FBBF24;">${n._avg.toFixed(1)}</div>
+            <div style="font-size:9px;color:var(--gr);margin-top:1px;">★ prom.</div>
+          </div>
+        </div>`;
+      }).join('');
+    };
+
+    /* ══ TAB: LOOPERS ══ */
+    if (tab === 'loopers') {
+      if (subtitle)  subtitle.textContent  = 'Loopers · quién acumula más likes';
+      if (listTitle) listTitle.textContent = 'Ranking de Loopers 👟';
+
+      // Cargar todos los loops (sin filtro de fecha — los likes son acumulados)
+      const allLoops = await _fetchCol('loops');
+      const source   = allLoops.length ? allLoops : (this.routes || []);
+
+      // Agrupar por autor
+      const byAuthor = {};
+      source.filter(r => r.type !== 'fotostop').forEach(r => {
+        const uid  = r.authorId   || 'anon';
+        const name = r.authorName || 'Looper Anónimo';
+        if (!byAuthor[uid]) byAuthor[uid] = { uid, name, totalLikes:0, totalLoops:0, totalPaseos:0 };
+        byAuthor[uid].totalLikes  += (r.likes  || 0);
+        byAuthor[uid].totalPaseos += (r.paseos || 0);
+        byAuthor[uid].totalLoops  += 1;
+      });
+
+      const scored = Object.values(byAuthor)
+        .sort((a, b) => b.totalLikes - a.totalLikes || b.totalPaseos - a.totalPaseos);
+
+      const top    = scored[0];
+      const maxLk  = top ? (top.totalLikes || 1) : 1;
+
+      // Card destacado
+      if (pCard) pCard.style.display = scored.length ? '' : 'none';
+      if (pStats) pStats.style.display = 'none';
+      if (pStNeg) pStNeg.style.display = 'none';
+
+      if (top && pName) {
+        if (pEmoji) pEmoji.textContent  = '👑';
+        pName.textContent               = top.name;
+        if (pSub)   pSub.textContent   = 'Looper con más likes';
+        if (pBadge) pBadge.textContent = '👑 TOP LOOPER';
+        if (pScLbl) pScLbl.textContent = 'Likes totales recibidos';
+        pScore.textContent              = top.totalLikes.toLocaleString() + ' likes';
+        if (pLikes)  pLikes.textContent  = top.totalLikes.toLocaleString();
+        if (pPaseos) pPaseos.textContent = top.totalPaseos.toLocaleString();
+        // mostrar stats de likes/paseos
+        if (pStats) {
+          pStats.style.display = '';
+          const likeSpan = pStats.querySelector('#rank-principal-likes');
+          const pasSpan  = pStats.querySelector('#rank-principal-paseos');
+          // reemplazar labels
+          if (pStats.innerHTML) {
+            pStats.innerHTML = `<span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--or)" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              \${top.totalLikes.toLocaleString()} likes recibidos
+            </span>
+            <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
+              🔄 \${top.totalLoops} loop\${top.totalLoops!==1?'s':''}
+            </span>`;
+          }
+        }
+        setTimeout(() => { if (pBar) pBar.style.width = '92%'; }, 60);
+      }
+
+      if (!list) return;
+      if (!scored.length) {
+        list.innerHTML = '<div style="text-align:center;padding:28px;color:var(--gr);font-size:13px;">Aún no hay loopers con loops publicados.</div>';
+        return;
+      }
+
+      // Detectar uid propio para resaltar
+      const myUid = this._uid || '';
+
+      list.innerHTML = scored.map((u, i) => {
+        const medal  = medals[i]     || (i + 1);
+        const posC   = posClasses[i] || 'other';
+        const color  = barColors[i]  || 'var(--gr)';
+        const pct    = Math.round((u.totalLikes / maxLk) * 100);
+        const isMe   = u.uid === myUid;
+        const initials = u.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() || '?';
+        // Color avatar basado en posición
+        const avatarColors = ['#BA7517','#64748B','#C2410C','#534AB7','#1D9E75'];
+        const avBg = isMe ? 'var(--or)' : (avatarColors[i] || 'var(--gr)');
+
+        return `
+        <div class="rank-loop-item \${i===0?'pos1':''}" style="\${isMe?'border:1.5px solid var(--or);':''} ">
+          <div class="rank-loop-pos \${posC}">\${medal}</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:\${avBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;">\${App._esc(initials)}</div>
+          <div class="rank-loop-info">
+            <div class="rank-loop-name">\${App._esc(u.name)}\${isMe?' <span style="font-size:9px;background:var(--or);color:white;padding:1px 5px;border-radius:6px;vertical-align:middle;">vos</span>':''}</div>
+            <div class="rank-loop-meta" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
+              <span style="color:\${i===0?'#BA7517':'var(--gr)'};display:flex;align-items:center;gap:2px;">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="\${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                \${u.totalLikes.toLocaleString()} likes
+              </span>
+              <span style="color:var(--gr);">· 🔄 \${u.totalLoops} loop\${u.totalLoops!==1?'s':''} · 👟 \${u.totalPaseos.toLocaleString()} paseos</span>
+            </div>
+            <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:\${pct}%;background:\${color};"></div></div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--or);">\${u.totalLikes.toLocaleString()}</div>
+            <div style="font-size:9px;color:var(--gr);margin-top:1px;">likes</div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    /* ══ TAB: LOOPS ══ */
+    else if (tab === 'loops') {
+      if (subtitle)  subtitle.textContent  = 'Loops · score en tiempo real';
+      if (listTitle) listTitle.textContent = 'Todos los loops';
+      let loops = await _fetchCol('loops');
+      loops = loops.filter(r => r.type !== 'fotostop');
+      if (!loops.length && this.routes?.length) {
+        loops = (since > 0 ? this.routes.filter(r=>(r.createdAt||0)>=since) : [...this.routes])
+                .filter(r => r.type !== 'fotostop');
+      }
+      if (!loops.length) loops = [
+        { id:'demo1', name:'Loop Costanera', emoji:'🏃', likes:248, paseos:1200, dist:'4.2 km', cityId:'La Paz', createdAt:now },
+        { id:'demo2', name:'Loop Arroyo',    emoji:'🌿', likes:141, paseos:830,  dist:'2.8 km', cityId:'La Paz', createdAt:now },
+        { id:'demo3', name:'Loop Centro',    emoji:'🏙️', likes:89,  paseos:510,  dist:'1.5 km', cityId:'La Paz', createdAt:now },
+      ];
+      const scored = loops.map(r => ({ ...r, _score:(r.likes||0)*2+(r.paseos||0) }))
+                          .sort((a,b) => b._score - a._score);
+      _renderLoopList(scored);
+    }
+
+    /* ══ TAB: FOTOLOOPS ══ */
+    else if (tab === 'foto') {
+      if (subtitle)  subtitle.textContent  = 'FotoLoops · score en tiempo real';
+      if (listTitle) listTitle.textContent = 'Todos los FotoLoops';
+      let items = await _fetchCol('fotoloops');
+      if (!items.length) items = [
+        { id:'f1', name:'Atardecer Costanera', emoji:'📸', likes:72,  paseos:320, dist:'—', cityId:'La Paz', createdAt:now },
+        { id:'f2', name:'Plaza San Martín',    emoji:'📸', likes:45,  paseos:180, dist:'—', cityId:'La Paz', createdAt:now },
+        { id:'f3', name:'Puerto Viejo',        emoji:'📸', likes:31,  paseos:95,  dist:'—', cityId:'La Paz', createdAt:now },
+      ];
+      const scored = items.map(r => ({ ...r, _score:(r.likes||0)*2+(r.paseos||0) }))
+                          .sort((a,b) => b._score - a._score);
+      _renderLoopList(scored);
+    }
+
+    /* ══ TAB: COMERCIOS ══ */
+    else if (tab === 'comercios') {
+      if (subtitle)  subtitle.textContent  = 'Comercios · mejor valorados';
+      if (listTitle) listTitle.textContent = 'Ranking por valoración ⭐';
+      const negocios = await _fetchCol('negocios');
+      if (!negocios.length) {
+        if (pCard) pCard.style.display = 'none';
+        if (list)  list.innerHTML = '<div style="text-align:center;padding:28px;color:var(--gr);font-size:13px;">Todavía no hay comercios cargados.</div>';
+      } else {
+        _renderComerciosList(negocios);
+      }
+    }
+
+    /* ══ TAB: TODO ══ */
+    else {
+      if (subtitle)  subtitle.textContent  = 'Todo · loops + fotoloops';
+      if (listTitle) listTitle.textContent = 'Ranking general';
+      const [loops, fotos] = await Promise.all([ _fetchCol('loops'), _fetchCol('fotoloops') ]);
+      let all = [
+        ...loops.filter(r=>r.type!=='fotostop').map(r=>({...r})),
+        ...fotos.map(r=>({...r, emoji:r.emoji||'📸'}))
+      ];
+      if (!all.length && this.routes?.length) {
+        all = since > 0 ? this.routes.filter(r=>(r.createdAt||0)>=since) : [...this.routes];
+      }
+      if (!all.length) all = [
+        { id:'demo1', name:'Loop Costanera',      emoji:'🏃', likes:248, paseos:1200, dist:'4.2 km', cityId:'La Paz', createdAt:now },
+        { id:'demo2', name:'Atardecer Costanera', emoji:'📸', likes:72,  paseos:320,  dist:'—',      cityId:'La Paz', createdAt:now },
+        { id:'demo3', name:'Loop Arroyo',         emoji:'🌿', likes:141, paseos:830,  dist:'2.8 km', cityId:'La Paz', createdAt:now },
+      ];
+      const scored = all.map(r=>({...r, _score:(r.likes||0)*2+(r.paseos||0)}))
+                        .sort((a,b)=>b._score-a._score);
+      _renderLoopList(scored);
+    }
+  },
+
+  rankSetTab(tabName, btn) {
+    this._rankTab = tabName;
+    document.querySelectorAll('#ranking .com-tab').forEach(b => b.classList.remove('on'));
+    if (btn) btn.classList.add('on');
+    const bar = document.getElementById('rank-principal-bar');
+    if (bar) bar.style.width = '0%';
+    this._renderRanking();
   },
 
   rankSetPeriod(period, btn) {
     this._rankPeriod = period;
-    document.querySelectorAll('#ranking button[onclick^="App.rankSetPeriod"]').forEach(b => {
-      b.style.background = 'var(--lt)'; b.style.color = 'var(--md)'; b.style.border = '0.5px solid var(--bd)';
+    document.querySelectorAll('#ranking button[id^="rank-p-"]').forEach(b => {
+      b.style.background = 'var(--lt)'; b.style.color = 'var(--md)';
+      b.style.border = '0.5px solid var(--bd)'; b.style.fontWeight = '';
     });
-    if (btn) { btn.style.background = 'var(--or)'; btn.style.color = 'white'; btn.style.border = 'none'; }
+    if (btn) { btn.style.background='var(--or)'; btn.style.color='white';
+               btn.style.border='none'; btn.style.fontWeight='700'; }
     this._renderRanking();
-    this.toast(`📊 Mostrando ranking ${period}`);
+    const labels = { semanal:'7 días', mensual:'30 días', todo:'Todo el tiempo' };
+    this.toast('📊 ' + (labels[period]||period));
   },
 
   // ══════════════════════════════════════════
