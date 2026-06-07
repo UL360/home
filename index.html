@@ -1889,6 +1889,9 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <h2>Grabar Loop</h2>
     <div style="width:60px"></div>
   </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 14px 0;">
+    <span style="font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;">Tipo de loop</span>
+  </div>
   <div class="grab-type-row" id="grab-type-row">
     <div class="grab-type-chip on" data-t="running">🏃 Running</div>
     <div class="grab-type-chip" data-t="mtb">🚵 MTB</div>
@@ -2696,6 +2699,26 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <input id="fl-name" type="text" placeholder="Nombre del lugar (ej: Costanera Norte, Bar El Viejo)" aria-label="Nombre del lugar" class="fi" style="margin-bottom:10px;width:100%;box-sizing:border-box;">
     <textarea id="fl-desc" placeholder="Contales a los demás por qué vale la pena parar acá..." aria-label="Descripción del lugar" style="width:100%;box-sizing:border-box;border:0.5px solid var(--bd);border-radius:12px;padding:12px;font-size:14px;color:var(--dk);background:var(--lt);resize:none;height:60px;font-family:var(--fB);margin-bottom:10px;"></textarea>
+
+
+    <!-- Tipo de loop (actividad) -->
+    <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">Tipo de loop</div>
+    <select id="fl-tipo" class="fi" aria-label="Tipo de loop" style="width:100%;margin-bottom:14px;">
+      <option value="trad">☕ Tradicional</option>
+      <option value="running">🏃 Running</option>
+      <option value="mtb">🚵 MTB</option>
+      <option value="ciclismo">🚴 Ciclismo / Ruta</option>
+      <option value="caminata">🥾 Caminata / Trekking</option>
+      <option value="paseo">🌳 Paseo</option>
+      <option value="pesca">🎣 Pesca</option>
+      <option value="atardecer">🌅 Atardecer</option>
+      <option value="gastro">🍽️ Gastronómica</option>
+      <option value="relax">🧘 Relax / Meditación</option>
+      <option value="salidas">🎉 Salidas / Social</option>
+      <option value="trabajo">💼 Trabajo</option>
+      <option value="vacaciones">🏖️ Vacaciones</option>
+      <option value="otra">🗺️ Otra</option>
+    </select>
 
     <!-- Categorías / Etiquetas -->
     <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">Etiqueta</div>
@@ -5926,6 +5949,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const emoji = catEmojis[cat] || '📍';
     const color = catColors[cat] || '#FF5F00';
     const makeLoop = document.getElementById('fl-make-loop')?.checked;
+    const tipoLoop  = document.getElementById('fl-tipo')?.value || 'trad';
 
     const stopId = 'fotostop-' + Date.now();
     const stopData = {
@@ -5942,7 +5966,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       authorName: this._user?.displayName || this._user?.email?.split('@')[0] || 'Anónimo',
       ts: Date.now(),
       createdAt: Date.now(),
-      likes: 0
+      likes: 0,
+      tipoLoop
     };
 
     try {
