@@ -9184,10 +9184,10 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           if (pStats.innerHTML) {
             pStats.innerHTML = `<span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--or)" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              \${top.totalLikes.toLocaleString()} likes recibidos
+              ${top.totalLikes.toLocaleString()} likes recibidos
             </span>
             <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
-              🔄 \${top.totalLoops} loop\${top.totalLoops!==1?'s':''}
+              🔄 ${top.totalLoops} loop${top.totalLoops!==1?'s':''}
             </span>`;
           }
         }
@@ -9215,22 +9215,22 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         const avBg = isMe ? 'var(--or)' : (avatarColors[i] || 'var(--gr)');
 
         return `
-        <div class="rank-loop-item \${i===0?'pos1':''}" style="\${isMe?'border:1.5px solid var(--or);':''} ">
-          <div class="rank-loop-pos \${posC}">\${medal}</div>
-          <div style="width:34px;height:34px;border-radius:50%;background:\${avBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;">\${App._esc(initials)}</div>
+        <div class="rank-loop-item ${i===0?'pos1':''}" style="${isMe?'border:1.5px solid var(--or);':''} ">
+          <div class="rank-loop-pos ${posC}">${medal}</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:${avBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;">${App._esc(initials)}</div>
           <div class="rank-loop-info">
-            <div class="rank-loop-name">\${App._esc(u.name)}\${isMe?' <span style="font-size:9px;background:var(--or);color:white;padding:1px 5px;border-radius:6px;vertical-align:middle;">vos</span>':''}</div>
+            <div class="rank-loop-name">${App._esc(u.name)}${isMe?' <span style="font-size:9px;background:var(--or);color:white;padding:1px 5px;border-radius:6px;vertical-align:middle;">vos</span>':''}</div>
             <div class="rank-loop-meta" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
-              <span style="color:\${i===0?'#BA7517':'var(--gr)'};display:flex;align-items:center;gap:2px;">
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="\${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                \${u.totalLikes.toLocaleString()} likes
+              <span style="color:${i===0?'#BA7517':'var(--gr)'};display:flex;align-items:center;gap:2px;">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                ${u.totalLikes.toLocaleString()} likes
               </span>
-              <span style="color:var(--gr);">· 🔄 \${u.totalLoops} loop\${u.totalLoops!==1?'s':''} · 👟 \${u.totalPaseos.toLocaleString()} paseos</span>
+              <span style="color:var(--gr);">· 🔄 ${u.totalLoops} loop${u.totalLoops!==1?'s':''} · 👟 ${u.totalPaseos.toLocaleString()} paseos</span>
             </div>
-            <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:\${pct}%;background:\${color};"></div></div>
+            <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:${pct}%;background:${color};"></div></div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--or);">\${u.totalLikes.toLocaleString()}</div>
+            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--or);">${u.totalLikes.toLocaleString()}</div>
             <div style="font-size:9px;color:var(--gr);margin-top:1px;">likes</div>
           </div>
         </div>`;
