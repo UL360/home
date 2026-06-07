@@ -4394,32 +4394,41 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     negocios.forEach(n => {
       const emoji = RUBRO_EMOJI[n.rubro] || '🏪';
 
-      // Wrapper fijo: MapLibre lo ancla. Inner: recibe el transform del hover sin mover el anchor
-      const el = document.createElement('div');
-      el.style.cssText = 'width:36px;height:36px;position:relative;cursor:pointer;pointer-events:all;';
+      // Pin gota con emoji adentro, color por rubro
+      const RUBRO_COLOR = {
+        'Restaurante / Parrilla':'#E85D04','Vinoteca / Vinería':'#7B2D8B',
+        'Almacén / Proveeduría':'#2563EB','Panadería / Confitería':'#D97706',
+        'Heladería':'#06B6D4','Farmacia':'#16A34A','Bar / Cervecería':'#B45309',
+        'Café':'#92400E','Hospedaje / Camping':'#0E7490','Guía de pesca':'#0284C7',
+        'Alquiler de botes / Kayaks':'#0369A1','Servicio náutico':'#1D4ED8',
+        'Turismo aventura':'#15803D','Dietética / Naturista':'#4D7C0F',
+        'Kiosco':'#FF5F00','Carnicería':'#DC2626','Verdulería':'#16A34A',
+        'Ferretería':'#6B7280','Indumentaria':'#DB2777','Peluquería / Estética':'#9333EA',
+        'Veterinaria':'#059669','Otro':'#FF5F00',
+      };
+      const pinColor = RUBRO_COLOR[n.rubro] || '#FF5F00';
 
-      const inner = document.createElement('div');
-      inner.style.cssText = [
-        'position:absolute',
-        'inset:0',
-        'display:flex',
-        'align-items:center',
-        'justify-content:center',
-        'font-size:26px',
-        'line-height:1',
-        'filter:drop-shadow(0 2px 5px rgba(0,0,0,.5))',
-        'transition:transform .15s',
-        'user-select:none',
-        '-webkit-user-select:none',
-      ].join(';');
-      inner.textContent = emoji;
-      el.appendChild(inner);
+      // Wrapper — MapLibre lo ancla por bottom-center (punta de la gota)
+      const el = document.createElement('div');
+      el.style.cssText = 'width:38px;height:46px;position:relative;cursor:pointer;pointer-events:all;';
+
+      // SVG gota
+      el.innerHTML = `
+        <svg width="38" height="46" viewBox="0 0 38 46" xmlns="http://www.w3.org/2000/svg"
+             style="position:absolute;inset:0;transition:transform .15s;filter:drop-shadow(0 3px 6px rgba(0,0,0,.45));">
+          <path d="M19 1 C9.6 1 2 8.6 2 18 C2 30 19 45 19 45 C19 45 36 30 36 18 C36 8.6 28.4 1 19 1Z"
+                fill="${pinColor}" stroke="white" stroke-width="1.5"/>
+          <text x="19" y="23" text-anchor="middle" dominant-baseline="middle"
+                font-size="16" style="user-select:none;">${emoji}</text>
+        </svg>`;
+
+      const svg = el.querySelector('svg');
       el.title = n.nombre || 'Negocio';
-      el.addEventListener('mouseenter', () => { inner.style.transform = 'scale(1.35)'; });
-      el.addEventListener('mouseleave', () => { inner.style.transform = 'scale(1)'; });
+      el.addEventListener('mouseenter', () => { svg.style.transform = 'scale(1.2) translateY(-3px)'; });
+      el.addEventListener('mouseleave', () => { svg.style.transform = 'scale(1) translateY(0)'; });
       el.addEventListener('click', (e) => { e.stopPropagation(); App._showNegocioPopup(n); });
 
-      const mkr = new maplibregl.Marker({ element: el, anchor: 'center' })
+      const mkr = new maplibregl.Marker({ element: el, anchor: 'bottom' })
         .setLngLat([parseFloat(n.lng), parseFloat(n.lat)])
         .addTo(this.mainMap);
       this._negocioMarkers.push(mkr);
