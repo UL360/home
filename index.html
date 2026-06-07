@@ -4295,6 +4295,34 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   // ── FotoLoops aprobados → aparecen en el mapa como etiqueta/tag ──
   _fotoMarkers: [],
   _fotoPopup: null,
+  _likedFotos: new Set(JSON.parse(localStorage.getItem('ul360_liked_fotos')||'[]')),
+
+  async _fotoPopupLike(id, btn) {
+    if (!this._uid) return this.toast('Iniciá sesión para dar like');
+    const already = (this._likedFotos||new Set()).has(id);
+    if (already) {
+      this._likedFotos.delete(id);
+    } else {
+      this._likedFotos.add(id);
+    }
+    // Persistir en localStorage
+    localStorage.setItem('ul360_liked_fotos', JSON.stringify([...this._likedFotos]));
+    // Actualizar botón visualmente sin cerrar popup
+    if (btn) {
+      btn.textContent = already ? '🤍' : '❤️';
+      btn.style.background = already ? '#2E2E42' : 'rgba(230,57,70,.3)';
+      btn.style.borderColor = already ? '#444' : '#e63946';
+    }
+    // Actualizar contador en Firestore
+    if (this._db) {
+      try {
+        const inc = firebase.firestore.FieldValue.increment(already ? -1 : 1);
+        await this._db.collection('fotoloops').doc(id).update({ likes: inc });
+      } catch(e) { console.warn('like fotoloop:', e); }
+    }
+    this.toast(already ? 'Like removido' : '❤️ ¡Like guardado!');
+  },
+
   _drawFotoStopsOnMap() {
     // Limpiar marcadores anteriores
     (this._fotoMarkers || []).forEach(m => { try { m.remove(); } catch(e){} });
@@ -4465,14 +4493,31 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       🧭 Cómo llegar
     </button>`;
 
+    // Calcular estrellas guardadas
+    const negRating = n.rating || 0;
+    const negRatingCount = n.ratingCount || 0;
+    const userRating = parseInt(localStorage.getItem('ul360_neg_rating_'+n.id)||'0');
+    const starsHTML = (selected) => [1,2,3,4,5].map(s =>
+      `<span data-s="${s}" onclick="App._negRate('${n.id}',${s})" 
+        style="font-size:22px;cursor:pointer;transition:transform .1s;color:${s<=selected?'#FBBF24':'#3A3A52'};"
+        onmouseenter="this.style.transform='scale(1.2)'" onmouseleave="this.style.transform='scale(1)'">★</span>`
+    ).join('');
+
     const html = `
-      <div style="font-family:'Bai Jamjuree',sans-serif;width:220px;border-radius:10px;overflow:hidden;background:#1E1E26;box-shadow:0 8px 32px rgba(0,0,0,.6);">
+      <div style="font-family:'Bai Jamjuree',sans-serif;width:225px;border-radius:12px;overflow:hidden;background:#1E1E26;box-shadow:0 8px 32px rgba(0,0,0,.7);">
         ${thumbHtml}
-        <div style="padding:10px 10px 8px;">
+        <div style="padding:10px 10px 10px;">
           <div style="font-size:13px;font-weight:800;color:#F0F0F8;line-height:1.3;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${emoji} ${this._esc(n.nombre||'Negocio')}</div>
           <div style="font-size:10px;color:#9898B8;margin-bottom:4px;">${this._esc(n.rubro||'')}${n.ciudad?' · '+this._esc(n.ciudad):''}${n.delivery?' · 🛵 Delivery':''}</div>
-          ${n.horario ? `<div style="font-size:10px;color:#9898B8;margin-bottom:6px;">🕐 ${this._esc(n.horario)}</div>` : ''}
-          ${n.direccion ? `<div style="font-size:10px;color:#9898B8;margin-bottom:8px;">📍 ${this._esc(n.direccion)}</div>` : ''}
+          ${n.horario ? `<div style="font-size:10px;color:#9898B8;margin-bottom:4px;">🕐 ${this._esc(n.horario)}</div>` : ''}
+          ${n.direccion ? `<div style="font-size:10px;color:#9898B8;margin-bottom:6px;">📍 ${this._esc(n.direccion)}</div>` : ''}
+          <!-- Estrellas -->
+          <div style="margin-bottom:8px;">
+            <div id="neg-stars-${n.id}" style="display:flex;gap:2px;align-items:center;">
+              ${starsHTML(userRating)}
+              ${negRatingCount > 0 ? `<span style="font-size:10px;color:#9898B8;margin-left:6px;">${(negRating/negRatingCount).toFixed(1)} (${negRatingCount})</span>` : '<span style="font-size:10px;color:#9898B8;margin-left:6px;">Sin valoraciones aún</span>'}
+            </div>
+          </div>
           <div style="display:flex;gap:6px;">
             ${navBtn}
             ${telBtn}
@@ -4512,19 +4557,24 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       ? `<img src="${imgSrc}" style="width:100%;height:110px;object-fit:cover;border-radius:10px 10px 0 0;display:block;" loading="lazy">`
       : `<div style="width:100%;height:80px;background:linear-gradient(135deg,#FF5F0030,#FF5F0060);display:flex;align-items:center;justify-content:center;font-size:36px;border-radius:10px 10px 0 0;">${emoji}</div>`;
 
+    const liked = (App._likedFotos||new Set()).has(p.id);
     const buildHTML = (imgSrc) => `
-      <div id="fl-popup-inner" style="font-family:'Bai Jamjuree',sans-serif;width:210px;border-radius:10px;overflow:hidden;background:#1E1E26;box-shadow:0 8px 32px rgba(0,0,0,.6);">
+      <div id="fl-popup-inner" style="font-family:'Bai Jamjuree',sans-serif;width:215px;border-radius:12px;overflow:hidden;background:#1E1E26;box-shadow:0 8px 32px rgba(0,0,0,.7);">
         ${thumbHtml(imgSrc)}
-        <div style="padding:10px 10px 8px;">
+        <div style="padding:10px 10px 10px;">
           <div style="font-size:13px;font-weight:800;color:#F0F0F8;line-height:1.3;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${emoji} ${App._esc(p.name || 'Foto Loop')}</div>
           <div style="font-size:10px;color:#9898B8;margin-bottom:10px;">${p.ciudad || ''} · ${p.cat || 'lugar'}</div>
           <div style="display:flex;gap:6px;">
-            <button onclick="App._navToFotoLoop(${p.lat},${p.lng},'${(p.name||'').replace(/'/g,'\'')}');if(App._fotoPopup){App._fotoPopup.remove();App._fotoPopup=null;}"
+            <button onclick="App._navToFotoLoop(${p.lat},${p.lng},'${(p.name||'').replace(/'/g,"\'")}');if(App._fotoPopup){App._fotoPopup.remove();App._fotoPopup=null;}"
               style="flex:1;height:34px;background:#FF5F00;color:white;border:none;border-radius:8px;font-family:'Bai Jamjuree',sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
               🧭 Ir
             </button>
+            <button id="fl-like-btn-${p.id}" onclick="App._fotoPopupLike('${p.id}',this)"
+              style="width:34px;height:34px;background:${liked?'rgba(230,57,70,.3)':'#2E2E42'};color:white;border:1px solid ${liked?'#e63946':'#444'};border-radius:8px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;">
+              ${liked?'❤️':'🤍'}
+            </button>
             <button onclick="App._openImgViewer('${p.id}','foto');if(App._fotoPopup){App._fotoPopup.remove();App._fotoPopup=null;}"
-              style="flex:1.4;height:34px;background:#2E2E42;color:#F0F0F8;border:1px solid #FF5F00;border-radius:8px;font-family:'Bai Jamjuree',sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
+              style="flex:1.2;height:34px;background:#2E2E42;color:#F0F0F8;border:1px solid #FF5F00;border-radius:8px;font-family:'Bai Jamjuree',sans-serif;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;">
               🔍 Detalles
             </button>
           </div>
@@ -5160,18 +5210,19 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     const imgHtml = r.img
       ? `${App._imgTag(r.img,"width:100%;height:96px;object-fit:cover;display:block;border-radius:4px 4px 0 0;")}`
       : `<div style="width:100%;height:60px;background:linear-gradient(135deg,${r.color}30,${r.color}60);display:flex;align-items:center;justify-content:center;font-size:32px;border-radius:4px 4px 0 0;">${r.emoji}</div>`;
-    const html = `<div style="font-family:'DM Sans',sans-serif;min-width:190px;">
-      ${imgHtml}
-      <div style="padding:8px 10px 4px;">
-        <div style="font-weight:700;font-size:13px;color:#111;">${r.emoji} ${App._esc(r.name)}</div>
-        <div style="font-size:11px;color:#888;margin-top:2px;">${r.dist||'—'} · ${r.dur||'—'} · ${r.pois?r.pois.length:0} paradas</div>
-        <button onclick="App.showDetail('${r.id}')"
-          style="margin-top:8px;width:100%;padding:7px;background:#FF5F00;color:white;border:none;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;">
-          Ver detalle →
-        </button>
-      </div>
-    </div>`;
-    this._loopPopup = new maplibregl.Popup({ maxWidth: '220px', closeButton: true, offset: 10 })
+    const html = `
+      <div style="font-family:'Bai Jamjuree',sans-serif;width:210px;border-radius:12px;overflow:hidden;background:#1E1E26;box-shadow:0 8px 32px rgba(0,0,0,.7);">
+        ${imgHtml}
+        <div style="padding:10px 10px 10px;">
+          <div style="font-weight:800;font-size:13px;color:#F0F0F8;margin-bottom:3px;">${r.emoji} ${App._esc(r.name)}</div>
+          <div style="font-size:11px;color:#9898B8;margin-bottom:10px;">${r.dist||'—'} · ${r.dur||'—'} · ${r.pois?r.pois.length:0} paradas</div>
+          <button onclick="App.showDetail('${r.id}')"
+            style="width:100%;padding:9px;background:#FF5F00;color:white;border:none;border-radius:8px;font-family:'Bai Jamjuree',sans-serif;font-size:12px;font-weight:700;cursor:pointer;">
+            Ver detalle →
+          </button>
+        </div>
+      </div>`;
+    this._loopPopup = new maplibregl.Popup({ maxWidth: '220px', closeButton: true, offset: 10, className: 'fl-popup' })
       .setLngLat(lngLat)
       .setHTML(html)
       .addTo(this.mainMap);
@@ -11538,6 +11589,37 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       this._negocioFormCerrar();
       this._admRenderNegocios();
     } catch(e) { this.toast('❌ Error: ' + e.message); }
+  },
+
+  async _negRate(id, stars) {
+    const prev = parseInt(localStorage.getItem('ul360_neg_rating_'+id)||'0');
+    localStorage.setItem('ul360_neg_rating_'+id, stars);
+    // Actualizar estrellas visualmente
+    const container = document.getElementById('neg-stars-'+id);
+    if (container) {
+      const spans = container.querySelectorAll('[data-s]');
+      spans.forEach(s => {
+        const v = parseInt(s.dataset.s);
+        s.style.color = v <= stars ? '#FBBF24' : '#3A3A52';
+      });
+    }
+    // Guardar en Firestore
+    if (this._db) {
+      try {
+        const ref = this._db.collection('negocios').doc(id);
+        await this._db.runTransaction(async tx => {
+          const doc = await tx.get(ref);
+          const d = doc.data() || {};
+          const oldSum = d.rating || 0;
+          const oldCnt = d.ratingCount || 0;
+          // Si ya había votado, restar el voto anterior
+          const newSum = oldSum - prev + stars;
+          const newCnt = prev > 0 ? oldCnt : oldCnt + 1;
+          tx.update(ref, { rating: newSum, ratingCount: newCnt });
+        });
+        this.toast(`⭐ Valoraste con ${stars} estrella${stars>1?'s':''}`);
+      } catch(e) { this.toast('⭐ Valoración guardada localmente'); }
+    }
   },
 
   async _negocioEliminar(id, nombre) {
