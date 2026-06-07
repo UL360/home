@@ -2427,7 +2427,8 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     </div>
     <!-- Tabs: Loops / Foto Loops / Explorar -->
     <div style="display:flex;border-top:0.5px solid var(--bd);">
-      <button id="lu-tab-loops"   onclick="App.luSetTab('loops',this)"   class="com-tab on">🔄 Loop Urbanos</button>
+      <button id="lu-tab-loops"   onclick="App.luSetTab('loops',this)"   class="com-tab on">🔄 Loops</button>
+      <button id="lu-tab-negocios" onclick="App.luSetTab('negocios',this)" class="com-tab">🏪 Comercios</button>
       <button id="lu-tab-foto"    onclick="App.luSetTab('foto',this)"    class="com-tab">📸 FotoLoop</button>
       <button id="lu-tab-explorar" onclick="App.luSetTab('explorar',this)" class="com-tab">🌍 Otras Ciudades</button>
     </div>
@@ -4393,27 +4394,29 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     negocios.forEach(n => {
       const emoji = RUBRO_EMOJI[n.rubro] || '🏪';
 
-      // Tamaño fijo para que MapLibre pueda anclar correctamente
+      // Wrapper fijo: MapLibre lo ancla. Inner: recibe el transform del hover sin mover el anchor
       const el = document.createElement('div');
-      el.style.cssText = [
-        'width:36px',
-        'height:36px',
+      el.style.cssText = 'width:36px;height:36px;position:relative;cursor:pointer;pointer-events:all;';
+
+      const inner = document.createElement('div');
+      inner.style.cssText = [
+        'position:absolute',
+        'inset:0',
         'display:flex',
         'align-items:center',
         'justify-content:center',
-        'font-size:24px',
+        'font-size:26px',
         'line-height:1',
-        'cursor:pointer',
-        'pointer-events:all',
         'filter:drop-shadow(0 2px 5px rgba(0,0,0,.5))',
         'transition:transform .15s',
         'user-select:none',
         '-webkit-user-select:none',
       ].join(';');
-      el.textContent = emoji;
+      inner.textContent = emoji;
+      el.appendChild(inner);
       el.title = n.nombre || 'Negocio';
-      el.addEventListener('mouseenter', () => { el.style.transform = 'scale(1.3)'; });
-      el.addEventListener('mouseleave', () => { el.style.transform = 'scale(1)'; });
+      el.addEventListener('mouseenter', () => { inner.style.transform = 'scale(1.35)'; });
+      el.addEventListener('mouseleave', () => { inner.style.transform = 'scale(1)'; });
       el.addEventListener('click', (e) => { e.stopPropagation(); App._showNegocioPopup(n); });
 
       const mkr = new maplibregl.Marker({ element: el, anchor: 'center' })
@@ -6660,9 +6663,84 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     if (lbl) lbl.textContent = city + ', ' + prov;
     if (deptLbl) deptLbl.textContent = dept ? `· Dpto. ${dept}` : '';
     const tab = this._luTab || 'loops';
-    if (tab === 'foto')     return this._renderLuFoto();
-    if (tab === 'explorar') return this._renderLuExplorar();
+    if (tab === 'foto')      return this._renderLuFoto();
+    if (tab === 'explorar')  return this._renderLuExplorar();
+    if (tab === 'negocios')  return this._renderLuNegocios();
     this._renderLuLoops();
+  },
+
+  async _renderLuNegocios() {
+    const city   = this._luCity || 'La Paz';
+    const list   = document.getElementById('lu-list');
+    if (!list) return;
+    list.innerHTML = `<div style="text-align:center;padding:24px;color:var(--gr);font-size:13px;">Cargando comercios...</div>`;
+
+    const RUBRO_EMOJI = {
+      'Restaurante / Parrilla':'🥩','Vinoteca / Vinería':'🍷','Almacén / Proveeduría':'🛒',
+      'Panadería / Confitería':'🥐','Heladería':'🍦','Farmacia':'💊','Bar / Cervecería':'🍺',
+      'Café':'☕','Hospedaje / Camping':'🏕️','Guía de pesca':'🎣','Alquiler de botes / Kayaks':'🚣',
+      'Servicio náutico':'⚓','Turismo aventura':'🧗','Dietética / Naturista':'🌿','Kiosco':'🏪',
+      'Carnicería':'🥩','Verdulería':'🥦','Ferretería':'🔧','Indumentaria':'👕',
+      'Peluquería / Estética':'✂️','Veterinaria':'🐾','Otro':'📍'
+    };
+
+    let negocios = [];
+    if (this._db) {
+      try {
+        const snap = await this._db.collection('negocios')
+          .where('activo', '==', true).get();
+        const normCity = c => (c||'').toLowerCase().trim();
+        negocios = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .filter(n => normCity(n.ciudad) === normCity(city));
+      } catch(e) { console.warn('_renderLuNegocios:', e); }
+    }
+
+    if (!negocios.length) {
+      list.innerHTML = `
+        <div style="text-align:center;padding:48px 20px;color:var(--gr);">
+          <div style="font-size:40px;margin-bottom:12px;">🏪</div>
+          <div style="font-size:15px;font-weight:700;color:var(--dk);margin-bottom:6px;">Sin comercios en ${this._esc(city)}</div>
+          <div style="font-size:12px;line-height:1.6;">Todavía no hay locales cargados en esta ciudad.<br>Pronto van a aparecer acá.</div>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = negocios.map(n => {
+      const emoji = RUBRO_EMOJI[n.rubro] || '🏪';
+      const imgHtml = n.img
+        ? `<img src="${n.img}" style="width:56px;height:56px;object-fit:cover;border-radius:12px;flex-shrink:0;" loading="lazy">`
+        : `<div style="width:56px;height:56px;border-radius:12px;background:var(--bg2);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;">${emoji}</div>`;
+      const deliveryBadge = n.delivery
+        ? `<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(56,189,248,.12);color:#0284C7;font-weight:700;">🛵 Delivery</span>` : '';
+      const telBtn = n.tel
+        ? `<a href="https://wa.me/54${n.tel.replace(/\D/g,'')}" target="_blank"
+             style="flex:1;padding:9px;border-radius:9px;background:#25D36618;border:0.5px solid #25D36640;color:#16A34A;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;">
+             💬 WhatsApp
+           </a>` : '';
+      const mapBtn = n.lat && n.lng
+        ? `<button onclick="App._navToFotoLoop(${n.lat},${n.lng},'${(n.nombre||'').replace(/'/g,"\'")}');App.go('explore')"
+             style="flex:1;padding:9px;border-radius:9px;background:var(--orL);border:0.5px solid var(--or);color:var(--or);font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
+             🗺 Ver en mapa
+           </button>` : '';
+
+      return `
+        <div style="background:var(--wh);border:0.5px solid var(--bd);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;gap:12px;align-items:flex-start;">
+            ${imgHtml}
+            <div style="flex:1;min-width:0;">
+              <div style="font-family:var(--fH);font-size:15px;font-weight:800;color:var(--dk);margin-bottom:3px;">${emoji} ${App._esc(n.nombre||'')}</div>
+              <div style="font-size:12px;color:var(--gr);margin-bottom:5px;">${App._esc(n.rubro||'')}${n.direccion?' · '+App._esc(n.direccion):''}</div>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                ${deliveryBadge}
+                ${n.horario ? `<span style="font-size:10px;padding:2px 7px;border-radius:20px;background:var(--bg2);color:var(--gr);">🕐 ${App._esc(n.horario)}</span>` : ''}
+              </div>
+            </div>
+          </div>
+          ${n.desc ? `<div style="font-size:12px;color:var(--md);line-height:1.5;">${App._esc(n.desc)}</div>` : ''}
+          ${(telBtn || mapBtn) ? `<div style="display:flex;gap:8px;">${mapBtn}${telBtn}</div>` : ''}
+        </div>`;
+    }).join('');
   },
 
   _renderLuLoops() {
