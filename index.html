@@ -5953,6 +5953,24 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           this.closeFotoLoop(); this.go('profile'); return;
         }
 
+        // ── Límite de 5 FotoLoops por usuario ──
+        const FOTOLOOP_LIMIT = 5;
+        try {
+          const myFlSnap = await this._db.collection('fotoloops')
+            .where('authorId', '==', this._uid).get();
+          if (myFlSnap.size >= FOTOLOOP_LIMIT) {
+            this.toast(`⚠️ Límite de ${FOTOLOOP_LIMIT} foto loops alcanzado. Eliminá uno para publicar otro.`);
+            return;
+          }
+        } catch(e) {
+          // Fallback: chequear cache local
+          const localCount = (this._fotoPosts || []).filter(p => p.authorId === this._uid).length;
+          if (localCount >= FOTOLOOP_LIMIT) {
+            this.toast(`⚠️ Límite de ${FOTOLOOP_LIMIT} foto loops alcanzado. Eliminá uno para publicar otro.`);
+            return;
+          }
+        }
+
         // Guardar imagen en Firestore (loop_imgs) en vez de Storage
         if (this._fotoLoopImg) {
           try {
@@ -8907,6 +8925,24 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       // FX
       this._fxPts(2);
       this._fxCombo();
+
+      // ── Auto-propuesta al municipio por likes destacados ──
+      const LOOP_MUNI_THRESHOLD = 20;
+      if (r.likes >= LOOP_MUNI_THRESHOLD && !r._sentToMuni && r.source !== 'municipio') {
+        r._sentToMuni = true;
+        if (this._db) {
+          const pendingData = {
+            ...r,
+            pts: (r.pts||[]).map(p => Array.isArray(p) ? {lat:p[0],lng:p[1]} : p),
+            tipo: 'destacado',
+            likeCount: r.likes,
+            proposedAt: Date.now(),
+            proposedReason: `Alcanzó ${r.likes} likes de la comunidad`
+          };
+          this._db.collection('loops_municipio_pending').doc(r.id).set(pendingData, { merge: true })
+            .catch(() => {});
+        }
+      }
     }
     this._savePts();
     this._saveData();
@@ -10340,15 +10376,20 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (!el) return;
     if (list.length === 0) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin loops</div>`; return; }
     el.innerHTML = list.map(r => {
+      const MUNI_THR = 20;
       const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
       const noImgBadge = !hasImg ? `<span style="font-size:9px;background:#FEE2E2;color:#991B1B;border-radius:6px;padding:1px 6px;font-weight:700;">SIN FOTO</span> ` : '';
+      const hotBadge = (r.likes||0) >= MUNI_THR
+        ? `<span style="font-size:9px;background:#FFF3CD;color:#92400E;border-radius:6px;padding:1px 6px;font-weight:700;margin-left:4px;">🔥 DESTACADO</span>`
+        : '';
+      const alreadySentMuni = r._sentToMuni || (r.likes||0) >= MUNI_THR;
       return `<div class="adm-item">
         <div class="adm-item-row">
           ${hasImg
             ? App._imgTag(r.img, 'width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;')
             : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--bg2);">${r.emoji||'🔄'}</div>`}
           <div class="adm-item-info">
-            <div class="adm-item-name">${noImgBadge}${App._esc(r.name)}</div>
+            <div class="adm-item-name">${noImgBadge}${App._esc(r.name)}${hotBadge}</div>
             <div class="adm-item-meta">${r.ciudad||r.cityId||'—'} · ${r.type} · ${r.dist||'—'} · ❤️${r.likes||0}</div>
             <div class="adm-item-meta">Por: ${App._esc(r.authorName)||'Anónimo'}</div>
           </div>
@@ -10359,6 +10400,12 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
           ${r.source !== 'municipio'
             ? `<button class="adm-btn adm-btn-green" onclick="App._admSetCiudad('${r.id}','${r.name.replace(/'/g,'')}')">🏙️ Poner en Ciudad</button>`
             : `<button class="adm-btn" style="opacity:.5;cursor:default;" disabled>🏙️ Ya es Ciudad</button>`
+          }
+          ${r.source !== 'municipio' && !alreadySentMuni
+            ? `<button class="adm-btn" style="background:#FFF3CD;color:#92400E;border:1px solid #F59E0B;" onclick="App._admProponerMunicipio('${r.id}')">📤 Proponer al Municipio</button>`
+            : r.source !== 'municipio' && alreadySentMuni
+              ? `<button class="adm-btn" style="opacity:.5;cursor:default;" disabled>📬 Ya en Municipio</button>`
+              : ''
           }
           <button class="adm-btn adm-btn-red" onclick="App._admDeleteLoop('${r.id}','${r.name.replace(/'/g,'')}')">🗑️ Eliminar</button>
         </div>
@@ -10392,6 +10439,28 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const statEl = document.getElementById('aStat-loops');
     if (statEl) statEl.textContent = this.routes.filter(r=>r.type!=='fotostop').length;
     this.toast(`🗑️ Loop "${name}" eliminado`);
+  },
+
+
+  async _admProponerMunicipio(id) {
+    const r = this.routes.find(x => x.id === id);
+    if (!r) return this.toast('Loop no encontrado');
+    if (!confirm(`¿Proponer "${r.name}" al municipio para revisión?\nAparecerá en la pestaña Propuestas comunidad.`)) return;
+    if (!this._db) return this.toast('Firebase no disponible');
+    try {
+      const pendingData = {
+        ...r,
+        pts: (r.pts||[]).map(p => Array.isArray(p) ? {lat:p[0],lng:p[1]} : p),
+        tipo: 'admin_manual',
+        likeCount: r.likes || 0,
+        proposedAt: Date.now(),
+        proposedReason: 'Propuesto manualmente por el admin'
+      };
+      await this._db.collection('loops_municipio_pending').doc(r.id).set(pendingData, { merge: true });
+      r._sentToMuni = true;
+      this._admRenderLoops();
+      this.toast('📤 Loop enviado a Propuestas Municipio');
+    } catch(e) { this.toast('❌ Error: ' + e.message); }
   },
 
   async _admSetCiudad(id, name) {
@@ -10475,21 +10544,31 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       return;
     }
     el.innerHTML = `<div style="padding:14px;display:flex;flex-direction:column;gap:10px;">` +
-      list.map(r => `
-      <div class="adm-item">
+      list.map(r => {
+        const isDestacado = r.tipo === 'destacado' || r.tipo === 'admin_manual';
+        const origenBadge = r.tipo === 'destacado'
+          ? `<span style="font-size:9px;background:#FFF3CD;color:#92400E;border-radius:6px;padding:1px 6px;font-weight:700;">🔥 Por likes (${r.likeCount||0} ❤️)</span>`
+          : r.tipo === 'admin_manual'
+          ? `<span style="font-size:9px;background:#E0F2FE;color:#0369A1;border-radius:6px;padding:1px 6px;font-weight:700;">📤 Admin</span>`
+          : `<span style="font-size:9px;background:#F0FDF4;color:#166534;border-radius:6px;padding:1px 6px;font-weight:700;">🏛 Comunidad</span>`;
+        return `
+      <div class="adm-item" style="${isDestacado ? 'border-left:3px solid #F59E0B;' : ''}">
         <div class="adm-item-row">
           <div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${r.emoji||'🔄'}</div>
           <div class="adm-item-info">
-            <div class="adm-item-name">${App._esc(r.name)}</div>
-            <div class="adm-item-meta">${r.ciudad||'—'} · ${r.dist||'—'} · por ${App._esc(r.authorName)||'Anónimo'}</div>
+            <div class="adm-item-name" style="display:flex;align-items:center;gap:6px;">${App._esc(r.name)} ${origenBadge}</div>
+            <div class="adm-item-meta">${r.ciudad||'—'} · ${r.dist||'—'} · ❤️${r.likeCount||r.likes||0} likes</div>
+            <div class="adm-item-meta">Por: ${App._esc(r.authorName)||'Anónimo'}</div>
+            ${r.proposedReason ? `<div class="adm-item-meta" style="margin-top:2px;font-style:italic;color:var(--gr);">${App._esc(r.proposedReason)}</div>` : ''}
             ${r.desc ? `<div class="adm-item-meta" style="margin-top:2px;">${App._esc(r.desc)}</div>` : ''}
           </div>
         </div>
         <div class="adm-item-actions">
-          <button class="adm-btn adm-btn-green" onclick="App._admApprovePropuesta('${r.id}')">✅ Aprobar → Capa Municipal</button>
+          <button class="adm-btn adm-btn-green" onclick="App._admApprovePropuesta('${r.id}')">✅ Aprobar → Loop Oficial</button>
           <button class="adm-btn adm-btn-red"   onclick="App._admRejectPropuesta('${r.id}','${(r.authorId||'')}')">❌ Rechazar</button>
         </div>
-      </div>`).join('') + `</div>`;
+      </div>`;
+      }).join('') + `</div>`;
   },
 
   async _admApprovePropuesta(id) {
