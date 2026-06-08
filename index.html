@@ -7,7 +7,7 @@
      Define exactamente qué dominios pueden ejecutar scripts, cargar estilos,
      conectarse a APIs, etc. El navegador bloquea todo lo que no esté acá.
 -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com https://api.maptiler.com https://*.tile.openstreetmap.org; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://urbanloop360.firebaseapp.com https://api.maptiler.com https://api.bigdatacloud.net https://nominatim.openstreetmap.org https://router.project-osrm.org https://raw.githubusercontent.com; frame-src 'none'; object-src 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://www.gstatic.com https://unpkg.com; worker-src blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://raw.githubusercontent.com https://api.maptiler.com https://*.tile.openstreetmap.org; connect-src 'self' https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://urbanloop360.firebaseapp.com https://accounts.google.com https://api.maptiler.com https://api.bigdatacloud.net https://nominatim.openstreetmap.org https://router.project-osrm.org https://raw.githubusercontent.com; frame-src https://urbanloop360.firebaseapp.com; object-src 'none'; base-uri 'self';">
 <title>Urban Loop 360° — Descubrí y grabá loops en tu ciudad</title>
 <meta name="description" content="Descubrí, grabá y compartí loops urbanos en La Paz, Entre Ríos y toda Argentina. Running, ciclismo, caminatas y más.">
 <meta name="theme-color" content="#FF5F00">
@@ -1889,46 +1889,29 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <h2>Grabar Loop</h2>
     <div style="width:60px"></div>
   </div>
-  <div class="grab-type-row" id="grab-type-row">
-    <div class="grab-type-chip on" data-t="running">🏃 Running</div>
-    <div class="grab-type-chip" data-t="mtb">🚵 MTB</div>
-    <div class="grab-type-chip" data-t="ciclismo">🚴 Ciclismo / Ruta</div>
-    <div class="grab-type-chip" data-t="caminata">🥾 Caminata</div>
-    <div class="grab-type-chip" data-t="perro">🐕 Vuelta al perro</div>
-    <div class="grab-type-chip" data-t="paseo">🌳 Paseo</div>
-    <div class="grab-type-chip" data-t="pesca">🎣 Pesca</div>
-    <div class="grab-type-chip" data-t="atardecer">🌅 Atardecer</div>
-    <div class="grab-type-chip" data-t="gastro">🍽️ Gastronómica</div>
-    <div class="grab-type-chip" data-t="trad">☕ Tradicional</div>
-    <div class="grab-type-chip" data-t="relax">🧘 Relax</div>
-    <div class="grab-type-chip" data-t="salidas">🎉 Salidas</div>
-    <div class="grab-type-chip" data-t="trabajo">💼 Trabajo</div>
-    <div class="grab-type-chip" data-t="vacaciones">🏖️ Vacaciones</div>
-    <div class="grab-type-chip" data-t="lugar">📍 Lugar</div>
-    <div class="grab-type-chip" data-t="resto">🥩 Resto</div>
-    <div class="grab-type-chip" data-t="cafe">☕ Café</div>
-    <div class="grab-type-chip" data-t="vino">🍷 Vino</div>
-    <div class="grab-type-chip" data-t="cerveza">🍺 Cerveza</div>
-    <div class="grab-type-chip" data-t="coctel">🍸 Cóctel</div>
-    <div class="grab-type-chip" data-t="vineria">🍾 Viñería</div>
-    <div class="grab-type-chip" data-t="bar">🥂 Bar</div>
-    <div class="grab-type-chip" data-t="boliche">🪩 Boliche</div>
-    <div class="grab-type-chip" data-t="teatro">🎭 Teatro</div>
-    <div class="grab-type-chip" data-t="cine">🎬 Cine</div>
-    <div class="grab-type-chip" data-t="musica">🎵 Música</div>
-    <div class="grab-type-chip" data-t="museo">🖼️ Museo</div>
-    <div class="grab-type-chip" data-t="arte">🎨 Arte</div>
-    <div class="grab-type-chip" data-t="naturaleza">🌿 Natural</div>
-    <div class="grab-type-chip" data-t="rio">🌊 Río</div>
-    <div class="grab-type-chip" data-t="playa">🏖️ Playa</div>
-    <div class="grab-type-chip" data-t="parque">🌳 Parque</div>
-    <div class="grab-type-chip" data-t="plaza">🏛️ Plaza</div>
-    <div class="grab-type-chip" data-t="aventura">🧗 Aventura</div>
-    <div class="grab-type-chip" data-t="campo">🌾 Campo</div>
-    <div class="grab-type-chip" data-t="deporte">⚽ Deporte</div>
-    <div class="grab-type-chip" data-t="nocturno">🌙 Noche</div>
-    <div class="grab-type-chip" data-t="foto">📸 Foto</div>
-    <div class="grab-type-chip" data-t="otro">✳️ Otro</div>
+  <div style="padding:10px 14px 10px;background:#1C1C1E;border-bottom:0.5px solid #2C2C2E;flex-shrink:0;">
+    <div style="font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px;">Tipo de loop</div>
+    <select id="grab-type-select" class="fi" aria-label="Tipo de loop" style="width:100%;" onchange="App._setGrabType(this.value)">
+      <option value="running">🏃 Running</option>
+      <option value="mtb">🚵 MTB</option>
+      <option value="ciclismo">🚴 Ciclismo / Ruta</option>
+      <option value="caminata">🥾 Caminata</option>
+      <option value="perro">🐕 Vuelta al perro</option>
+      <option value="paseo">🌳 Paseo</option>
+      <option value="pesca">🎣 Pesca</option>
+      <option value="atardecer">🌅 Atardecer</option>
+      <option value="gastro">🍽️ Gastronómica</option>
+      <option value="trad">☕ Tradicional</option>
+      <option value="relax">🧘 Relax</option>
+      <option value="salidas">🎉 Salidas</option>
+      <option value="trabajo">💼 Trabajo</option>
+      <option value="vacaciones">🏖️ Vacaciones</option>
+      <option value="aventura">🧗 Aventura</option>
+      <option value="campo">🌾 Campo</option>
+      <option value="deporte">⚽ Deporte</option>
+      <option value="nocturno">🌙 Noche</option>
+      <option value="otro">✳️ Otro</option>
+    </select>
   </div>
   <div class="grab-map-wrap">
     <div id="grab-map" style="width:100%;height:100%;"></div>
@@ -2699,37 +2682,37 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <!-- Categorías / Etiquetas -->
     <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">Etiqueta</div>
-    <div style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:3px;margin-bottom:12px;" class="fl-cat-scroll">
-      <button class="fl-cat on" data-c="lugar" onclick="App._setFLCat(this)">📍 Lugar</button>
-      <button class="fl-cat" data-c="gastro" onclick="App._setFLCat(this)">🍽️ Gastro</button>
-      <button class="fl-cat" data-c="resto" onclick="App._setFLCat(this)">🥩 Resto</button>
-      <button class="fl-cat" data-c="cafe" onclick="App._setFLCat(this)">☕ Café</button>
-      <button class="fl-cat" data-c="vino" onclick="App._setFLCat(this)">🍷 Vino</button>
-      <button class="fl-cat" data-c="cerveza" onclick="App._setFLCat(this)">🍺 Cerveza</button>
-      <button class="fl-cat" data-c="coctel" onclick="App._setFLCat(this)">🍸 Cóctel</button>
-      <button class="fl-cat" data-c="vineria" onclick="App._setFLCat(this)">🍾 Viñería</button>
-      <button class="fl-cat" data-c="bar" onclick="App._setFLCat(this)">🥂 Bar</button>
-      <button class="fl-cat" data-c="boliche" onclick="App._setFLCat(this)">🪩 Boliche</button>
-      <button class="fl-cat" data-c="teatro" onclick="App._setFLCat(this)">🎭 Teatro</button>
-      <button class="fl-cat" data-c="cine" onclick="App._setFLCat(this)">🎬 Cine</button>
-      <button class="fl-cat" data-c="musica" onclick="App._setFLCat(this)">🎵 Música</button>
-      <button class="fl-cat" data-c="museo" onclick="App._setFLCat(this)">🖼️ Museo</button>
-      <button class="fl-cat" data-c="arte" onclick="App._setFLCat(this)">🎨 Arte</button>
-      <button class="fl-cat" data-c="naturaleza" onclick="App._setFLCat(this)">🌿 Natural</button>
-      <button class="fl-cat" data-c="rio" onclick="App._setFLCat(this)">🌊 Río</button>
-      <button class="fl-cat" data-c="playa" onclick="App._setFLCat(this)">🏖️ Playa</button>
-      <button class="fl-cat" data-c="parque" onclick="App._setFLCat(this)">🌳 Parque</button>
-      <button class="fl-cat" data-c="plaza" onclick="App._setFLCat(this)">🏛️ Plaza</button>
-      <button class="fl-cat" data-c="pesca" onclick="App._setFLCat(this)">🎣 Pesca</button>
-      <button class="fl-cat" data-c="aventura" onclick="App._setFLCat(this)">🧗 Aventura</button>
-      <button class="fl-cat" data-c="campo" onclick="App._setFLCat(this)">🌾 Campo</button>
-      <button class="fl-cat" data-c="deporte" onclick="App._setFLCat(this)">⚽ Deporte</button>
-      <button class="fl-cat" data-c="ciclismo" onclick="App._setFLCat(this)">🚴 Ciclismo</button>
-      <button class="fl-cat" data-c="nocturno" onclick="App._setFLCat(this)">🌙 Noche</button>
-      <button class="fl-cat" data-c="perro" onclick="App._setFLCat(this)">🐕 Pet</button>
-      <button class="fl-cat" data-c="foto" onclick="App._setFLCat(this)">📸 Foto</button>
-      <button class="fl-cat" data-c="otro" onclick="App._setFLCat(this)">✳️ Otro</button>
-    </div>
+    <select id="fl-cat-select" class="fi" aria-label="Etiqueta del lugar" style="width:100%;margin-bottom:14px;" onchange="App._setFLCatSelect(this)">
+      <option value="lugar">📍 Lugar</option>
+      <option value="gastro">🍽️ Gastro</option>
+      <option value="resto">🥩 Resto</option>
+      <option value="cafe">☕ Café</option>
+      <option value="vino">🍷 Vino</option>
+      <option value="cerveza">🍺 Cerveza</option>
+      <option value="coctel">🍸 Cóctel</option>
+      <option value="vineria">🍾 Viñería</option>
+      <option value="bar">🥂 Bar</option>
+      <option value="boliche">🪩 Boliche</option>
+      <option value="teatro">🎭 Teatro</option>
+      <option value="cine">🎬 Cine</option>
+      <option value="musica">🎵 Música</option>
+      <option value="museo">🖼️ Museo</option>
+      <option value="arte">🎨 Arte</option>
+      <option value="naturaleza">🌿 Natural</option>
+      <option value="rio">🌊 Río</option>
+      <option value="playa">🏖️ Playa</option>
+      <option value="parque">🌳 Parque</option>
+      <option value="plaza">🏛️ Plaza</option>
+      <option value="pesca">🎣 Pesca</option>
+      <option value="aventura">🧗 Aventura</option>
+      <option value="campo">🌾 Campo</option>
+      <option value="deporte">⚽ Deporte</option>
+      <option value="ciclismo">🚴 Ciclismo</option>
+      <option value="nocturno">🌙 Noche</option>
+      <option value="perro">🐕 Pet</option>
+      <option value="foto">📸 Foto</option>
+      <option value="otro">✳️ Otro</option>
+    </select>
 
     <!-- Mapa de ubicación -->
     <div style="margin-bottom:12px;">
@@ -3090,6 +3073,8 @@ const App = {
   _auth: null,
   _user: null,
   _uid: 'public',
+  _userRole: 'user',
+  _userLoopSlots: null,
   _fs: null,
   _appReady: false,
 
@@ -3121,6 +3106,31 @@ const App = {
       this._db      = firebase.firestore();
       this._auth    = firebase.auth();
       this._storage = null; // Storage no activado — imágenes guardadas en Firestore (loop_imgs)
+
+      // ── Persistencia de sesión: SESSION funciona en incógnito (usa sessionStorage) ──
+      // LOCAL usa IndexedDB que está bloqueado en incógnito y Safari estricto
+      try {
+        await this._auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      } catch(e) {
+        // IndexedDB bloqueado (incógnito, Safari) → fallback a SESSION
+        try {
+          await this._auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+          console.log('[auth] Usando SESSION persistence (incógnito/Safari)');
+        } catch(e2) {
+          console.warn('[auth] No se pudo establecer persistencia:', e2.message);
+        }
+      }
+
+      // ── Capturar resultado de signInWithRedirect (regreso desde login Google) ──
+      try {
+        const redirectResult = await this._auth.getRedirectResult();
+        if (redirectResult && redirectResult.user) {
+          this._userJustLoggedIn = true;
+          console.log('[auth] Redirect login OK:', redirectResult.user.email);
+        }
+      } catch(e) {
+        console.warn('[auth] getRedirectResult error:', e.code, e.message);
+      }
 
       // Cargar API key de Anthropic desde Firestore (_config/keys) — no se guarda en el código
       try {
@@ -3154,12 +3164,18 @@ const App = {
         // Guardar/actualizar documento de perfil en users/{uid} para que el admin pueda listarlos
         if (user && this._db) {
           try {
-            await this._db.collection('users').doc(user.uid).set({
+            const _uRef = this._db.collection('users').doc(user.uid);
+            const _uSnap = await _uRef.get();
+            const _uData = _uSnap.data() || {};
+            // Leer rol y slots ANTES de sobrescribir con merge
+            this._userRole       = _uData.role       || 'user';
+            this._userLoopSlots  = _uData.loopSlots  || null;
+            await _uRef.set({
               uid: user.uid,
               displayName: user.displayName || user.email?.split('@')[0] || 'Anónimo',
               email: user.email || '',
               photoURL: user.photoURL || '',
-              createdAt: (await this._db.collection('users').doc(user.uid).get()).data()?.createdAt || Date.now(),
+              createdAt: _uData.createdAt || Date.now(),
               lastSeen: Date.now()
             }, { merge: true });
           } catch(e) { /* silencioso */ }
@@ -3206,19 +3222,25 @@ const App = {
     return 'other';
   },
 
+  // Detectar si localStorage/sessionStorage están disponibles
+  _storageAvailable() {
+    try { localStorage.setItem('_t','1'); localStorage.removeItem('_t'); return true; } catch(e) { return false; }
+  },
+
   async loginGoogle() {
     if (!this._auth) return this.toast('⚠️ Firebase no conectado');
 
-    // ── In-app browser: ningún método funciona ──
+    // ── In-app browser ──
     if (this._isInAppBrowser()) {
-      const url = window.location.href;
-      const browser = this._getBrowserName();
-      const msg = /Android/i.test(navigator.userAgent)
-        ? `Para iniciar con Google abrí la app en Edge o Chrome.\n\nURL: ${url}`
-        : `Para iniciar con Google abrí la app en Edge o Safari.\n\nTocá ··· → "Abrir en navegador"`;
-      if (confirm(msg + '\n\n¿Usar email en vez de Google?')) {
+      if (confirm('Para iniciar con Google abrí esta URL en Chrome o Safari.\n\n¿Usar email en vez de Google?')) {
         document.getElementById('auth-email')?.focus();
       }
+      return;
+    }
+
+    // ── Incógnito / storage bloqueado → no puede persistir la sesión de Google ──
+    if (!this._storageAvailable()) {
+      this._showIncognitoAuthHelp();
       return;
     }
 
@@ -3240,38 +3262,88 @@ const App = {
 
     } catch(e) {
       console.error('[loginGoogle]', e.code, e.message);
+
       const browser = this._getBrowserName();
 
-      if (e.code === 'auth/popup-blocked') {
-        this._showPopupBlockedBanner(browser);
+      // Edge/Safari bloquean cookies de terceros → mensajes específicos en e.message
+      const isTrackingBlock =
+        e.code === 'auth/web-storage-unsupported' ||
+        e.message?.includes('cross-origin') ||
+        e.message?.includes('ITP') ||
+        e.message?.includes('third-party') ||
+        e.message?.includes('Tracking Prevention') ||
+        (e.code === 'auth/internal-error' && (
+          e.message?.includes('initial state') ||
+          e.message?.includes('sessionStorage')
+        ));
 
-      } else if (e.code === 'auth/popup-closed-by-user') {
-        this.toast('Cancelado');
+      const needsRedirect =
+        e.code === 'auth/popup-blocked' ||
+        e.code === 'auth/operation-not-supported-in-this-environment' ||
+        // auth/internal-error genérico sin mensaje de tracking → intentar redirect
+        (e.code === 'auth/internal-error' && !isTrackingBlock);
 
-      } else if (e.code === 'auth/cancelled-popup-request') {
-        // Doble clic — ignorar
-        void 0;
-
+      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+        if (btn) { btn.innerHTML = originalHTML || 'Continuar con Google'; btn.disabled = false; }
+        return;
       } else if (e.code === 'auth/network-request-failed') {
         this.toast('⚠️ Sin conexión. Revisá internet.');
-
       } else if (e.code === 'auth/unauthorized-domain') {
-        this.toast('⚠️ Dominio no autorizado en Firebase Console → Authentication → Authorized domains.');
-
-      } else if (
-        e.code === 'auth/internal-error' ||
-        e.message?.includes('sessionStorage') ||
-        e.message?.includes('initial state')
-      ) {
-        // Edge con Tracking Prevention Estricto bloquea el popup OAuth
+        this.toast('⚠️ Dominio no autorizado en Firebase → Authentication → Authorized domains.');
+      } else if (isTrackingBlock) {
+        // Edge/Safari con prevención de seguimiento → mostrar banner con instrucciones
         this._showTrackingPreventionHelp(browser);
-
+      } else if (needsRedirect) {
+        // Popup bloqueado o internal-error genérico → intentar redirect como fallback
+        if (e.code === 'auth/popup-blocked') this._showPopupBlockedBanner(browser);
+        try {
+          await this._auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+          const p2 = new firebase.auth.GoogleAuthProvider();
+          p2.setCustomParameters({ prompt: 'select_account' });
+          if (btn) { btn.innerHTML = '🔄 Redirigiendo...'; }
+          await this._auth.signInWithRedirect(p2);
+          return;
+        } catch(e2) {
+          this._showIncognitoAuthHelp();
+        }
       } else {
         this.toast('⚠️ Error: ' + (e.message || e.code));
       }
     } finally {
       if (btn) { btn.innerHTML = originalHTML || 'Continuar con Google'; btn.disabled = false; }
     }
+  },
+
+  _showIncognitoAuthHelp() {
+    // Mostrar un panel claro explicando que deben usar email en modo incógnito
+    const existing = document.getElementById('incognito-auth-help');
+    if (existing) { existing.remove(); }
+    const el = document.createElement('div');
+    el.id = 'incognito-auth-help';
+    el.style.cssText = `
+      position:fixed;inset:0;z-index:99999;
+      background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+      display:flex;align-items:center;justify-content:center;padding:20px;
+    `;
+    el.innerHTML = `
+      <div style="background:#1E1E26;border-radius:18px;padding:24px;max-width:360px;width:100%;border:1px solid #2C2C3E;">
+        <div style="font-size:32px;text-align:center;margin-bottom:12px;">🕵️</div>
+        <div style="font-family:'Bai Jamjuree',sans-serif;font-size:15px;font-weight:700;color:#F0F0F8;text-align:center;margin-bottom:8px;">Modo incógnito detectado</div>
+        <div style="font-size:13px;color:#9898B8;text-align:center;line-height:1.6;margin-bottom:20px;">
+          Google Login no puede guardar la sesión en modo incógnito.<br>
+          Usá <b style="color:#FF5F00;">email y contraseña</b> o abrí la app en una ventana normal.
+        </div>
+        <button onclick="document.getElementById('incognito-auth-help').remove();document.getElementById('auth-email')?.focus();"
+          style="width:100%;padding:13px;background:#FF5F00;color:white;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Bai Jamjuree',sans-serif;">
+          Entrar con Email →
+        </button>
+        <button onclick="document.getElementById('incognito-auth-help').remove();"
+          style="width:100%;padding:11px;background:transparent;color:#9898B8;border:none;font-size:13px;cursor:pointer;margin-top:8px;">
+          Cancelar
+        </button>
+      </div>
+    `;
+    document.body.appendChild(el);
   },
 
   _showPopupBlockedBanner(browser) {
@@ -3322,7 +3394,11 @@ const App = {
     }
 
     div.innerHTML = `⚠️ ${steps}
-      <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end;">
+      <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center;">
+        <span style="cursor:pointer;background:rgba(255,255,255,.2);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;"
+          onclick="document.getElementById('auth-help-banner').remove();App.go('profile');setTimeout(()=>document.getElementById('auth-email')?.focus(),300);">
+          Usar Email →
+        </span>
         <span style="cursor:pointer;text-decoration:underline;font-size:12px;" onclick="document.getElementById('auth-help-banner').remove()">✕ Cerrar</span>
       </div>`;
     document.body.prepend(div);
@@ -5323,7 +5399,19 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         <button class="dt-action-btn" onclick="App.shareLoop('${id}')">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
           Compartir
-        </button>`;
+        </button>
+        ${this._isMod() ? `
+        <div style="width:100%;margin-top:8px;padding-top:8px;border-top:1px solid var(--bd);display:flex;gap:7px;flex-wrap:wrap;">
+          <button class="dt-action-btn" style="background:var(--bg2);color:#F59E0B;border-color:#F59E0B33;" onclick="App.go('admin');App._admTab('loops')">
+            ✏️ Editar (Admin)
+          </button>
+          ${r.source !== 'municipio' ? `<button class="dt-action-btn" style="background:var(--bg2);color:#10B981;border-color:#10B98133;" onclick="App._admSetCiudad('${id}','${r.name.replace(/'/g,'')}')">
+            🏙️ → Municipio
+          </button>` : ''}
+          <button class="dt-action-btn" style="background:var(--bg2);color:#EF4444;border-color:#EF444433;" onclick="App._admDeleteLoop('${id}','${r.name.replace(/'/g,'')}')">
+            🗑️ Eliminar
+          </button>
+        </div>` : ''}`;
     }
 
     this.go('detail');
@@ -5761,7 +5849,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     if (flMuni) flMuni.checked = false;
     this._fotoLoopCat = 'lugar';
     this._flLat = null; this._flLng = null;
-    document.querySelectorAll('.fl-cat').forEach(b => b.classList.toggle('on', b.dataset.c === 'lugar'));
+    const flCatSel = document.getElementById('fl-cat-select');
+    if (flCatSel) flCatSel.value = 'lugar';
     this._clearFotoLoop();
     // Inicializar mapa del modal (con pequeño delay para que el DOM esté visible)
     setTimeout(() => this._initFLMap(), 150);
@@ -5804,11 +5893,12 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     });
   },
 
-  _setFLCat(btn) {
-    this._fotoLoopCat = btn.dataset.c;
-    document.querySelectorAll('.fl-cat').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
+  _setFLCatSelect(sel) {
+    this._fotoLoopCat = sel.value;
   },
+
+  // legacy — ya no se usa, se mantiene por si hay referencias viejas
+  _setFLCat(btn) { this._fotoLoopCat = btn?.dataset?.c || 'lugar'; },
 
   // ── FOTO LOOP MAP ──
   _flMap: null,
@@ -5951,6 +6041,24 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         if (!this._user) {
           this.toast('⚠️ Iniciá sesión primero');
           this.closeFotoLoop(); this.go('profile'); return;
+        }
+
+        // ── Límite de FotoLoops por usuario (según rol) ──
+        const FOTOLOOP_LIMIT = this._getLoopLimit();
+        try {
+          const myFlSnap = await this._db.collection('fotoloops')
+            .where('authorId', '==', this._uid).get();
+          if (myFlSnap.size >= FOTOLOOP_LIMIT) {
+            this.toast(`⚠️ Límite de ${FOTOLOOP_LIMIT} foto loops alcanzado. Eliminá uno para publicar otro.`);
+            return;
+          }
+        } catch(e) {
+          // Fallback: chequear cache local
+          const localCount = (this._fotoPosts || []).filter(p => p.authorId === this._uid).length;
+          if (localCount >= FOTOLOOP_LIMIT) {
+            this.toast(`⚠️ Límite de ${FOTOLOOP_LIMIT} foto loops alcanzado. Eliminá uno para publicar otro.`);
+            return;
+          }
         }
 
         // Guardar imagen en Firestore (loop_imgs) en vez de Storage
@@ -6606,6 +6714,16 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           this.toast('⚠️ Iniciá sesión para crear un loop');
           this.go('profile');
           return;
+        }
+        // ── Límite de loops por usuario ──
+        if (!this._isAdmin()) {
+          const myCount = this.routes.filter(r => r.authorId === this._uid && r.type !== 'fotostop').length;
+          const lim = this._getLoopLimit();
+          if (myCount >= lim) {
+            this.toast(`⚠️ Límite de ${lim} loops alcanzado. Contactá al admin para ampliar tu cuota.`);
+            if(btn){ btn.disabled=false; btn.textContent='Guardar Loop 🚀'; }
+            return;
+          }
         }
         // Ciudad: usar el select como fuente autoritaria (ya auto-detectado en _addAdmPt al primer click)
         const selCity = document.getElementById('adm-city');
@@ -8907,6 +9025,24 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       // FX
       this._fxPts(2);
       this._fxCombo();
+
+      // ── Auto-propuesta al municipio por likes destacados ──
+      const LOOP_MUNI_THRESHOLD = 20;
+      if (r.likes >= LOOP_MUNI_THRESHOLD && !r._sentToMuni && r.source !== 'municipio') {
+        r._sentToMuni = true;
+        if (this._db) {
+          const pendingData = {
+            ...r,
+            pts: (r.pts||[]).map(p => Array.isArray(p) ? {lat:p[0],lng:p[1]} : p),
+            tipo: 'destacado',
+            likeCount: r.likes,
+            proposedAt: Date.now(),
+            proposedReason: `Alcanzó ${r.likes} likes de la comunidad`
+          };
+          this._db.collection('loops_municipio_pending').doc(r.id).set(pendingData, { merge: true })
+            .catch(() => {});
+        }
+      }
     }
     this._savePts();
     this._saveData();
@@ -9184,10 +9320,10 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           if (pStats.innerHTML) {
             pStats.innerHTML = `<span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--or)" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              \${top.totalLikes.toLocaleString()} likes recibidos
+              ${top.totalLikes.toLocaleString()} likes recibidos
             </span>
             <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
-              🔄 \${top.totalLoops} loop\${top.totalLoops!==1?'s':''}
+              🔄 ${top.totalLoops} loop${top.totalLoops!==1?'s':''}
             </span>`;
           }
         }
@@ -9215,22 +9351,22 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         const avBg = isMe ? 'var(--or)' : (avatarColors[i] || 'var(--gr)');
 
         return `
-        <div class="rank-loop-item \${i===0?'pos1':''}" style="\${isMe?'border:1.5px solid var(--or);':''} ">
-          <div class="rank-loop-pos \${posC}">\${medal}</div>
-          <div style="width:34px;height:34px;border-radius:50%;background:\${avBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;">\${App._esc(initials)}</div>
+        <div class="rank-loop-item ${i===0?'pos1':''}" style="${isMe?'border:1.5px solid var(--or);':''} ">
+          <div class="rank-loop-pos ${posC}">${medal}</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:${avBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;">${App._esc(initials)}</div>
           <div class="rank-loop-info">
-            <div class="rank-loop-name">\${App._esc(u.name)}\${isMe?' <span style="font-size:9px;background:var(--or);color:white;padding:1px 5px;border-radius:6px;vertical-align:middle;">vos</span>':''}</div>
+            <div class="rank-loop-name">${App._esc(u.name)}${isMe?' <span style="font-size:9px;background:var(--or);color:white;padding:1px 5px;border-radius:6px;vertical-align:middle;">vos</span>':''}</div>
             <div class="rank-loop-meta" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
-              <span style="color:\${i===0?'#BA7517':'var(--gr)'};display:flex;align-items:center;gap:2px;">
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="\${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                \${u.totalLikes.toLocaleString()} likes
+              <span style="color:${i===0?'#BA7517':'var(--gr)'};display:flex;align-items:center;gap:2px;">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                ${u.totalLikes.toLocaleString()} likes
               </span>
-              <span style="color:var(--gr);">· 🔄 \${u.totalLoops} loop\${u.totalLoops!==1?'s':''} · 👟 \${u.totalPaseos.toLocaleString()} paseos</span>
+              <span style="color:var(--gr);">· 🔄 ${u.totalLoops} loop${u.totalLoops!==1?'s':''} · 👟 ${u.totalPaseos.toLocaleString()} paseos</span>
             </div>
-            <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:\${pct}%;background:\${color};"></div></div>
+            <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:${pct}%;background:${color};"></div></div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--or);">\${u.totalLikes.toLocaleString()}</div>
+            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--or);">${u.totalLikes.toLocaleString()}</div>
             <div style="font-size:9px;color:var(--gr);margin-top:1px;">likes</div>
           </div>
         </div>`;
@@ -9681,11 +9817,11 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     this.grabMap.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right');
     this.grabPts=[]; this.grabSecs=0; this.grabState='idle';
     this._grabLine=null; this._grabSim=null;
-    document.getElementById('grab-type-row').addEventListener('click',e=>{
-      const c=e.target.closest('.grab-type-chip'); if(!c) return;
-      document.querySelectorAll('.grab-type-chip').forEach(x=>x.classList.remove('on'));
-      c.classList.add('on'); this.grabType=c.dataset.t;
-    });
+    const grabTypeSel = document.getElementById('grab-type-select');
+    if (grabTypeSel) {
+      grabTypeSel.value = this.grabType || 'running';
+      grabTypeSel.addEventListener('change', e => { this.grabType = e.target.value; });
+    }
     this._updateGrabUI();
   },
   grabToggle() {
@@ -9951,6 +10087,15 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   async _confirmGrabSave() {
     const name  = (document.getElementById('gsm-name')?.value||'').trim() || 'Mi Loop';
     const desc  = (document.getElementById('gsm-desc')?.value||'').trim();
+    // ── Límite de loops por usuario ──
+    if (!this._isAdmin()) {
+      const myCount = this.routes.filter(r => r.authorId === this._uid && r.type !== 'fotostop').length;
+      const lim = this._getLoopLimit();
+      if (myCount >= lim) {
+        this.toast(`⚠️ Límite de ${lim} loops alcanzado. Contactá al admin para ampliar tu cuota.`);
+        return;
+      }
+    }
     const btn   = document.getElementById('gsm-save-btn');
     if(btn){ btn.textContent='☁️ Guardando...'; btn.disabled=true; }
 
@@ -10147,7 +10292,15 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   _admCurrentTab: 'dashboard',
 
   _isAdmin() {
-    return this._uid && (this._uid === this.ADMIN_UID);
+    return this._uid && (this._uid === this.ADMIN_UID || this._userRole === 'admin');
+  },
+  _isMod() {
+    return this._userRole === 'moderador' || this._isAdmin();
+  },
+  _getLoopLimit() {
+    if (this._isAdmin())                   return 999;
+    if (this._userRole === 'moderador')    return this._userLoopSlots || 15;
+    return this._userLoopSlots || 5;
   },
 
   _initAdmin() {
@@ -10340,15 +10493,20 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (!el) return;
     if (list.length === 0) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin loops</div>`; return; }
     el.innerHTML = list.map(r => {
+      const MUNI_THR = 20;
       const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
       const noImgBadge = !hasImg ? `<span style="font-size:9px;background:#FEE2E2;color:#991B1B;border-radius:6px;padding:1px 6px;font-weight:700;">SIN FOTO</span> ` : '';
+      const hotBadge = (r.likes||0) >= MUNI_THR
+        ? `<span style="font-size:9px;background:#FFF3CD;color:#92400E;border-radius:6px;padding:1px 6px;font-weight:700;margin-left:4px;">🔥 DESTACADO</span>`
+        : '';
+      const alreadySentMuni = r._sentToMuni || (r.likes||0) >= MUNI_THR;
       return `<div class="adm-item">
         <div class="adm-item-row">
           ${hasImg
             ? App._imgTag(r.img, 'width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;')
             : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--bg2);">${r.emoji||'🔄'}</div>`}
           <div class="adm-item-info">
-            <div class="adm-item-name">${noImgBadge}${App._esc(r.name)}</div>
+            <div class="adm-item-name">${noImgBadge}${App._esc(r.name)}${hotBadge}</div>
             <div class="adm-item-meta">${r.ciudad||r.cityId||'—'} · ${r.type} · ${r.dist||'—'} · ❤️${r.likes||0}</div>
             <div class="adm-item-meta">Por: ${App._esc(r.authorName)||'Anónimo'}</div>
           </div>
@@ -10359,6 +10517,12 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
           ${r.source !== 'municipio'
             ? `<button class="adm-btn adm-btn-green" onclick="App._admSetCiudad('${r.id}','${r.name.replace(/'/g,'')}')">🏙️ Poner en Ciudad</button>`
             : `<button class="adm-btn" style="opacity:.5;cursor:default;" disabled>🏙️ Ya es Ciudad</button>`
+          }
+          ${r.source !== 'municipio' && !alreadySentMuni
+            ? `<button class="adm-btn" style="background:#FFF3CD;color:#92400E;border:1px solid #F59E0B;" onclick="App._admProponerMunicipio('${r.id}')">📤 Proponer al Municipio</button>`
+            : r.source !== 'municipio' && alreadySentMuni
+              ? `<button class="adm-btn" style="opacity:.5;cursor:default;" disabled>📬 Ya en Municipio</button>`
+              : ''
           }
           <button class="adm-btn adm-btn-red" onclick="App._admDeleteLoop('${r.id}','${r.name.replace(/'/g,'')}')">🗑️ Eliminar</button>
         </div>
@@ -10392,6 +10556,28 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const statEl = document.getElementById('aStat-loops');
     if (statEl) statEl.textContent = this.routes.filter(r=>r.type!=='fotostop').length;
     this.toast(`🗑️ Loop "${name}" eliminado`);
+  },
+
+
+  async _admProponerMunicipio(id) {
+    const r = this.routes.find(x => x.id === id);
+    if (!r) return this.toast('Loop no encontrado');
+    if (!confirm(`¿Proponer "${r.name}" al municipio para revisión?\nAparecerá en la pestaña Propuestas comunidad.`)) return;
+    if (!this._db) return this.toast('Firebase no disponible');
+    try {
+      const pendingData = {
+        ...r,
+        pts: (r.pts||[]).map(p => Array.isArray(p) ? {lat:p[0],lng:p[1]} : p),
+        tipo: 'admin_manual',
+        likeCount: r.likes || 0,
+        proposedAt: Date.now(),
+        proposedReason: 'Propuesto manualmente por el admin'
+      };
+      await this._db.collection('loops_municipio_pending').doc(r.id).set(pendingData, { merge: true });
+      r._sentToMuni = true;
+      this._admRenderLoops();
+      this.toast('📤 Loop enviado a Propuestas Municipio');
+    } catch(e) { this.toast('❌ Error: ' + e.message); }
   },
 
   async _admSetCiudad(id, name) {
@@ -10475,21 +10661,31 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       return;
     }
     el.innerHTML = `<div style="padding:14px;display:flex;flex-direction:column;gap:10px;">` +
-      list.map(r => `
-      <div class="adm-item">
+      list.map(r => {
+        const isDestacado = r.tipo === 'destacado' || r.tipo === 'admin_manual';
+        const origenBadge = r.tipo === 'destacado'
+          ? `<span style="font-size:9px;background:#FFF3CD;color:#92400E;border-radius:6px;padding:1px 6px;font-weight:700;">🔥 Por likes (${r.likeCount||0} ❤️)</span>`
+          : r.tipo === 'admin_manual'
+          ? `<span style="font-size:9px;background:#E0F2FE;color:#0369A1;border-radius:6px;padding:1px 6px;font-weight:700;">📤 Admin</span>`
+          : `<span style="font-size:9px;background:#F0FDF4;color:#166534;border-radius:6px;padding:1px 6px;font-weight:700;">🏛 Comunidad</span>`;
+        return `
+      <div class="adm-item" style="${isDestacado ? 'border-left:3px solid #F59E0B;' : ''}">
         <div class="adm-item-row">
           <div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${r.emoji||'🔄'}</div>
           <div class="adm-item-info">
-            <div class="adm-item-name">${App._esc(r.name)}</div>
-            <div class="adm-item-meta">${r.ciudad||'—'} · ${r.dist||'—'} · por ${App._esc(r.authorName)||'Anónimo'}</div>
+            <div class="adm-item-name" style="display:flex;align-items:center;gap:6px;">${App._esc(r.name)} ${origenBadge}</div>
+            <div class="adm-item-meta">${r.ciudad||'—'} · ${r.dist||'—'} · ❤️${r.likeCount||r.likes||0} likes</div>
+            <div class="adm-item-meta">Por: ${App._esc(r.authorName)||'Anónimo'}</div>
+            ${r.proposedReason ? `<div class="adm-item-meta" style="margin-top:2px;font-style:italic;color:var(--gr);">${App._esc(r.proposedReason)}</div>` : ''}
             ${r.desc ? `<div class="adm-item-meta" style="margin-top:2px;">${App._esc(r.desc)}</div>` : ''}
           </div>
         </div>
         <div class="adm-item-actions">
-          <button class="adm-btn adm-btn-green" onclick="App._admApprovePropuesta('${r.id}')">✅ Aprobar → Capa Municipal</button>
+          <button class="adm-btn adm-btn-green" onclick="App._admApprovePropuesta('${r.id}')">✅ Aprobar → Loop Oficial</button>
           <button class="adm-btn adm-btn-red"   onclick="App._admRejectPropuesta('${r.id}','${(r.authorId||'')}')">❌ Rechazar</button>
         </div>
-      </div>`).join('') + `</div>`;
+      </div>`;
+      }).join('') + `</div>`;
   },
 
   async _admApprovePropuesta(id) {
@@ -10681,25 +10877,65 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         snap = await this._db.collection('users').limit(50).get();
       }
       if (snap.empty) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin usuarios registrados en la colección "users".<br><small>Nota: los usuarios se crean en la colección al iniciar sesión por primera vez.</small></div>`; return; }
+      // Contar loops de cada usuario
+      let loopCountMap = {};
+      try {
+        const allMine = await this._db.collection('loops').get();
+        allMine.forEach(d => {
+          const aid = d.data().authorId;
+          if (aid) loopCountMap[aid] = (loopCountMap[aid]||0) + 1;
+        });
+      } catch(e) {}
+
       el.innerHTML = snap.docs.map(doc => {
         const u = {id:doc.id,...doc.data()};
-        const banned = u.banned || false;
-        return `<div class="adm-item">
+        const banned   = u.banned || false;
+        const role     = u.role || 'user';
+        const slots    = u.loopSlots || null;
+        const usedLoops = loopCountMap[u.id] || 0;
+        const defaultSlots = role==='admin' ? '∞' : role==='moderador' ? (slots||15) : (slots||5);
+        const roleBadge = role==='admin'
+          ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;background:#FFF3CD;color:#92400E;">👑 Admin</span>`
+          : role==='moderador'
+          ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;background:#EDE9FE;color:#6D28D9;">🛡️ Moderador</span>`
+          : `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;background:var(--bg2);color:var(--gr);">👤 Usuario</span>`;
+        const bannedBadge = banned
+          ? `<span style="font-size:9px;font-weight:700;padding:2px 7px;border-radius:8px;background:#FEE2E2;color:#991B1B;">🚫 Baneado</span>`
+          : '';
+        const isCurrentAdmin = u.id === this.ADMIN_UID;
+        return `<div class="adm-item" style="${isCurrentAdmin?'border-left:3px solid #F59E0B;':''}">
           <div class="adm-item-row">
-            <div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;font-family:var(--fH);font-weight:700;color:var(--or);">${(u.displayName||u.email||'?')[0].toUpperCase()}</div>
-            <div class="adm-item-info">
-              <div class="adm-item-name">${u.displayName||u.email||u.id}</div>
-              <div class="adm-item-meta">${u.email||''} · ${u.pts||0} pts</div>
-              <div class="adm-item-meta">Registrado: ${u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-AR') : '—'}</div>
-              ${banned ? `<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:10px;background:#FEE2E2;color:#991B1B;display:inline-block;margin-top:2px;">🚫 Baneado</span>` : ''}
+            <div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;font-family:var(--fH);font-weight:700;color:var(--or);flex-shrink:0;">${(u.displayName||u.email||'?')[0].toUpperCase()}</div>
+            <div class="adm-item-info" style="flex:1;min-width:0;">
+              <div class="adm-item-name" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">${App._esc(u.displayName||u.email||u.id)} ${roleBadge} ${bannedBadge}</div>
+              <div class="adm-item-meta">${u.email||''}</div>
+              <div class="adm-item-meta">Loops: <b style="color:var(--or);">${usedLoops}</b> / ${defaultSlots} · ${u.pts||0} pts · ${u.createdAt ? new Date(u.createdAt).toLocaleDateString('es-AR') : '—'}</div>
             </div>
           </div>
-          <div class="adm-item-actions">
-            ${!banned
-              ? `<button class="adm-btn adm-btn-red" onclick="App._admBanUser('${u.id}','${(u.displayName||u.email||'Usuario').replace(/'/g,'')}')">🚫 Banear</button>`
-              : `<button class="adm-btn adm-btn-green" onclick="App._admUnbanUser('${u.id}')">✅ Desbanear</button>`
-            }
-          </div>
+          ${isCurrentAdmin ? '' : `
+          <div style="padding:10px 0 6px;border-top:1px solid var(--bd);margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <label style="font-size:11px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.4px;width:42px;flex-shrink:0;">Rol</label>
+              <select class="fi" style="flex:1;min-width:120px;font-size:12px;padding:6px 10px;" onchange="App._admSetRole('${u.id}',this.value)">
+                <option value="user"      ${role==='user'?'selected':''}>👤 Usuario</option>
+                <option value="moderador" ${role==='moderador'?'selected':''}>🛡️ Moderador</option>
+                <option value="admin"     ${role==='admin'?'selected':''}>👑 Admin</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+              <label style="font-size:11px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.4px;width:42px;flex-shrink:0;">Slots</label>
+              <input type="number" class="fi" min="1" max="999" value="${u.loopSlots||''}" placeholder="Default (${role==='moderador'?15:5})"
+                style="flex:1;min-width:100px;font-size:12px;padding:6px 10px;"
+                onchange="App._admSetSlots('${u.id}',this.value)" />
+              <span style="font-size:10px;color:var(--gr);">vacío = default del rol</span>
+            </div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:2px;">
+              ${!banned
+                ? `<button class="adm-btn adm-btn-red" onclick="App._admBanUser('${u.id}','${(u.displayName||u.email||'Usuario').replace(/'/g,'')}')">🚫 Banear</button>`
+                : `<button class="adm-btn adm-btn-green" onclick="App._admUnbanUser('${u.id}')">✅ Desbanear</button>`
+              }
+            </div>
+          </div>`}
         </div>`;
       }).join('');
     } catch(e) {
@@ -10714,6 +10950,26 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
         </div>
       </div>`;
     }
+  },
+
+  async _admSetRole(uid, role) {
+    if (!this._db) return this.toast('Firebase no disponible');
+    const ROLE_LABELS = { user:'Usuario', moderador:'Moderador', admin:'Admin' };
+    try {
+      await this._db.collection('users').doc(uid).update({ role });
+      this.toast(`✅ Rol actualizado → ${ROLE_LABELS[role]||role}`);
+      this._admRenderUsuarios();
+    } catch(e) { this.toast('❌ Error: ' + e.message); }
+  },
+
+  async _admSetSlots(uid, value) {
+    if (!this._db) return this.toast('Firebase no disponible');
+    const slots = value ? parseInt(value) : null;
+    if (slots !== null && (isNaN(slots) || slots < 1)) return this.toast('⚠️ Número inválido');
+    try {
+      await this._db.collection('users').doc(uid).update({ loopSlots: slots });
+      this.toast(slots ? `✅ Slots → ${slots}` : '✅ Slots reseteados al default del rol');
+    } catch(e) { this.toast('❌ Error: ' + e.message); }
   },
 
   async _admBanUser(uid, name) {
