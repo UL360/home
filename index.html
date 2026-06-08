@@ -3275,8 +3275,15 @@ const App = {
 
       const result = await this._auth.signInWithPopup(provider);
       if (result.user) {
+        this._user = result.user;
+        this._uid  = result.user.uid;
         this._userJustLoggedIn = true;
+        this._updateProfileUI();
+        await this._loadData();
+        this._renderCards('', this._activeFilter || 'all');
+        if (this.mainMap) this._refreshMain();
         this.toast(`✅ Bienvenido, ${result.user.displayName || result.user.email}`);
+        setTimeout(() => this.go('profile'), 200);
       }
 
     } catch(e) {
