@@ -3107,6 +3107,20 @@ const App = {
       this._auth    = firebase.auth();
       this._storage = null; // Storage no activado — imágenes guardadas en Firestore (loop_imgs)
 
+      // ── Persistencia de sesión: SESSION funciona en incógnito (usa sessionStorage) ──
+      // LOCAL usa IndexedDB que está bloqueado en incógnito y Safari estricto
+      try {
+        await this._auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      } catch(e) {
+        // IndexedDB bloqueado (incógnito, Safari) → fallback a SESSION
+        try {
+          await this._auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+          console.log('[auth] Usando SESSION persistence (incógnito/Safari)');
+        } catch(e2) {
+          console.warn('[auth] No se pudo establecer persistencia:', e2.message);
+        }
+      }
+
       // ── Capturar resultado de signInWithRedirect (regreso desde login Google) ──
       try {
         const redirectResult = await this._auth.getRedirectResult();
@@ -3208,19 +3222,25 @@ const App = {
     return 'other';
   },
 
+  // Detectar si localStorage/sessionStorage están disponibles
+  _storageAvailable() {
+    try { localStorage.setItem('_t','1'); localStorage.removeItem('_t'); return true; } catch(e) { return false; }
+  },
+
   async loginGoogle() {
     if (!this._auth) return this.toast('⚠️ Firebase no conectado');
 
-    // ── In-app browser: ningún método funciona ──
+    // ── In-app browser ──
     if (this._isInAppBrowser()) {
-      const url = window.location.href;
-      const browser = this._getBrowserName();
-      const msg = /Android/i.test(navigator.userAgent)
-        ? `Para iniciar con Google abrí la app en Edge o Chrome.\n\nURL: ${url}`
-        : `Para iniciar con Google abrí la app en Edge o Safari.\n\nTocá ··· → "Abrir en navegador"`;
-      if (confirm(msg + '\n\n¿Usar email en vez de Google?')) {
+      if (confirm('Para iniciar con Google abrí esta URL en Chrome o Safari.\n\n¿Usar email en vez de Google?')) {
         document.getElementById('auth-email')?.focus();
       }
+      return;
+    }
+
+    // ── Incógnito / storage bloqueado → no puede persistir la sesión de Google ──
+    if (!this._storageAvailable()) {
+      this._showIncognitoAuthHelp();
       return;
     }
 
@@ -3234,7 +3254,6 @@ const App = {
       provider.addScope('email');
       provider.setCustomParameters({ prompt: 'select_account' });
 
-      // Intentar popup primero
       const result = await this._auth.signInWithPopup(provider);
       if (result.user) {
         this._userJustLoggedIn = true;
@@ -3244,46 +3263,71 @@ const App = {
     } catch(e) {
       console.error('[loginGoogle]', e.code, e.message);
 
-      const REDIRECT_CODES = [
+      const needsRedirect = [
         'auth/popup-blocked',
         'auth/internal-error',
         'auth/web-storage-unsupported',
         'auth/operation-not-supported-in-this-environment',
-      ];
-      const isStorageError = e.message?.includes('sessionStorage') || e.message?.includes('initial state') || e.message?.includes('cross-origin');
+      ].includes(e.code) || e.message?.includes('sessionStorage') || e.message?.includes('initial state');
 
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-        // Usuario cerró el popup — no hacer nada
         if (btn) { btn.innerHTML = originalHTML || 'Continuar con Google'; btn.disabled = false; }
         return;
-
       } else if (e.code === 'auth/network-request-failed') {
         this.toast('⚠️ Sin conexión. Revisá internet.');
-
       } else if (e.code === 'auth/unauthorized-domain') {
-        this.toast('⚠️ Dominio no autorizado en Firebase Console → Authentication → Authorized domains.');
-
-      } else if (REDIRECT_CODES.includes(e.code) || isStorageError) {
-        // Popup bloqueado o cookies bloqueadas → usar redirect (funciona en incógnito y Safari)
+        this.toast('⚠️ Dominio no autorizado en Firebase → Authentication → Authorized domains.');
+      } else if (needsRedirect) {
+        // Último intento: redirect con persistencia SESSION
         try {
-          const provider2 = new firebase.auth.GoogleAuthProvider();
-          provider2.addScope('profile');
-          provider2.addScope('email');
-          provider2.setCustomParameters({ prompt: 'select_account' });
-          this.toast('🔄 Redirigiendo a Google...');
-          await this._auth.signInWithRedirect(provider2);
-          return; // la página se recarga sola al volver
+          await this._auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
+          const p2 = new firebase.auth.GoogleAuthProvider();
+          p2.setCustomParameters({ prompt: 'select_account' });
+          if (btn) { btn.innerHTML = '🔄 Redirigiendo...'; }
+          await this._auth.signInWithRedirect(p2);
+          return;
         } catch(e2) {
-          console.error('[loginGoogle redirect]', e2.code, e2.message);
-          this.toast('⚠️ No se pudo iniciar sesión. Probá con email/contraseña.');
+          // Si también falla el redirect, pedir email
+          this._showIncognitoAuthHelp();
         }
-
       } else {
         this.toast('⚠️ Error: ' + (e.message || e.code));
       }
     } finally {
       if (btn) { btn.innerHTML = originalHTML || 'Continuar con Google'; btn.disabled = false; }
     }
+  },
+
+  _showIncognitoAuthHelp() {
+    // Mostrar un panel claro explicando que deben usar email en modo incógnito
+    const existing = document.getElementById('incognito-auth-help');
+    if (existing) { existing.remove(); }
+    const el = document.createElement('div');
+    el.id = 'incognito-auth-help';
+    el.style.cssText = `
+      position:fixed;inset:0;z-index:99999;
+      background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+      display:flex;align-items:center;justify-content:center;padding:20px;
+    `;
+    el.innerHTML = `
+      <div style="background:#1E1E26;border-radius:18px;padding:24px;max-width:360px;width:100%;border:1px solid #2C2C3E;">
+        <div style="font-size:32px;text-align:center;margin-bottom:12px;">🕵️</div>
+        <div style="font-family:'Bai Jamjuree',sans-serif;font-size:15px;font-weight:700;color:#F0F0F8;text-align:center;margin-bottom:8px;">Modo incógnito detectado</div>
+        <div style="font-size:13px;color:#9898B8;text-align:center;line-height:1.6;margin-bottom:20px;">
+          Google Login no puede guardar la sesión en modo incógnito.<br>
+          Usá <b style="color:#FF5F00;">email y contraseña</b> o abrí la app en una ventana normal.
+        </div>
+        <button onclick="document.getElementById('incognito-auth-help').remove();document.getElementById('auth-email')?.focus();"
+          style="width:100%;padding:13px;background:#FF5F00;color:white;border:none;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Bai Jamjuree',sans-serif;">
+          Entrar con Email →
+        </button>
+        <button onclick="document.getElementById('incognito-auth-help').remove();"
+          style="width:100%;padding:11px;background:transparent;color:#9898B8;border:none;font-size:13px;cursor:pointer;margin-top:8px;">
+          Cancelar
+        </button>
+      </div>
+    `;
+    document.body.appendChild(el);
   },
 
   _showPopupBlockedBanner(browser) {
