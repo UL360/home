@@ -3265,21 +3265,23 @@ const App = {
 
       const browser = this._getBrowserName();
 
-      // Edge/Safari bloquean cookies de terceros → el popup abre pero falla el handshake OAuth
+      // Edge/Safari bloquean cookies de terceros → mensajes específicos en e.message
       const isTrackingBlock =
-        e.code === 'auth/internal-error' ||
         e.code === 'auth/web-storage-unsupported' ||
         e.message?.includes('cross-origin') ||
         e.message?.includes('ITP') ||
-        e.message?.includes('initial state') ||
-        e.message?.includes('sessionStorage') ||
         e.message?.includes('third-party') ||
-        e.message?.includes('Tracking');
+        e.message?.includes('Tracking Prevention') ||
+        (e.code === 'auth/internal-error' && (
+          e.message?.includes('initial state') ||
+          e.message?.includes('sessionStorage')
+        ));
 
-      const needsRedirect = [
-        'auth/popup-blocked',
-        'auth/operation-not-supported-in-this-environment',
-      ].includes(e.code);
+      const needsRedirect =
+        e.code === 'auth/popup-blocked' ||
+        e.code === 'auth/operation-not-supported-in-this-environment' ||
+        // auth/internal-error genérico sin mensaje de tracking → intentar redirect
+        (e.code === 'auth/internal-error' && !isTrackingBlock);
 
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
         if (btn) { btn.innerHTML = originalHTML || 'Continuar con Google'; btn.disabled = false; }
@@ -3292,8 +3294,8 @@ const App = {
         // Edge/Safari con prevención de seguimiento → mostrar banner con instrucciones
         this._showTrackingPreventionHelp(browser);
       } else if (needsRedirect) {
-        // Popup bloqueado → mostrar instrucciones y luego intentar redirect
-        this._showPopupBlockedBanner(browser);
+        // Popup bloqueado o internal-error genérico → intentar redirect como fallback
+        if (e.code === 'auth/popup-blocked') this._showPopupBlockedBanner(browser);
         try {
           await this._auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
           const p2 = new firebase.auth.GoogleAuthProvider();
