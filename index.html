@@ -1248,6 +1248,20 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 .vis-opt.on.muni   { border-color:#0F6E56; background:#E1F5EE; color:#085041; }
 .vis-opt.on.privado{ border-color:#888; background:var(--bg3); color:var(--dk); }
 .vis-opt .vis-em   { font-size:20px; }
+
+/* ── REGISTRO MODAL ── */
+.rg-field { display:flex; flex-direction:column; gap:5px; }
+.rg-label { font-size:12px; font-weight:700; color:var(--md); letter-spacing:.3px; }
+.rg-req   { color:var(--or); }
+.rg-input { width:100%; box-sizing:border-box; }
+.rg-disc-btn {
+  padding:7px 13px; border-radius:20px;
+  border:1.5px solid var(--bd); background:var(--bg2);
+  font-family:var(--fB); font-size:12px; font-weight:500; color:var(--md);
+  cursor:pointer; transition:all .15s;
+}
+.rg-disc-btn.on { background:var(--orL); border-color:var(--or); color:var(--or); font-weight:700; }
+#register-sheet::-webkit-scrollbar { display:none; }
 </style>
 
 </head>
@@ -1547,7 +1561,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
         <input id="auth-pass" type="password" placeholder="Contraseña (mín. 6 caracteres)" aria-label="Contraseña" class="fi" style="margin-bottom:12px;width:100%;box-sizing:border-box;">
         <div style="display:flex;gap:8px;">
           <button onclick="App.loginEmail()" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--or);color:white;font-size:13px;font-weight:600;cursor:pointer;">Iniciar sesión</button>
-          <button onclick="App.registerEmail()" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--or);background:transparent;color:var(--or);font-size:13px;font-weight:600;cursor:pointer;">Registrarse</button>
+          <button onclick="App.openRegisterModal()" style="flex:1;padding:11px;border-radius:10px;border:1.5px solid var(--or);background:transparent;color:var(--or);font-size:13px;font-weight:600;cursor:pointer;">Registrarse</button>
         </div>
       </div>
     </div>
@@ -3192,6 +3206,11 @@ const App = {
             this._userJustLoggedIn = false;
             setTimeout(() => this.go('profile'), 300);
             this._initNotifications();
+            // Mostrar banner si no verificó el email (solo cuentas email/password)
+            const isGoogle = user.providerData?.some(p => p.providerId === 'google.com');
+            if (!isGoogle && !user.emailVerified) {
+              setTimeout(() => this._showVerifyBanner(), 800);
+            }
           } else if (user && !wasLoggedIn) {
             // Refresh de página con sesión existente: quedarse en explore
             this._initNotifications();
@@ -5966,6 +5985,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   },
 
   async publishFotoLoop() {
+    if (!this._checkVerified()) return;
     const name = document.getElementById('fl-name')?.value?.trim();
     const desc = document.getElementById('fl-desc')?.value?.trim();
     if (!name) return this.toast('⚠️ Poné un nombre al lugar');
@@ -7728,6 +7748,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
   async _cmSave() {
     if (!this._user) return this.toast('⚠️ Iniciá sesión para publicar');
+    if (!this._checkVerified()) return;
     const name = document.getElementById('cm-name')?.value?.trim();
     const desc = document.getElementById('cm-desc')?.value?.trim();
     const type = document.getElementById('cm-type')?.value || 'trad';
@@ -8593,6 +8614,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
   async savePost() {
     if (!this._uid) { this.toast('Iniciá sesión para publicar'); return; }
+    if (!this._checkVerified()) return;
     const textEl = document.getElementById('post-text');
     const text = textEl ? textEl.value.trim() : '';
     const loopEl = document.getElementById('post-loop-id');
@@ -8773,6 +8795,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   },
 
   async saveEvento() {
+    if (!this._checkVerified()) return;
     const name  = (document.getElementById('ev-name')?.value||'').trim();
     const desc  = (document.getElementById('ev-desc')?.value||'').trim();
     const fecha = document.getElementById('ev-fecha')?.value;
@@ -9825,6 +9848,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     this._updateGrabUI();
   },
   grabToggle() {
+    if (!this._checkVerified()) return;
     if(this.grabState==='idle'||this.grabState==='paused') this._grabStart();
     else if(this.grabState==='recording') this._grabPause();
   },
@@ -12213,6 +12237,196 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     } catch(e) { this.toast('❌ Error: ' + e.message); }
   },
 
+  // ── REGISTRO MODAL ──
+  openRegisterModal() {
+    const modal = document.getElementById('register-modal');
+    const sheet = document.getElementById('register-sheet');
+    if (!modal || !sheet) return;
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { sheet.style.transform = 'translateY(0)'; });
+    });
+    modal.onclick = (e) => { if (e.target === modal) this.closeRegisterModal(); };
+  },
+
+  closeRegisterModal() {
+    const modal = document.getElementById('register-modal');
+    const sheet = document.getElementById('register-sheet');
+    if (!sheet) return;
+    sheet.style.transform = 'translateY(100%)';
+    setTimeout(() => { if (modal) modal.style.display = 'none'; }, 350);
+    this._rgTCAccepted = false;
+    this._rgDisc = [];
+    const check = document.getElementById('rg-tc-check');
+    const row   = document.getElementById('rg-tc-row');
+    const btn   = document.getElementById('rg-submit-btn');
+    if (check) { check.textContent = ''; check.style.background = 'transparent'; check.style.borderColor = 'var(--bd)'; }
+    if (row)   row.style.borderColor = 'var(--bd)';
+    if (btn)   { btn.disabled = true; btn.style.background = 'var(--bd)'; btn.style.color = 'var(--gr)'; btn.style.cursor = 'not-allowed'; }
+    document.querySelectorAll('.rg-disc-btn').forEach(b => b.classList.remove('on'));
+    ['rg-nombre','rg-username','rg-email','rg-pass','rg-fecha','rg-ciudad'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.value = '';
+    });
+  },
+
+  _rgTCAccepted: false,
+  _toggleTC() {
+    this._rgTCAccepted = !this._rgTCAccepted;
+    const check = document.getElementById('rg-tc-check');
+    const row   = document.getElementById('rg-tc-row');
+    const btn   = document.getElementById('rg-submit-btn');
+    if (this._rgTCAccepted) {
+      check.textContent = '✓'; check.style.background = 'var(--or)'; check.style.borderColor = 'var(--or)';
+      row.style.borderColor = 'var(--or)';
+      btn.disabled = false; btn.style.background = 'var(--or)'; btn.style.color = 'white'; btn.style.cursor = 'pointer';
+    } else {
+      check.textContent = ''; check.style.background = 'transparent'; check.style.borderColor = 'var(--bd)';
+      row.style.borderColor = 'var(--bd)';
+      btn.disabled = true; btn.style.background = 'var(--bd)'; btn.style.color = 'var(--gr)'; btn.style.cursor = 'not-allowed';
+    }
+  },
+
+  _rgDisc: [],
+  _toggleDisc(btn) {
+    const v = btn.dataset.v;
+    btn.classList.toggle('on');
+    if (this._rgDisc.includes(v)) { this._rgDisc = this._rgDisc.filter(x => x !== v); }
+    else { this._rgDisc.push(v); }
+  },
+
+  _togglePassVis(inputId, btnId) {
+    const input = document.getElementById(inputId);
+    const btn   = document.getElementById(btnId);
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+    if (btn) btn.textContent = input.type === 'password' ? '👁' : '🙈';
+  },
+
+  _validarMayorEdad(fechaStr) {
+    if (!fechaStr) return false;
+    const hoy   = new Date();
+    const nacim = new Date(fechaStr);
+    const edad  = hoy.getFullYear() - nacim.getFullYear();
+    const cumplioEsteAnio = hoy.getMonth() > nacim.getMonth() ||
+      (hoy.getMonth() === nacim.getMonth() && hoy.getDate() >= nacim.getDate());
+    return (edad > 18) || (edad === 18 && cumplioEsteAnio);
+  },
+
+  async submitRegister() {
+    if (!this._auth) return this.toast('⚠️ Firebase no conectado');
+    if (!this._rgTCAccepted) return this.toast('⚠️ Debés aceptar los Términos y Condiciones');
+    const nombre   = document.getElementById('rg-nombre')?.value?.trim();
+    const username = document.getElementById('rg-username')?.value?.trim();
+    const email    = document.getElementById('rg-email')?.value?.trim();
+    const pass     = document.getElementById('rg-pass')?.value;
+    const fecha    = document.getElementById('rg-fecha')?.value;
+    const ciudad   = document.getElementById('rg-ciudad')?.value?.trim();
+    if (!nombre)              return this.toast('⚠️ Ingresá tu nombre y apellido');
+    if (!username)            return this.toast('⚠️ Elegí un nombre de usuario');
+    if (username.length < 3)  return this.toast('⚠️ El usuario debe tener al menos 3 caracteres');
+    if (!email)               return this.toast('⚠️ Ingresá tu correo electrónico');
+    if (!pass || pass.length < 6) return this.toast('⚠️ La contraseña debe tener al menos 6 caracteres');
+    if (!fecha)               return this.toast('⚠️ Ingresá tu fecha de nacimiento');
+    if (!this._validarMayorEdad(fecha)) return this.toast('⚠️ Debés ser mayor de 18 años para registrarte');
+    const btn = document.getElementById('rg-submit-btn');
+    if (btn) { btn.textContent = 'Creando cuenta...'; btn.disabled = true; }
+    try {
+      const cred = await this._auth.createUserWithEmailAndPassword(email, pass);
+      await cred.user.updateProfile({ displayName: nombre });
+      if (this._db) {
+        await this._db.collection('usuarios').doc(cred.user.uid).set({
+          nombre, username, email,
+          ciudad:      ciudad || '',
+          disciplinas: this._rgDisc,
+          fechaNac:    fecha,
+          tcAceptado:  true,
+          tcFecha:     Date.now(),
+          createdAt:   Date.now(),
+        });
+      }
+      this._user = cred.user;
+      // Enviar email de verificación automáticamente
+      try { await cred.user.sendEmailVerification(); } catch(e) { console.warn('sendEmailVerification:', e.message); }
+      this.toast(`🎉 ¡Bienvenido a Urban Loop, ${nombre.split(' ')[0]}! Revisá tu email para verificar tu cuenta.`);
+      this.closeRegisterModal();
+    } catch(e) {
+      const msg = {
+        'auth/email-already-in-use':   'Ese email ya tiene una cuenta registrada',
+        'auth/invalid-email':          'El email ingresado no es válido',
+        'auth/weak-password':          'La contraseña es muy débil (mín. 6 caracteres)',
+        'auth/network-request-failed': 'Sin conexión. Revisá tu internet',
+      }[e.code] || e.message;
+      this.toast('⚠️ ' + msg);
+      if (btn) { btn.textContent = 'Crear cuenta'; btn.disabled = false; }
+    }
+  },
+
+  // ── VERIFICACIÓN DE EMAIL ──
+  // Devuelve true si el usuario está verificado (o es Google). Muestra toast si no.
+  _checkVerified() {
+    if (!this._user) { this.toast('⚠️ Iniciá sesión para continuar'); return false; }
+    // Cuentas Google siempre verificadas
+    const isGoogle = this._user.providerData?.some(p => p.providerId === 'google.com');
+    if (isGoogle || this._user.emailVerified) return true;
+    this._showVerifyBanner();
+    this.toast('📧 Verificá tu email para poder publicar');
+    return false;
+  },
+
+  async _resendVerification() {
+    if (!this._user) return;
+    try {
+      await this._user.sendEmailVerification();
+      this.toast('📧 Email de verificación reenviado. Revisá tu casilla.');
+    } catch(e) {
+      if (e.code === 'auth/too-many-requests') this.toast('⚠️ Esperá unos minutos antes de reenviar');
+      else this.toast('⚠️ No se pudo reenviar: ' + e.message);
+    }
+  },
+
+  _showVerifyBanner() {
+    if (document.getElementById('verify-email-banner')) return;
+    const div = document.createElement('div');
+    div.id = 'verify-email-banner';
+    div.style.cssText = `
+      position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      z-index:9990;width:calc(100% - 28px);max-width:460px;
+      background:var(--bg1);border:1.5px solid var(--or);border-radius:16px;
+      padding:14px 16px;box-shadow:0 8px 32px rgba(0,0,0,.4);
+      display:flex;gap:12px;align-items:flex-start;
+      animation:fadeUp .3s ease both;
+    `;
+    div.innerHTML = `
+      <div style="font-size:22px;flex-shrink:0;margin-top:1px;">📧</div>
+      <div style="flex:1;">
+        <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);margin-bottom:4px;">Verificá tu correo electrónico</div>
+        <div style="font-size:12px;color:var(--gr);line-height:1.55;margin-bottom:10px;">
+          Te enviamos un email de confirmación. Hacé clic en el link para activar tu cuenta y poder publicar.
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="App._resendVerification()" style="flex:1;padding:8px;border-radius:9px;border:1.5px solid var(--or);background:transparent;color:var(--or);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fB);">Reenviar email</button>
+          <button onclick="App._checkVerifiedRefresh()" style="flex:1;padding:8px;border-radius:9px;border:none;background:var(--or);color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--fB);">Ya verifiqué ✓</button>
+          <button onclick="document.getElementById('verify-email-banner')?.remove()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--bg3);color:var(--gr);font-size:14px;cursor:pointer;flex-shrink:0;">✕</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(div);
+    setTimeout(() => div?.remove(), 18000);
+  },
+
+  async _checkVerifiedRefresh() {
+    if (!this._user) return;
+    try {
+      await this._user.reload();
+      if (this._user.emailVerified) {
+        document.getElementById('verify-email-banner')?.remove();
+        this.toast('✅ ¡Email verificado! Ya podés publicar.');
+      } else {
+        this.toast('⏳ Todavía no verificaste. Revisá tu casilla de correo.');
+      }
+    } catch(e) { this.toast('⚠️ Error al verificar: ' + e.message); }
+  },
+
   toast(msg) {
     const t = document.getElementById('toast');
     if (!t) return;
@@ -12286,5 +12500,93 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 })();
 </script>
+
+<!-- ── MODAL REGISTRO ── -->
+<div id="register-modal" style="display:none;position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:flex-end;justify-content:center;padding:0;">
+  <div id="register-sheet" style="background:var(--bg1);border-radius:22px 22px 0 0;border:1px solid var(--bd);border-bottom:none;width:100%;max-width:520px;max-height:92vh;overflow-y:auto;padding:0 0 32px;transform:translateY(100%);transition:transform .35s cubic-bezier(.34,1.2,.64,1);scrollbar-width:none;">
+    <!-- Handle -->
+    <div style="display:flex;justify-content:center;padding:14px 0 6px;">
+      <div style="width:38px;height:4px;border-radius:2px;background:var(--bd);"></div>
+    </div>
+    <!-- Header -->
+    <div style="padding:10px 22px 20px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:var(--fH);font-size:17px;font-weight:700;color:var(--dk);">Crear cuenta</div>
+        <div style="font-size:12px;color:var(--gr);margin-top:3px;">Completá tus datos para unirte a Urban Loop</div>
+      </div>
+      <button onclick="App.closeRegisterModal()" style="width:32px;height:32px;border-radius:50%;border:none;background:var(--bg3);color:var(--gr);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
+    </div>
+    <!-- Form -->
+    <div style="padding:20px 22px;display:flex;flex-direction:column;gap:14px;">
+      <!-- Nombre -->
+      <div class="rg-field">
+        <label class="rg-label">Nombre y apellido <span class="rg-req">*</span></label>
+        <input id="rg-nombre" type="text" class="fi rg-input" placeholder="Ej: Martina López" autocomplete="name">
+      </div>
+      <!-- Username -->
+      <div class="rg-field">
+        <label class="rg-label">Nombre de usuario <span class="rg-req">*</span></label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--or);font-weight:700;font-size:14px;pointer-events:none;">@</span>
+          <input id="rg-username" type="text" class="fi rg-input" placeholder="tu_usuario" style="padding-left:28px;" autocomplete="username" oninput="this.value=this.value.replace(/[^a-z0-9_.]/gi,'').toLowerCase()">
+        </div>
+        <div style="font-size:11px;color:var(--gr);margin-top:4px;">Solo letras, números, puntos y guiones bajos.</div>
+      </div>
+      <!-- Email -->
+      <div class="rg-field">
+        <label class="rg-label">Correo electrónico <span class="rg-req">*</span></label>
+        <input id="rg-email" type="email" class="fi rg-input" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <!-- Contraseña -->
+      <div class="rg-field">
+        <label class="rg-label">Contraseña <span class="rg-req">*</span></label>
+        <div style="position:relative;">
+          <input id="rg-pass" type="password" class="fi rg-input" placeholder="Mínimo 6 caracteres" autocomplete="new-password" style="padding-right:44px;">
+          <button type="button" onclick="App._togglePassVis('rg-pass','rg-pass-eye')" id="rg-pass-eye" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gr);font-size:16px;padding:0;line-height:1;">👁</button>
+        </div>
+      </div>
+      <!-- Fecha de nacimiento -->
+      <div class="rg-field">
+        <label class="rg-label">Fecha de nacimiento <span class="rg-req">*</span></label>
+        <input id="rg-fecha" type="date" class="fi rg-input" autocomplete="bday">
+        <div style="font-size:11px;color:var(--gr);margin-top:4px;">Debés ser mayor de 18 años para registrarte.</div>
+      </div>
+      <!-- Ciudad -->
+      <div class="rg-field">
+        <label class="rg-label">Ciudad / Localidad</label>
+        <input id="rg-ciudad" type="text" class="fi rg-input" placeholder="Ej: La Paz, Entre Ríos" autocomplete="address-level2">
+      </div>
+      <!-- Disciplina -->
+      <div class="rg-field">
+        <label class="rg-label">Disciplina principal</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+          <button type="button" class="rg-disc-btn" data-v="running"    onclick="App._toggleDisc(this)">🏃 Running</button>
+          <button type="button" class="rg-disc-btn" data-v="ciclismo"   onclick="App._toggleDisc(this)">🚴 Ciclismo</button>
+          <button type="button" class="rg-disc-btn" data-v="caminata"   onclick="App._toggleDisc(this)">🚶 Caminata</button>
+          <button type="button" class="rg-disc-btn" data-v="fotografia" onclick="App._toggleDisc(this)">📷 Foto-loop</button>
+          <button type="button" class="rg-disc-btn" data-v="otro"       onclick="App._toggleDisc(this)">⚡ Otro</button>
+        </div>
+      </div>
+      <!-- Divider -->
+      <div style="height:1px;background:var(--bd);margin:4px 0;"></div>
+      <!-- T&C Checkbox -->
+      <div id="rg-tc-row" style="display:flex;align-items:flex-start;gap:12px;padding:14px;background:var(--bg2);border-radius:12px;border:1.5px solid var(--bd);cursor:pointer;" onclick="App._toggleTC()">
+        <div id="rg-tc-check" style="width:22px;height:22px;border-radius:6px;border:2px solid var(--bd);background:transparent;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:13px;color:white;"></div>
+        <div style="font-size:12.5px;color:var(--md);line-height:1.6;">
+          Leí y acepto los
+          <a href="terminos-y-condiciones-urban-loop.html" target="_blank" onclick="event.stopPropagation()" style="color:var(--or);font-weight:700;text-decoration:none;">Términos y Condiciones</a>
+          de Urban Loop 360°. Declaro ser mayor de 18 años y que soy responsable de todo el contenido que publique.
+        </div>
+      </div>
+      <!-- Botón -->
+      <button id="rg-submit-btn" onclick="App.submitRegister()" disabled style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--bd);color:var(--gr);font-family:var(--fB);font-size:14px;font-weight:700;cursor:not-allowed;transition:all .25s;margin-top:2px;">Crear cuenta</button>
+      <div style="font-size:11px;color:var(--gr);text-align:center;line-height:1.6;">
+        ¿Ya tenés cuenta?
+        <span onclick="App.closeRegisterModal()" style="color:var(--or);font-weight:600;cursor:pointer;">Iniciá sesión</span>
+      </div>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
