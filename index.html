@@ -3263,12 +3263,23 @@ const App = {
     } catch(e) {
       console.error('[loginGoogle]', e.code, e.message);
 
+      const browser = this._getBrowserName();
+
+      // Edge/Safari bloquean cookies de terceros → el popup abre pero falla el handshake OAuth
+      const isTrackingBlock =
+        e.code === 'auth/internal-error' ||
+        e.code === 'auth/web-storage-unsupported' ||
+        e.message?.includes('cross-origin') ||
+        e.message?.includes('ITP') ||
+        e.message?.includes('initial state') ||
+        e.message?.includes('sessionStorage') ||
+        e.message?.includes('third-party') ||
+        e.message?.includes('Tracking');
+
       const needsRedirect = [
         'auth/popup-blocked',
-        'auth/internal-error',
-        'auth/web-storage-unsupported',
         'auth/operation-not-supported-in-this-environment',
-      ].includes(e.code) || e.message?.includes('sessionStorage') || e.message?.includes('initial state');
+      ].includes(e.code);
 
       if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
         if (btn) { btn.innerHTML = originalHTML || 'Continuar con Google'; btn.disabled = false; }
@@ -3277,8 +3288,12 @@ const App = {
         this.toast('⚠️ Sin conexión. Revisá internet.');
       } else if (e.code === 'auth/unauthorized-domain') {
         this.toast('⚠️ Dominio no autorizado en Firebase → Authentication → Authorized domains.');
+      } else if (isTrackingBlock) {
+        // Edge/Safari con prevención de seguimiento → mostrar banner con instrucciones
+        this._showTrackingPreventionHelp(browser);
       } else if (needsRedirect) {
-        // Último intento: redirect con persistencia SESSION
+        // Popup bloqueado → mostrar instrucciones y luego intentar redirect
+        this._showPopupBlockedBanner(browser);
         try {
           await this._auth.setPersistence(firebase.auth.Auth.Persistence.SESSION);
           const p2 = new firebase.auth.GoogleAuthProvider();
@@ -3287,7 +3302,6 @@ const App = {
           await this._auth.signInWithRedirect(p2);
           return;
         } catch(e2) {
-          // Si también falla el redirect, pedir email
           this._showIncognitoAuthHelp();
         }
       } else {
@@ -3378,7 +3392,11 @@ const App = {
     }
 
     div.innerHTML = `⚠️ ${steps}
-      <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end;">
+      <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;align-items:center;">
+        <span style="cursor:pointer;background:rgba(255,255,255,.2);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600;"
+          onclick="document.getElementById('auth-help-banner').remove();App.go('profile');setTimeout(()=>document.getElementById('auth-email')?.focus(),300);">
+          Usar Email →
+        </span>
         <span style="cursor:pointer;text-decoration:underline;font-size:12px;" onclick="document.getElementById('auth-help-banner').remove()">✕ Cerrar</span>
       </div>`;
     document.body.prepend(div);
