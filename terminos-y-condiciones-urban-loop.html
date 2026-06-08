@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Términos y Condiciones — Urban Loop 360°</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree:wght@300;400;500;600;700&display=swap">
+<style>
+  :root {
+    --or: #FF5F00;
+    --or2: #FF8C42;
+    --orL: rgba(255,95,0,.12);
+    --bg0: #16161C;
+    --bg1: #1E1E26;
+    --bg2: #272730;
+    --bg3: #2F2F38;
+    --bd: #38383F;
+    --dk: #EBEBF0;
+    --md: #C8C8D4;
+    --gr: #7A7A8A;
+    --fB: 'Bai Jamjuree', system-ui, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--fB);
+    background: var(--bg0);
+    color: var(--dk);
+    line-height: 1.7;
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .header {
+    background: var(--bg1);
+    border-bottom: 1px solid var(--bd);
+    padding: 28px 24px 24px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(12px);
+  }
+  .header-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .logo-dot {
+    width: 38px; height: 38px;
+    background: var(--or);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+    box-shadow: 0 4px 18px rgba(255,95,0,.35);
+  }
+  .header-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--or);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .header-sub {
+    font-size: 11px;
+    color: var(--gr);
+    margin-top: 2px;
+  }
+
+  /* Content */
+  .content {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  /* Hero */
+  .hero {
+    margin-bottom: 40px;
+    padding: 32px;
+    background: var(--bg1);
+    border-radius: 18px;
+    border: 1px solid var(--bd);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255,95,0,.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--or);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .hero-title {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--dk);
+    line-height: 1.3;
+    margin-bottom: 14px;
+  }
+  .hero-title span { color: var(--or); }
+  .hero-desc {
+    font-size: 14px;
+    color: var(--md);
+    line-height: 1.7;
+    max-width: 580px;
+  }
+  .meta-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .meta-item {
+    font-size: 11px;
+    color: var(--gr);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .meta-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--or);
+  }
+
+  /* Sections */
+  .section {
+    margin-bottom: 12px;
+    background: var(--bg1);
+    border-radius: 16px;
+    border: 1px solid var(--bd);
+    overflow: hidden;
+  }
+  .section-header {
+    padding: 20px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    user-select: none;
+    transition: background .15s;
+  }
+  .section-header:hover { background: var(--bg2); }
+  .section-num {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: var(--orL);
+    border: 1px solid rgba(255,95,0,.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--or);
+    flex-shrink: 0;
+  }
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--dk);
+    flex: 1;
+  }
+  .section-arrow {
+    font-size: 12px;
+    color: var(--gr);
+    transition: transform .25s;
+  }
+  .section.open .section-arrow { transform: rotate(180deg); }
+  .section-body {
+    display: none;
+    padding: 0 24px 24px;
+    font-size: 13px;
+    color: var(--md);
+    line-height: 1.75;
+    border-top: 1px solid var(--bd);
+  }
+  .section.open .section-body { display: block; }
+
+  /* Text elements inside sections */
+  .section-body p { margin-top: 14px; }
+  .section-body p:first-child { margin-top: 14px; }
+  .section-body strong { color: var(--dk); font-weight: 700; }
+  .section-body em { color: var(--or); font-style: normal; font-weight: 600; }
+
+  .rule-list {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .rule-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .rule-icon {
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .rule-icon.ok   { background: rgba(107,207,114,.12); color: #6BCF72; }
+  .rule-icon.no   { background: rgba(252,129,129,.12); color: #FC8181; }
+  .rule-icon.warn { background: rgba(251,191,36,.12);  color: #FBBF24; }
+
+  /* Critical warning box */
+  .warn-box {
+    margin-top: 16px;
+    background: rgba(252,129,129,.07);
+    border: 1px solid rgba(252,129,129,.25);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .warn-box-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .warn-box-text { font-size: 12.5px; color: #FC8181; line-height: 1.65; }
+  .warn-box-text strong { color: #FCA5A5; }
+
+  .info-box {
+    margin-top: 16px;
+    background: var(--orL);
+    border: 1px solid rgba(255,95,0,.25);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .info-box-icon { font-size: 18px; flex-shrink: 0; }
+  .info-box-text { font-size: 12.5px; color: var(--or2); line-height: 1.65; }
+  .info-box-text strong { color: var(--or); }
+
+  /* Signature section */
+  .signature {
+    margin-top: 36px;
+    padding: 28px;
+    background: var(--bg1);
+    border-radius: 16px;
+    border: 1px solid var(--bd);
+    text-align: center;
+  }
+  .sig-brand {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--dk);
+    margin-bottom: 6px;
+  }
+  .sig-brand span { color: var(--or); }
+  .sig-copy {
+    font-size: 11px;
+    color: var(--gr);
+    line-height: 1.6;
+  }
+  .sig-email {
+    margin-top: 14px;
+    display: inline-block;
+    padding: 8px 20px;
+    background: var(--orL);
+    border: 1px solid rgba(255,95,0,.3);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--or);
+    text-decoration: none;
+  }
+
+  /* Expand all btn */
+  .expand-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg2);
+    border: 1px solid var(--bd);
+    color: var(--md);
+    font-family: var(--fB);
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 8px 14px;
+    cursor: pointer;
+    margin-bottom: 20px;
+    transition: all .15s;
+  }
+  .expand-btn:hover { background: var(--bg3); color: var(--dk); }
+
+  @media (max-width: 600px) {
+    .hero { padding: 22px; }
+    .hero-title { font-size: 20px; }
+    .content { padding: 28px 16px 60px; }
+    .section-body { padding: 0 16px 20px; }
+    .section-header { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo-dot">🔁</div>
+    <div>
+      <div class="header-title">Urban Loop 360°</div>
+      <div class="header-sub">Términos y Condiciones de Uso</div>
+    </div>
+  </div>
+</div>
+
+<div class="content">
+
+  <div class="hero">
+    <div class="hero-label">Documento Legal</div>
+    <div class="hero-title">Términos y Condiciones<br>de <span>Urban Loop 360°</span></div>
+    <div class="hero-desc">
+      Al registrarte y utilizar Urban Loop 360°, aceptás íntegramente estos términos. 
+      Te pedimos que los leas con atención. Si no estás de acuerdo con alguna de estas condiciones, 
+      no deberías usar la plataforma.
+    </div>
+    <div class="meta-row">
+      <div class="meta-item"><div class="meta-dot"></div> Versión 1.0</div>
+      <div class="meta-item"><div class="meta-dot"></div> Vigente desde junio 2026</div>
+      <div class="meta-item"><div class="meta-dot"></div> Aplicable a todos los usuarios</div>
+    </div>
+  </div>
+
+  <button class="expand-btn" onclick="toggleAll()">⬇ Expandir todo</button>
+
+  <!-- 1 -->
+  <div class="section open">
+    <div class="section-header" onclick="toggle(this)">
+      <div class="section-num">01</div>
+      <div class="section-title">Descripción del servicio y aceptación</div>
+      <div class="section-arrow">▼</div>
+    </div>
+    <div class="section-body">
+      <p>
+        <strong>Urban Loop 360°</strong> es una plataforma digital orientada a la comunidad de deportes urbanos: running, ciclismo, caminatas, fotografía de ruta y actividades afines. Su propósito es permitir a los usuarios descubrir, registrar, compartir y explorar <em>loops</em> (recorridos circulares) en ciudades de Argentina y la región.
+      </p>
+      <p>
+        Al crear una cuenta —ya sea mediante Google o correo electrónico— el usuario declara haber leído, comprendido y aceptado la totalidad de estos Términos y Condiciones, así como la Política de Privacidad de la plataforma.
+      </p>
+
+    </div>
+  </div>
+
+  <!-- 2 -->
+  <div class="section open">
+    <div class="section-header" onclick="toggle(this)">
+      <div class="section-num">02</div>
+      <div class="section-title">Responsabilidad exclusiva del usuario sobre su cuenta</div>
+      <div class="section-arrow">▼</div>
+    </div>
+    <div class="section-body">
+      <p>
+        Para registrarse en Urban Loop 360° el usuario debe ser <em>mayor de 18 años</em>. Al crear una cuenta, declara bajo su propia responsabilidad cumplir con este requisito. Si se comprueba que un usuario es menor de edad, su cuenta podrá ser eliminada de forma inmediata. En caso de que un menor proporcione datos falsos para registrarse, la responsabilidad recae íntegramente sobre él o sobre sus padres/tutores legales, quedando el Administrador completamente eximido.
+      </p>
+      <p>
+        Cada usuario es el <em>único y exclusivo responsable</em> de todas las acciones realizadas desde su cuenta, incluyendo el contenido que publica, las interacciones con otros usuarios y el uso que hace de la plataforma.
+      </p>
+      <div class="rule-list">
+        <div class="rule-item">
+          <div class="rule-icon warn">!</div>
+          <span>Las credenciales de acceso (correo y contraseña / cuenta Google) son personales e intransferibles. Compartirlas o cederlas a terceros no exime al titular de la responsabilidad por lo que se publique desde esa cuenta.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon warn">!</div>
+          <span>En caso de detectar acceso no autorizado a tu cuenta, el usuario debe notificarlo de inmediato al Administrador. Hasta tanto no se reciba esa notificación, toda actividad se imputa al titular registrado.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon warn">!</div>
+          <span>El Administrador no asume responsabilidad alguna por daños, pérdidas o consecuencias derivadas del uso de una cuenta por parte de terceros no autorizados.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 -->
+  <div class="section open">
+    <div class="section-header" onclick="toggle(this)">
+      <div class="section-num">03</div>
+      <div class="section-title">Contenido permitido — La esencia de Urban Loop</div>
+      <div class="section-arrow">▼</div>
+    </div>
+    <div class="section-body">
+      <p>
+        Urban Loop 360° es una plataforma de <em>deporte, movimiento y exploración urbana</em>. El contenido publicado debe estar directamente relacionado con esta temática. Los usuarios pueden compartir:
+      </p>
+      <div class="rule-list">
+        <div class="rule-item">
+          <div class="rule-icon ok">✓</div>
+          <span>Loops, recorridos y rutas de running, ciclismo, caminata, foto-loops u otras disciplinas urbanas.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon ok">✓</div>
+          <span>Fotos, experiencias y comentarios relacionados con actividades físicas o exploración de espacios urbanos y naturales.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon ok">✓</div>
+          <span>Eventos deportivos, convocatorias, grupos de entrenamiento o iniciativas comunitarias vinculadas al movimiento.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon ok">✓</div>
+          <span>Recomendaciones de lugares, negocios o servicios relevantes para la comunidad deportiva local.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon ok">✓</div>
+          <span>Consultas, tips, consejos de entrenamiento y contenido educativo relacionado con el deporte urbano.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4 -->
+  <div class="section open">
+    <div class="section-header" onclick="toggle(this)">
+      <div class="section-num">04</div>
+      <div class="section-title">Contenido prohibido y sanciones</div>
+      <div class="section-arrow">▼</div>
+    </div>
+    <div class="section-body">
+      <p>
+        Queda <strong>estrictamente prohibido</strong> publicar, compartir, enviar o de cualquier modo difundir contenido que:
+      </p>
+      <div class="rule-list">
+        <div class="rule-item">
+          <div class="rule-icon no">✕</div>
+          <span><strong>Sea de naturaleza pornográfica, sexual explícita o erótica</strong> en cualquiera de sus formas: imágenes, videos, texto, links o referencias.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon no">✕</div>
+          <span>Contenga violencia explícita, gore, automutilación, actos de crueldad o material que incite al daño físico o psicológico.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon no">✕</div>
+          <span>Constituya acoso, hostigamiento, difamación, discriminación o amenazas contra otros usuarios o personas.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon no">✕</div>
+          <span>Promueva actividades ilegales, venta de sustancias prohibidas, apuestas clandestinas u otras prácticas delictivas.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon no">✕</div>
+          <span>Sea spam, publicidad masiva no solicitada, phishing o intentos de estafa hacia otros miembros de la comunidad.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon no">✕</div>
+          <span>No guarde ninguna relación con el deporte urbano, el movimiento o la exploración de la ciudad — temáticas que son la esencia de esta plataforma.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon no">✕</div>
+          <span>Vulnere derechos de autor, marcas registradas o privacidad de terceros.</span>
+        </div>
+      </div>
+
+      <div class="warn-box">
+        <div class="warn-box-icon">⛔</div>
+        <div class="warn-box-text">
+          <strong>Sanción por contenido pornográfico o gravemente inapropiado:</strong> la cuenta será eliminada de forma <strong>permanente e inmediata</strong>, sin previo aviso y sin derecho a recuperación. El Administrador se reserva el derecho de reportar el caso a las autoridades competentes si correspondiera por ley.
+        </div>
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-icon">ℹ️</div>
+        <div class="info-box-text">
+          Para contenido inapropiado de menor gravedad (publicaciones fuera de tema, spam, lenguaje ofensivo), el Administrador puede aplicar advertencias, eliminación del contenido o suspensión temporal antes de llegar a la eliminación definitiva de la cuenta, según su criterio.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 5 -->
+  <div class="section">
+    <div class="section-header" onclick="toggle(this)">
+      <div class="section-num">05</div>
+      <div class="section-title">Exención de responsabilidad del Administrador</div>
+      <div class="section-arrow">▼</div>
+    </div>
+    <div class="section-body">
+      <p>
+        Urban Loop 360° es una plataforma de contenido generado por sus usuarios. El Administrador <em>no produce, no controla ni revisa en tiempo real</em> cada publicación que los usuarios realizan.
+      </p>
+      <p>
+        En consecuencia, el Administrador <strong>no asume responsabilidad alguna</strong> por:
+      </p>
+      <div class="rule-list">
+        <div class="rule-item">
+          <div class="rule-icon warn">!</div>
+          <span>El contenido publicado por los usuarios que infrinja estos Términos, leyes vigentes o derechos de terceros.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon warn">!</div>
+          <span>Daños físicos, lesiones o accidentes ocurridos durante la práctica de actividades registradas o sugeridas en la plataforma. Cada usuario asume el riesgo inherente de su propia actividad física.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon warn">!</div>
+          <span>Conflictos entre usuarios derivados de interacciones en la plataforma.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon warn">!</div>
+          <span>Pérdida de datos, interrupciones del servicio o fallos técnicos, aunque se trabajará para minimizarlos.</span>
+        </div>
+        <div class="rule-item">
+          <div class="rule-icon warn">!</div>
+          <span>Información desactualizada sobre rutas, lugares o negocios publicados por otros usuarios.</span>
+        </div>
+      </div>
+      <p style="margin-top:16px;">
+        Al aceptar estos Términos, el usuario reconoce que Urban Loop 360° actúa como <strong>intermediario técnico</strong> y que la responsabilidad por el contenido publicado recae <em>íntegramente sobre quien lo publica</em>.
+      </p>
+    </div>
+  </div>
+
+  <!-- 6 -->
+  <div class="section">
+    <div class="section-header" onclick="toggle(this)">
+      <div class="section-num">06</div>
+      <div class="section-title">Propiedad del contenido publicado</div>
+      <div class="section-arrow">▼</div>
+    </div>
+    <div class="section-body">
+      <p>
+        Los loops, fotos, rutas y demás contenido que cada usuario crea y sube a Urban Loop 360° <em>siguen siendo propiedad del usuario</em> que los publicó.
+      </p>
+      <p>
+        Sin embargo, al publicar contenido en la plataforma, el usuario otorga a Urban Loop 360° una <strong>licencia no exclusiva, gratuita y global</strong> para mostrar, reproducir y distribuir dicho contenido dentro de la plataforma y en los canales de comunicación oficiales de Urban Loop 360° (redes sociales, materiales promocionales, etc.).
+      </p>
+      <p>
+        Esta licencia no implica transferencia de propiedad. El usuario puede eliminar su contenido en cualquier momento, lo que revocará esta licencia para usos futuros, aunque no necesariamente para contenido ya difundido.
+      </p>
+    </div>
+  </div>
+
+  <!-- 7 -->
+  <div class="section">
+    <div class="section-header" onclick="toggle(this)">
+      <div class="section-num">07</div>
+      <div class="section-title">Datos personales y privacidad</div>
+      <div class="section-arrow">▼</div>
+    </div>
+    <div class="section-body">
+      <p>
+        Urban Loop 360° recopila datos básicos de registro (nombre, correo electrónico) y datos de uso (rutas, GPS, interacciones). Esta información se utiliza exclusivamente para el funcionamiento de la plataforma y la mejora de la experiencia del usuario.
+      </p>
+      <p>
+        El Administrador <strong>no vende ni cede datos personales a terceros</strong> con fines comerciales. Los datos se almacenan en servidores de <em>Firebase (Google Cloud)</em>, bajo estándares internacionales de seguridad.
+      </p>
+      <p>
+        Los datos de GPS y ubicación son opcionales y controlados por el propio usuario a través de los permisos de su dispositivo.
+      </p>
+      <p>
+        El usuario tiene derecho a solicitar la eliminación de su cuenta y datos personales enviando un correo a <strong>paranafly@gmail.com</strong>.
+      </p>
+    </div>
+  </div>
+
+  <!-- 8 -->
+  <div class="section">
+    <div class="section-header" onclick="toggle(this)">
+      <div class="section-num">08</div>
+      <div class="section-title">Reporte de contenido inapropiado</div>
+      <div class="section-arrow">▼</div>
+    </div>
+    <div class="section-body">
+      <p>
+        La comunidad de Urban Loop 360° es corresponsable del ambiente que se construye. Todos los usuarios son bienvenidos a reportar contenido que consideren inapropiado, ofensivo o que viole estos Términos.
+      </p>
+      <p>
+        Los reportes pueden realizarse directamente desde la plataforma (botón de reporte en publicaciones) o por correo a <strong>paranafly@gmail.com</strong> con una descripción del contenido y, si es posible, capturas de pantalla.
+      </p>
+      <div class="info-box">
+        <div class="info-box-icon">🛡️</div>
+        <div class="info-box-text">
+          El Administrador revisará cada reporte y tomará las acciones correspondientes según la gravedad del caso. Los reportes de buena fe son tratados con confidencialidad.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 9 -->
+  <div class="section">
+    <div class="section-header" onclick="toggle(this)">
+      <div class="section-num">09</div>
+      <div class="section-title">Modificaciones a estos Términos</div>
+      <div class="section-arrow">▼</div>
+    </div>
+    <div class="section-body">
+      <p>
+        El Administrador se reserva el derecho de modificar estos Términos y Condiciones en cualquier momento. Los cambios serán comunicados a través de la plataforma o por correo electrónico a los usuarios registrados.
+      </p>
+      <p>
+        El uso continuado de Urban Loop 360° tras la publicación de modificaciones implica la aceptación de los nuevos términos. Si el usuario no acepta los cambios, deberá discontinuar el uso de la plataforma y puede solicitar la eliminación de su cuenta.
+      </p>
+    </div>
+  </div>
+
+  <!-- 10 -->
+  <div class="section">
+    <div class="section-header" onclick="toggle(this)">
+      <div class="section-num">10</div>
+      <div class="section-title">Legislación aplicable</div>
+      <div class="section-arrow">▼</div>
+    </div>
+    <div class="section-body">
+      <p>
+        Estos Términos y Condiciones se rigen por las leyes de la <strong>República Argentina</strong>, en particular por el Código Civil y Comercial de la Nación, la Ley 25.326 de Protección de Datos Personales y demás normativa aplicable.
+      </p>
+      <p>
+        Para cualquier controversia que no pueda resolverse de forma amistosa, las partes acuerdan someterse a la jurisdicción de los Tribunales Ordinarios de la ciudad de <strong>La Paz, Entre Ríos, Argentina</strong>.
+      </p>
+    </div>
+  </div>
+
+  <!-- Firma -->
+  <div class="signature">
+    <div class="sig-brand">Urban <span>Loop</span> 360°</div>
+    <div class="sig-copy">
+      © 2026 Bruno Emiliano Airaldi. Todos los derechos reservados.<br>
+      Versión 1.0 — Junio 2026 — La Paz, Entre Ríos, Argentina
+    </div>
+    <a href="mailto:paranafly@gmail.com" class="sig-email">paranafly@gmail.com</a>
+  </div>
+
+</div>
+
+<script>
+  function toggle(header) {
+    const section = header.parentElement;
+    section.classList.toggle('open');
+  }
+
+  let allOpen = true;
+  function toggleAll() {
+    const sections = document.querySelectorAll('.section');
+    allOpen = !allOpen;
+    sections.forEach(s => {
+      if (allOpen) s.classList.add('open');
+      else s.classList.remove('open');
+    });
+    document.querySelector('.expand-btn').textContent = allOpen ? '⬆ Colapsar todo' : '⬇ Expandir todo';
+  }
+</script>
+</body>
+</html>
