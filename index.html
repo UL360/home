@@ -1889,46 +1889,29 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <h2>Grabar Loop</h2>
     <div style="width:60px"></div>
   </div>
-  <div class="grab-type-row" id="grab-type-row">
-    <div class="grab-type-chip on" data-t="running">🏃 Running</div>
-    <div class="grab-type-chip" data-t="mtb">🚵 MTB</div>
-    <div class="grab-type-chip" data-t="ciclismo">🚴 Ciclismo / Ruta</div>
-    <div class="grab-type-chip" data-t="caminata">🥾 Caminata</div>
-    <div class="grab-type-chip" data-t="perro">🐕 Vuelta al perro</div>
-    <div class="grab-type-chip" data-t="paseo">🌳 Paseo</div>
-    <div class="grab-type-chip" data-t="pesca">🎣 Pesca</div>
-    <div class="grab-type-chip" data-t="atardecer">🌅 Atardecer</div>
-    <div class="grab-type-chip" data-t="gastro">🍽️ Gastronómica</div>
-    <div class="grab-type-chip" data-t="trad">☕ Tradicional</div>
-    <div class="grab-type-chip" data-t="relax">🧘 Relax</div>
-    <div class="grab-type-chip" data-t="salidas">🎉 Salidas</div>
-    <div class="grab-type-chip" data-t="trabajo">💼 Trabajo</div>
-    <div class="grab-type-chip" data-t="vacaciones">🏖️ Vacaciones</div>
-    <div class="grab-type-chip" data-t="lugar">📍 Lugar</div>
-    <div class="grab-type-chip" data-t="resto">🥩 Resto</div>
-    <div class="grab-type-chip" data-t="cafe">☕ Café</div>
-    <div class="grab-type-chip" data-t="vino">🍷 Vino</div>
-    <div class="grab-type-chip" data-t="cerveza">🍺 Cerveza</div>
-    <div class="grab-type-chip" data-t="coctel">🍸 Cóctel</div>
-    <div class="grab-type-chip" data-t="vineria">🍾 Viñería</div>
-    <div class="grab-type-chip" data-t="bar">🥂 Bar</div>
-    <div class="grab-type-chip" data-t="boliche">🪩 Boliche</div>
-    <div class="grab-type-chip" data-t="teatro">🎭 Teatro</div>
-    <div class="grab-type-chip" data-t="cine">🎬 Cine</div>
-    <div class="grab-type-chip" data-t="musica">🎵 Música</div>
-    <div class="grab-type-chip" data-t="museo">🖼️ Museo</div>
-    <div class="grab-type-chip" data-t="arte">🎨 Arte</div>
-    <div class="grab-type-chip" data-t="naturaleza">🌿 Natural</div>
-    <div class="grab-type-chip" data-t="rio">🌊 Río</div>
-    <div class="grab-type-chip" data-t="playa">🏖️ Playa</div>
-    <div class="grab-type-chip" data-t="parque">🌳 Parque</div>
-    <div class="grab-type-chip" data-t="plaza">🏛️ Plaza</div>
-    <div class="grab-type-chip" data-t="aventura">🧗 Aventura</div>
-    <div class="grab-type-chip" data-t="campo">🌾 Campo</div>
-    <div class="grab-type-chip" data-t="deporte">⚽ Deporte</div>
-    <div class="grab-type-chip" data-t="nocturno">🌙 Noche</div>
-    <div class="grab-type-chip" data-t="foto">📸 Foto</div>
-    <div class="grab-type-chip" data-t="otro">✳️ Otro</div>
+  <div style="padding:10px 14px 10px;background:#1C1C1E;border-bottom:0.5px solid #2C2C2E;flex-shrink:0;">
+    <div style="font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px;">Tipo de loop</div>
+    <select id="grab-type-select" class="fi" aria-label="Tipo de loop" style="width:100%;" onchange="App._setGrabType(this.value)">
+      <option value="running">🏃 Running</option>
+      <option value="mtb">🚵 MTB</option>
+      <option value="ciclismo">🚴 Ciclismo / Ruta</option>
+      <option value="caminata">🥾 Caminata</option>
+      <option value="perro">🐕 Vuelta al perro</option>
+      <option value="paseo">🌳 Paseo</option>
+      <option value="pesca">🎣 Pesca</option>
+      <option value="atardecer">🌅 Atardecer</option>
+      <option value="gastro">🍽️ Gastronómica</option>
+      <option value="trad">☕ Tradicional</option>
+      <option value="relax">🧘 Relax</option>
+      <option value="salidas">🎉 Salidas</option>
+      <option value="trabajo">💼 Trabajo</option>
+      <option value="vacaciones">🏖️ Vacaciones</option>
+      <option value="aventura">🧗 Aventura</option>
+      <option value="campo">🌾 Campo</option>
+      <option value="deporte">⚽ Deporte</option>
+      <option value="nocturno">🌙 Noche</option>
+      <option value="otro">✳️ Otro</option>
+    </select>
   </div>
   <div class="grab-map-wrap">
     <div id="grab-map" style="width:100%;height:100%;"></div>
@@ -2699,37 +2682,37 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <!-- Categorías / Etiquetas -->
     <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">Etiqueta</div>
-    <div style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:3px;margin-bottom:12px;" class="fl-cat-scroll">
-      <button class="fl-cat on" data-c="lugar" onclick="App._setFLCat(this)">📍 Lugar</button>
-      <button class="fl-cat" data-c="gastro" onclick="App._setFLCat(this)">🍽️ Gastro</button>
-      <button class="fl-cat" data-c="resto" onclick="App._setFLCat(this)">🥩 Resto</button>
-      <button class="fl-cat" data-c="cafe" onclick="App._setFLCat(this)">☕ Café</button>
-      <button class="fl-cat" data-c="vino" onclick="App._setFLCat(this)">🍷 Vino</button>
-      <button class="fl-cat" data-c="cerveza" onclick="App._setFLCat(this)">🍺 Cerveza</button>
-      <button class="fl-cat" data-c="coctel" onclick="App._setFLCat(this)">🍸 Cóctel</button>
-      <button class="fl-cat" data-c="vineria" onclick="App._setFLCat(this)">🍾 Viñería</button>
-      <button class="fl-cat" data-c="bar" onclick="App._setFLCat(this)">🥂 Bar</button>
-      <button class="fl-cat" data-c="boliche" onclick="App._setFLCat(this)">🪩 Boliche</button>
-      <button class="fl-cat" data-c="teatro" onclick="App._setFLCat(this)">🎭 Teatro</button>
-      <button class="fl-cat" data-c="cine" onclick="App._setFLCat(this)">🎬 Cine</button>
-      <button class="fl-cat" data-c="musica" onclick="App._setFLCat(this)">🎵 Música</button>
-      <button class="fl-cat" data-c="museo" onclick="App._setFLCat(this)">🖼️ Museo</button>
-      <button class="fl-cat" data-c="arte" onclick="App._setFLCat(this)">🎨 Arte</button>
-      <button class="fl-cat" data-c="naturaleza" onclick="App._setFLCat(this)">🌿 Natural</button>
-      <button class="fl-cat" data-c="rio" onclick="App._setFLCat(this)">🌊 Río</button>
-      <button class="fl-cat" data-c="playa" onclick="App._setFLCat(this)">🏖️ Playa</button>
-      <button class="fl-cat" data-c="parque" onclick="App._setFLCat(this)">🌳 Parque</button>
-      <button class="fl-cat" data-c="plaza" onclick="App._setFLCat(this)">🏛️ Plaza</button>
-      <button class="fl-cat" data-c="pesca" onclick="App._setFLCat(this)">🎣 Pesca</button>
-      <button class="fl-cat" data-c="aventura" onclick="App._setFLCat(this)">🧗 Aventura</button>
-      <button class="fl-cat" data-c="campo" onclick="App._setFLCat(this)">🌾 Campo</button>
-      <button class="fl-cat" data-c="deporte" onclick="App._setFLCat(this)">⚽ Deporte</button>
-      <button class="fl-cat" data-c="ciclismo" onclick="App._setFLCat(this)">🚴 Ciclismo</button>
-      <button class="fl-cat" data-c="nocturno" onclick="App._setFLCat(this)">🌙 Noche</button>
-      <button class="fl-cat" data-c="perro" onclick="App._setFLCat(this)">🐕 Pet</button>
-      <button class="fl-cat" data-c="foto" onclick="App._setFLCat(this)">📸 Foto</button>
-      <button class="fl-cat" data-c="otro" onclick="App._setFLCat(this)">✳️ Otro</button>
-    </div>
+    <select id="fl-cat-select" class="fi" aria-label="Etiqueta del lugar" style="width:100%;margin-bottom:14px;" onchange="App._setFLCatSelect(this)">
+      <option value="lugar">📍 Lugar</option>
+      <option value="gastro">🍽️ Gastro</option>
+      <option value="resto">🥩 Resto</option>
+      <option value="cafe">☕ Café</option>
+      <option value="vino">🍷 Vino</option>
+      <option value="cerveza">🍺 Cerveza</option>
+      <option value="coctel">🍸 Cóctel</option>
+      <option value="vineria">🍾 Viñería</option>
+      <option value="bar">🥂 Bar</option>
+      <option value="boliche">🪩 Boliche</option>
+      <option value="teatro">🎭 Teatro</option>
+      <option value="cine">🎬 Cine</option>
+      <option value="musica">🎵 Música</option>
+      <option value="museo">🖼️ Museo</option>
+      <option value="arte">🎨 Arte</option>
+      <option value="naturaleza">🌿 Natural</option>
+      <option value="rio">🌊 Río</option>
+      <option value="playa">🏖️ Playa</option>
+      <option value="parque">🌳 Parque</option>
+      <option value="plaza">🏛️ Plaza</option>
+      <option value="pesca">🎣 Pesca</option>
+      <option value="aventura">🧗 Aventura</option>
+      <option value="campo">🌾 Campo</option>
+      <option value="deporte">⚽ Deporte</option>
+      <option value="ciclismo">🚴 Ciclismo</option>
+      <option value="nocturno">🌙 Noche</option>
+      <option value="perro">🐕 Pet</option>
+      <option value="foto">📸 Foto</option>
+      <option value="otro">✳️ Otro</option>
+    </select>
 
     <!-- Mapa de ubicación -->
     <div style="margin-bottom:12px;">
@@ -5761,7 +5744,8 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     if (flMuni) flMuni.checked = false;
     this._fotoLoopCat = 'lugar';
     this._flLat = null; this._flLng = null;
-    document.querySelectorAll('.fl-cat').forEach(b => b.classList.toggle('on', b.dataset.c === 'lugar'));
+    const flCatSel = document.getElementById('fl-cat-select');
+    if (flCatSel) flCatSel.value = 'lugar';
     this._clearFotoLoop();
     // Inicializar mapa del modal (con pequeño delay para que el DOM esté visible)
     setTimeout(() => this._initFLMap(), 150);
@@ -5804,11 +5788,12 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     });
   },
 
-  _setFLCat(btn) {
-    this._fotoLoopCat = btn.dataset.c;
-    document.querySelectorAll('.fl-cat').forEach(b => b.classList.remove('on'));
-    btn.classList.add('on');
+  _setFLCatSelect(sel) {
+    this._fotoLoopCat = sel.value;
   },
+
+  // legacy — ya no se usa, se mantiene por si hay referencias viejas
+  _setFLCat(btn) { this._fotoLoopCat = btn?.dataset?.c || 'lugar'; },
 
   // ── FOTO LOOP MAP ──
   _flMap: null,
@@ -9717,11 +9702,11 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     this.grabMap.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right');
     this.grabPts=[]; this.grabSecs=0; this.grabState='idle';
     this._grabLine=null; this._grabSim=null;
-    document.getElementById('grab-type-row').addEventListener('click',e=>{
-      const c=e.target.closest('.grab-type-chip'); if(!c) return;
-      document.querySelectorAll('.grab-type-chip').forEach(x=>x.classList.remove('on'));
-      c.classList.add('on'); this.grabType=c.dataset.t;
-    });
+    const grabTypeSel = document.getElementById('grab-type-select');
+    if (grabTypeSel) {
+      grabTypeSel.value = this.grabType || 'running';
+      grabTypeSel.addEventListener('change', e => { this.grabType = e.target.value; });
+    }
     this._updateGrabUI();
   },
   grabToggle() {
