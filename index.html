@@ -1889,29 +1889,46 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <h2>Grabar Loop</h2>
     <div style="width:60px"></div>
   </div>
-  <div style="padding:10px 14px 10px;background:#1C1C1E;border-bottom:0.5px solid #2C2C2E;flex-shrink:0;">
-    <div style="font-size:10px;font-weight:700;color:var(--gr);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px;">Tipo de loop</div>
-    <select id="grab-type-select" class="fi" aria-label="Tipo de loop" style="width:100%;" onchange="App._setGrabType(this.value)">
-      <option value="running">🏃 Running</option>
-      <option value="mtb">🚵 MTB</option>
-      <option value="ciclismo">🚴 Ciclismo / Ruta</option>
-      <option value="caminata">🥾 Caminata</option>
-      <option value="perro">🐕 Vuelta al perro</option>
-      <option value="paseo">🌳 Paseo</option>
-      <option value="pesca">🎣 Pesca</option>
-      <option value="atardecer">🌅 Atardecer</option>
-      <option value="gastro">🍽️ Gastronómica</option>
-      <option value="trad">☕ Tradicional</option>
-      <option value="relax">🧘 Relax</option>
-      <option value="salidas">🎉 Salidas</option>
-      <option value="trabajo">💼 Trabajo</option>
-      <option value="vacaciones">🏖️ Vacaciones</option>
-      <option value="aventura">🧗 Aventura</option>
-      <option value="campo">🌾 Campo</option>
-      <option value="deporte">⚽ Deporte</option>
-      <option value="nocturno">🌙 Noche</option>
-      <option value="otro">✳️ Otro</option>
-    </select>
+  <div class="grab-type-row" id="grab-type-row">
+    <div class="grab-type-chip on" data-t="running">🏃 Running</div>
+    <div class="grab-type-chip" data-t="mtb">🚵 MTB</div>
+    <div class="grab-type-chip" data-t="ciclismo">🚴 Ciclismo / Ruta</div>
+    <div class="grab-type-chip" data-t="caminata">🥾 Caminata</div>
+    <div class="grab-type-chip" data-t="perro">🐕 Vuelta al perro</div>
+    <div class="grab-type-chip" data-t="paseo">🌳 Paseo</div>
+    <div class="grab-type-chip" data-t="pesca">🎣 Pesca</div>
+    <div class="grab-type-chip" data-t="atardecer">🌅 Atardecer</div>
+    <div class="grab-type-chip" data-t="gastro">🍽️ Gastronómica</div>
+    <div class="grab-type-chip" data-t="trad">☕ Tradicional</div>
+    <div class="grab-type-chip" data-t="relax">🧘 Relax</div>
+    <div class="grab-type-chip" data-t="salidas">🎉 Salidas</div>
+    <div class="grab-type-chip" data-t="trabajo">💼 Trabajo</div>
+    <div class="grab-type-chip" data-t="vacaciones">🏖️ Vacaciones</div>
+    <div class="grab-type-chip" data-t="lugar">📍 Lugar</div>
+    <div class="grab-type-chip" data-t="resto">🥩 Resto</div>
+    <div class="grab-type-chip" data-t="cafe">☕ Café</div>
+    <div class="grab-type-chip" data-t="vino">🍷 Vino</div>
+    <div class="grab-type-chip" data-t="cerveza">🍺 Cerveza</div>
+    <div class="grab-type-chip" data-t="coctel">🍸 Cóctel</div>
+    <div class="grab-type-chip" data-t="vineria">🍾 Viñería</div>
+    <div class="grab-type-chip" data-t="bar">🥂 Bar</div>
+    <div class="grab-type-chip" data-t="boliche">🪩 Boliche</div>
+    <div class="grab-type-chip" data-t="teatro">🎭 Teatro</div>
+    <div class="grab-type-chip" data-t="cine">🎬 Cine</div>
+    <div class="grab-type-chip" data-t="musica">🎵 Música</div>
+    <div class="grab-type-chip" data-t="museo">🖼️ Museo</div>
+    <div class="grab-type-chip" data-t="arte">🎨 Arte</div>
+    <div class="grab-type-chip" data-t="naturaleza">🌿 Natural</div>
+    <div class="grab-type-chip" data-t="rio">🌊 Río</div>
+    <div class="grab-type-chip" data-t="playa">🏖️ Playa</div>
+    <div class="grab-type-chip" data-t="parque">🌳 Parque</div>
+    <div class="grab-type-chip" data-t="plaza">🏛️ Plaza</div>
+    <div class="grab-type-chip" data-t="aventura">🧗 Aventura</div>
+    <div class="grab-type-chip" data-t="campo">🌾 Campo</div>
+    <div class="grab-type-chip" data-t="deporte">⚽ Deporte</div>
+    <div class="grab-type-chip" data-t="nocturno">🌙 Noche</div>
+    <div class="grab-type-chip" data-t="foto">📸 Foto</div>
+    <div class="grab-type-chip" data-t="otro">✳️ Otro</div>
   </div>
   <div class="grab-map-wrap">
     <div id="grab-map" style="width:100%;height:100%;"></div>
@@ -2682,37 +2699,37 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <!-- Categorías / Etiquetas -->
     <div style="font-size:11px;font-weight:700;color:var(--gr);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px;">Etiqueta</div>
-    <select id="fl-cat-select" class="fi" aria-label="Etiqueta del lugar" style="width:100%;margin-bottom:14px;" onchange="App._setFLCatSelect(this)">
-      <option value="lugar">📍 Lugar</option>
-      <option value="gastro">🍽️ Gastro</option>
-      <option value="resto">🥩 Resto</option>
-      <option value="cafe">☕ Café</option>
-      <option value="vino">🍷 Vino</option>
-      <option value="cerveza">🍺 Cerveza</option>
-      <option value="coctel">🍸 Cóctel</option>
-      <option value="vineria">🍾 Viñería</option>
-      <option value="bar">🥂 Bar</option>
-      <option value="boliche">🪩 Boliche</option>
-      <option value="teatro">🎭 Teatro</option>
-      <option value="cine">🎬 Cine</option>
-      <option value="musica">🎵 Música</option>
-      <option value="museo">🖼️ Museo</option>
-      <option value="arte">🎨 Arte</option>
-      <option value="naturaleza">🌿 Natural</option>
-      <option value="rio">🌊 Río</option>
-      <option value="playa">🏖️ Playa</option>
-      <option value="parque">🌳 Parque</option>
-      <option value="plaza">🏛️ Plaza</option>
-      <option value="pesca">🎣 Pesca</option>
-      <option value="aventura">🧗 Aventura</option>
-      <option value="campo">🌾 Campo</option>
-      <option value="deporte">⚽ Deporte</option>
-      <option value="ciclismo">🚴 Ciclismo</option>
-      <option value="nocturno">🌙 Noche</option>
-      <option value="perro">🐕 Pet</option>
-      <option value="foto">📸 Foto</option>
-      <option value="otro">✳️ Otro</option>
-    </select>
+    <div style="display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:3px;margin-bottom:12px;" class="fl-cat-scroll">
+      <button class="fl-cat on" data-c="lugar" onclick="App._setFLCat(this)">📍 Lugar</button>
+      <button class="fl-cat" data-c="gastro" onclick="App._setFLCat(this)">🍽️ Gastro</button>
+      <button class="fl-cat" data-c="resto" onclick="App._setFLCat(this)">🥩 Resto</button>
+      <button class="fl-cat" data-c="cafe" onclick="App._setFLCat(this)">☕ Café</button>
+      <button class="fl-cat" data-c="vino" onclick="App._setFLCat(this)">🍷 Vino</button>
+      <button class="fl-cat" data-c="cerveza" onclick="App._setFLCat(this)">🍺 Cerveza</button>
+      <button class="fl-cat" data-c="coctel" onclick="App._setFLCat(this)">🍸 Cóctel</button>
+      <button class="fl-cat" data-c="vineria" onclick="App._setFLCat(this)">🍾 Viñería</button>
+      <button class="fl-cat" data-c="bar" onclick="App._setFLCat(this)">🥂 Bar</button>
+      <button class="fl-cat" data-c="boliche" onclick="App._setFLCat(this)">🪩 Boliche</button>
+      <button class="fl-cat" data-c="teatro" onclick="App._setFLCat(this)">🎭 Teatro</button>
+      <button class="fl-cat" data-c="cine" onclick="App._setFLCat(this)">🎬 Cine</button>
+      <button class="fl-cat" data-c="musica" onclick="App._setFLCat(this)">🎵 Música</button>
+      <button class="fl-cat" data-c="museo" onclick="App._setFLCat(this)">🖼️ Museo</button>
+      <button class="fl-cat" data-c="arte" onclick="App._setFLCat(this)">🎨 Arte</button>
+      <button class="fl-cat" data-c="naturaleza" onclick="App._setFLCat(this)">🌿 Natural</button>
+      <button class="fl-cat" data-c="rio" onclick="App._setFLCat(this)">🌊 Río</button>
+      <button class="fl-cat" data-c="playa" onclick="App._setFLCat(this)">🏖️ Playa</button>
+      <button class="fl-cat" data-c="parque" onclick="App._setFLCat(this)">🌳 Parque</button>
+      <button class="fl-cat" data-c="plaza" onclick="App._setFLCat(this)">🏛️ Plaza</button>
+      <button class="fl-cat" data-c="pesca" onclick="App._setFLCat(this)">🎣 Pesca</button>
+      <button class="fl-cat" data-c="aventura" onclick="App._setFLCat(this)">🧗 Aventura</button>
+      <button class="fl-cat" data-c="campo" onclick="App._setFLCat(this)">🌾 Campo</button>
+      <button class="fl-cat" data-c="deporte" onclick="App._setFLCat(this)">⚽ Deporte</button>
+      <button class="fl-cat" data-c="ciclismo" onclick="App._setFLCat(this)">🚴 Ciclismo</button>
+      <button class="fl-cat" data-c="nocturno" onclick="App._setFLCat(this)">🌙 Noche</button>
+      <button class="fl-cat" data-c="perro" onclick="App._setFLCat(this)">🐕 Pet</button>
+      <button class="fl-cat" data-c="foto" onclick="App._setFLCat(this)">📸 Foto</button>
+      <button class="fl-cat" data-c="otro" onclick="App._setFLCat(this)">✳️ Otro</button>
+    </div>
 
     <!-- Mapa de ubicación -->
     <div style="margin-bottom:12px;">
@@ -5744,8 +5761,7 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     if (flMuni) flMuni.checked = false;
     this._fotoLoopCat = 'lugar';
     this._flLat = null; this._flLng = null;
-    const flCatSel = document.getElementById('fl-cat-select');
-    if (flCatSel) flCatSel.value = 'lugar';
+    document.querySelectorAll('.fl-cat').forEach(b => b.classList.toggle('on', b.dataset.c === 'lugar'));
     this._clearFotoLoop();
     // Inicializar mapa del modal (con pequeño delay para que el DOM esté visible)
     setTimeout(() => this._initFLMap(), 150);
@@ -5788,12 +5804,11 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     });
   },
 
-  _setFLCatSelect(sel) {
-    this._fotoLoopCat = sel.value;
+  _setFLCat(btn) {
+    this._fotoLoopCat = btn.dataset.c;
+    document.querySelectorAll('.fl-cat').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
   },
-
-  // legacy — ya no se usa, se mantiene por si hay referencias viejas
-  _setFLCat(btn) { this._fotoLoopCat = btn?.dataset?.c || 'lugar'; },
 
   // ── FOTO LOOP MAP ──
   _flMap: null,
@@ -5936,24 +5951,6 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         if (!this._user) {
           this.toast('⚠️ Iniciá sesión primero');
           this.closeFotoLoop(); this.go('profile'); return;
-        }
-
-        // ── Límite de 5 FotoLoops por usuario ──
-        const FOTOLOOP_LIMIT = 5;
-        try {
-          const myFlSnap = await this._db.collection('fotoloops')
-            .where('authorId', '==', this._uid).get();
-          if (myFlSnap.size >= FOTOLOOP_LIMIT) {
-            this.toast(`⚠️ Límite de ${FOTOLOOP_LIMIT} foto loops alcanzado. Eliminá uno para publicar otro.`);
-            return;
-          }
-        } catch(e) {
-          // Fallback: chequear cache local
-          const localCount = (this._fotoPosts || []).filter(p => p.authorId === this._uid).length;
-          if (localCount >= FOTOLOOP_LIMIT) {
-            this.toast(`⚠️ Límite de ${FOTOLOOP_LIMIT} foto loops alcanzado. Eliminá uno para publicar otro.`);
-            return;
-          }
         }
 
         // Guardar imagen en Firestore (loop_imgs) en vez de Storage
@@ -8910,24 +8907,6 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       // FX
       this._fxPts(2);
       this._fxCombo();
-
-      // ── Auto-propuesta al municipio por likes destacados ──
-      const LOOP_MUNI_THRESHOLD = 20;
-      if (r.likes >= LOOP_MUNI_THRESHOLD && !r._sentToMuni && r.source !== 'municipio') {
-        r._sentToMuni = true;
-        if (this._db) {
-          const pendingData = {
-            ...r,
-            pts: (r.pts||[]).map(p => Array.isArray(p) ? {lat:p[0],lng:p[1]} : p),
-            tipo: 'destacado',
-            likeCount: r.likes,
-            proposedAt: Date.now(),
-            proposedReason: `Alcanzó ${r.likes} likes de la comunidad`
-          };
-          this._db.collection('loops_municipio_pending').doc(r.id).set(pendingData, { merge: true })
-            .catch(() => {});
-        }
-      }
     }
     this._savePts();
     this._saveData();
@@ -9205,10 +9184,10 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
           if (pStats.innerHTML) {
             pStats.innerHTML = `<span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="var(--or)" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              ${top.totalLikes.toLocaleString()} likes recibidos
+              \${top.totalLikes.toLocaleString()} likes recibidos
             </span>
             <span style="font-size:11px;color:var(--gr);display:flex;align-items:center;gap:4px;">
-              🔄 ${top.totalLoops} loop${top.totalLoops!==1?'s':''}
+              🔄 \${top.totalLoops} loop\${top.totalLoops!==1?'s':''}
             </span>`;
           }
         }
@@ -9236,22 +9215,22 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
         const avBg = isMe ? 'var(--or)' : (avatarColors[i] || 'var(--gr)');
 
         return `
-        <div class="rank-loop-item ${i===0?'pos1':''}" style="${isMe?'border:1.5px solid var(--or);':''} ">
-          <div class="rank-loop-pos ${posC}">${medal}</div>
-          <div style="width:34px;height:34px;border-radius:50%;background:${avBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;">${App._esc(initials)}</div>
+        <div class="rank-loop-item \${i===0?'pos1':''}" style="\${isMe?'border:1.5px solid var(--or);':''} ">
+          <div class="rank-loop-pos \${posC}">\${medal}</div>
+          <div style="width:34px;height:34px;border-radius:50%;background:\${avBg};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:white;flex-shrink:0;">\${App._esc(initials)}</div>
           <div class="rank-loop-info">
-            <div class="rank-loop-name">${App._esc(u.name)}${isMe?' <span style="font-size:9px;background:var(--or);color:white;padding:1px 5px;border-radius:6px;vertical-align:middle;">vos</span>':''}</div>
+            <div class="rank-loop-name">\${App._esc(u.name)}\${isMe?' <span style="font-size:9px;background:var(--or);color:white;padding:1px 5px;border-radius:6px;vertical-align:middle;">vos</span>':''}</div>
             <div class="rank-loop-meta" style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;">
-              <span style="color:${i===0?'#BA7517':'var(--gr)'};display:flex;align-items:center;gap:2px;">
-                <svg width="9" height="9" viewBox="0 0 24 24" fill="${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                ${u.totalLikes.toLocaleString()} likes
+              <span style="color:\${i===0?'#BA7517':'var(--gr)'};display:flex;align-items:center;gap:2px;">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="\${i===0?'#BA7517':'var(--gr)'}" stroke="none"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                \${u.totalLikes.toLocaleString()} likes
               </span>
-              <span style="color:var(--gr);">· 🔄 ${u.totalLoops} loop${u.totalLoops!==1?'s':''} · 👟 ${u.totalPaseos.toLocaleString()} paseos</span>
+              <span style="color:var(--gr);">· 🔄 \${u.totalLoops} loop\${u.totalLoops!==1?'s':''} · 👟 \${u.totalPaseos.toLocaleString()} paseos</span>
             </div>
-            <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:${pct}%;background:${color};"></div></div>
+            <div class="rank-loop-bar-wrap"><div class="rank-loop-bar" style="width:\${pct}%;background:\${color};"></div></div>
           </div>
           <div style="text-align:right;flex-shrink:0;">
-            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--or);">${u.totalLikes.toLocaleString()}</div>
+            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--or);">\${u.totalLikes.toLocaleString()}</div>
             <div style="font-size:9px;color:var(--gr);margin-top:1px;">likes</div>
           </div>
         </div>`;
@@ -9702,11 +9681,11 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     this.grabMap.addControl(new maplibregl.NavigationControl({ showCompass: true }), 'bottom-right');
     this.grabPts=[]; this.grabSecs=0; this.grabState='idle';
     this._grabLine=null; this._grabSim=null;
-    const grabTypeSel = document.getElementById('grab-type-select');
-    if (grabTypeSel) {
-      grabTypeSel.value = this.grabType || 'running';
-      grabTypeSel.addEventListener('change', e => { this.grabType = e.target.value; });
-    }
+    document.getElementById('grab-type-row').addEventListener('click',e=>{
+      const c=e.target.closest('.grab-type-chip'); if(!c) return;
+      document.querySelectorAll('.grab-type-chip').forEach(x=>x.classList.remove('on'));
+      c.classList.add('on'); this.grabType=c.dataset.t;
+    });
     this._updateGrabUI();
   },
   grabToggle() {
@@ -10361,20 +10340,15 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     if (!el) return;
     if (list.length === 0) { el.innerHTML = `<div style="text-align:center;padding:32px;color:var(--gr);font-size:13px;">Sin loops</div>`; return; }
     el.innerHTML = list.map(r => {
-      const MUNI_THR = 20;
       const hasImg = r.img && (r.img.startsWith('data:') || r.img.startsWith('http') || r.img.startsWith('firestore:'));
       const noImgBadge = !hasImg ? `<span style="font-size:9px;background:#FEE2E2;color:#991B1B;border-radius:6px;padding:1px 6px;font-weight:700;">SIN FOTO</span> ` : '';
-      const hotBadge = (r.likes||0) >= MUNI_THR
-        ? `<span style="font-size:9px;background:#FFF3CD;color:#92400E;border-radius:6px;padding:1px 6px;font-weight:700;margin-left:4px;">🔥 DESTACADO</span>`
-        : '';
-      const alreadySentMuni = r._sentToMuni || (r.likes||0) >= MUNI_THR;
       return `<div class="adm-item">
         <div class="adm-item-row">
           ${hasImg
             ? App._imgTag(r.img, 'width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;')
             : `<div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;background:var(--bg2);">${r.emoji||'🔄'}</div>`}
           <div class="adm-item-info">
-            <div class="adm-item-name">${noImgBadge}${App._esc(r.name)}${hotBadge}</div>
+            <div class="adm-item-name">${noImgBadge}${App._esc(r.name)}</div>
             <div class="adm-item-meta">${r.ciudad||r.cityId||'—'} · ${r.type} · ${r.dist||'—'} · ❤️${r.likes||0}</div>
             <div class="adm-item-meta">Por: ${App._esc(r.authorName)||'Anónimo'}</div>
           </div>
@@ -10385,12 +10359,6 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
           ${r.source !== 'municipio'
             ? `<button class="adm-btn adm-btn-green" onclick="App._admSetCiudad('${r.id}','${r.name.replace(/'/g,'')}')">🏙️ Poner en Ciudad</button>`
             : `<button class="adm-btn" style="opacity:.5;cursor:default;" disabled>🏙️ Ya es Ciudad</button>`
-          }
-          ${r.source !== 'municipio' && !alreadySentMuni
-            ? `<button class="adm-btn" style="background:#FFF3CD;color:#92400E;border:1px solid #F59E0B;" onclick="App._admProponerMunicipio('${r.id}')">📤 Proponer al Municipio</button>`
-            : r.source !== 'municipio' && alreadySentMuni
-              ? `<button class="adm-btn" style="opacity:.5;cursor:default;" disabled>📬 Ya en Municipio</button>`
-              : ''
           }
           <button class="adm-btn adm-btn-red" onclick="App._admDeleteLoop('${r.id}','${r.name.replace(/'/g,'')}')">🗑️ Eliminar</button>
         </div>
@@ -10424,28 +10392,6 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     const statEl = document.getElementById('aStat-loops');
     if (statEl) statEl.textContent = this.routes.filter(r=>r.type!=='fotostop').length;
     this.toast(`🗑️ Loop "${name}" eliminado`);
-  },
-
-
-  async _admProponerMunicipio(id) {
-    const r = this.routes.find(x => x.id === id);
-    if (!r) return this.toast('Loop no encontrado');
-    if (!confirm(`¿Proponer "${r.name}" al municipio para revisión?\nAparecerá en la pestaña Propuestas comunidad.`)) return;
-    if (!this._db) return this.toast('Firebase no disponible');
-    try {
-      const pendingData = {
-        ...r,
-        pts: (r.pts||[]).map(p => Array.isArray(p) ? {lat:p[0],lng:p[1]} : p),
-        tipo: 'admin_manual',
-        likeCount: r.likes || 0,
-        proposedAt: Date.now(),
-        proposedReason: 'Propuesto manualmente por el admin'
-      };
-      await this._db.collection('loops_municipio_pending').doc(r.id).set(pendingData, { merge: true });
-      r._sentToMuni = true;
-      this._admRenderLoops();
-      this.toast('📤 Loop enviado a Propuestas Municipio');
-    } catch(e) { this.toast('❌ Error: ' + e.message); }
   },
 
   async _admSetCiudad(id, name) {
@@ -10529,31 +10475,21 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
       return;
     }
     el.innerHTML = `<div style="padding:14px;display:flex;flex-direction:column;gap:10px;">` +
-      list.map(r => {
-        const isDestacado = r.tipo === 'destacado' || r.tipo === 'admin_manual';
-        const origenBadge = r.tipo === 'destacado'
-          ? `<span style="font-size:9px;background:#FFF3CD;color:#92400E;border-radius:6px;padding:1px 6px;font-weight:700;">🔥 Por likes (${r.likeCount||0} ❤️)</span>`
-          : r.tipo === 'admin_manual'
-          ? `<span style="font-size:9px;background:#E0F2FE;color:#0369A1;border-radius:6px;padding:1px 6px;font-weight:700;">📤 Admin</span>`
-          : `<span style="font-size:9px;background:#F0FDF4;color:#166534;border-radius:6px;padding:1px 6px;font-weight:700;">🏛 Comunidad</span>`;
-        return `
-      <div class="adm-item" style="${isDestacado ? 'border-left:3px solid #F59E0B;' : ''}">
+      list.map(r => `
+      <div class="adm-item">
         <div class="adm-item-row">
           <div class="adm-item-thumb" style="display:flex;align-items:center;justify-content:center;font-size:22px;">${r.emoji||'🔄'}</div>
           <div class="adm-item-info">
-            <div class="adm-item-name" style="display:flex;align-items:center;gap:6px;">${App._esc(r.name)} ${origenBadge}</div>
-            <div class="adm-item-meta">${r.ciudad||'—'} · ${r.dist||'—'} · ❤️${r.likeCount||r.likes||0} likes</div>
-            <div class="adm-item-meta">Por: ${App._esc(r.authorName)||'Anónimo'}</div>
-            ${r.proposedReason ? `<div class="adm-item-meta" style="margin-top:2px;font-style:italic;color:var(--gr);">${App._esc(r.proposedReason)}</div>` : ''}
+            <div class="adm-item-name">${App._esc(r.name)}</div>
+            <div class="adm-item-meta">${r.ciudad||'—'} · ${r.dist||'—'} · por ${App._esc(r.authorName)||'Anónimo'}</div>
             ${r.desc ? `<div class="adm-item-meta" style="margin-top:2px;">${App._esc(r.desc)}</div>` : ''}
           </div>
         </div>
         <div class="adm-item-actions">
-          <button class="adm-btn adm-btn-green" onclick="App._admApprovePropuesta('${r.id}')">✅ Aprobar → Loop Oficial</button>
+          <button class="adm-btn adm-btn-green" onclick="App._admApprovePropuesta('${r.id}')">✅ Aprobar → Capa Municipal</button>
           <button class="adm-btn adm-btn-red"   onclick="App._admRejectPropuesta('${r.id}','${(r.authorId||'')}')">❌ Rechazar</button>
         </div>
-      </div>`;
-      }).join('') + `</div>`;
+      </div>`).join('') + `</div>`;
   },
 
   async _admApprovePropuesta(id) {
