@@ -3107,6 +3107,17 @@ const App = {
       this._auth    = firebase.auth();
       this._storage = null; // Storage no activado — imágenes guardadas en Firestore (loop_imgs)
 
+      // ── Capturar resultado de signInWithRedirect (regreso desde login Google) ──
+      try {
+        const redirectResult = await this._auth.getRedirectResult();
+        if (redirectResult && redirectResult.user) {
+          this._userJustLoggedIn = true;
+          console.log('[auth] Redirect login OK:', redirectResult.user.email);
+        }
+      } catch(e) {
+        console.warn('[auth] getRedirectResult error:', e.code, e.message);
+      }
+
       // Cargar API key de Anthropic desde Firestore (_config/keys) — no se guarda en el código
       try {
         const cfgSnap = await this._db.collection('_config').doc('keys').get();
@@ -3223,6 +3234,7 @@ const App = {
       provider.addScope('email');
       provider.setCustomParameters({ prompt: 'select_account' });
 
+      // Intentar popup primero
       const result = await this._auth.signInWithPopup(provider);
       if (result.user) {
         this._userJustLoggedIn = true;
@@ -3231,17 +3243,19 @@ const App = {
 
     } catch(e) {
       console.error('[loginGoogle]', e.code, e.message);
-      const browser = this._getBrowserName();
 
-      if (e.code === 'auth/popup-blocked') {
-        this._showPopupBlockedBanner(browser);
+      const REDIRECT_CODES = [
+        'auth/popup-blocked',
+        'auth/internal-error',
+        'auth/web-storage-unsupported',
+        'auth/operation-not-supported-in-this-environment',
+      ];
+      const isStorageError = e.message?.includes('sessionStorage') || e.message?.includes('initial state') || e.message?.includes('cross-origin');
 
-      } else if (e.code === 'auth/popup-closed-by-user') {
-        this.toast('Cancelado');
-
-      } else if (e.code === 'auth/cancelled-popup-request') {
-        // Doble clic — ignorar
-        void 0;
+      if (e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
+        // Usuario cerró el popup — no hacer nada
+        if (btn) { btn.innerHTML = originalHTML || 'Continuar con Google'; btn.disabled = false; }
+        return;
 
       } else if (e.code === 'auth/network-request-failed') {
         this.toast('⚠️ Sin conexión. Revisá internet.');
@@ -3249,13 +3263,20 @@ const App = {
       } else if (e.code === 'auth/unauthorized-domain') {
         this.toast('⚠️ Dominio no autorizado en Firebase Console → Authentication → Authorized domains.');
 
-      } else if (
-        e.code === 'auth/internal-error' ||
-        e.message?.includes('sessionStorage') ||
-        e.message?.includes('initial state')
-      ) {
-        // Edge con Tracking Prevention Estricto bloquea el popup OAuth
-        this._showTrackingPreventionHelp(browser);
+      } else if (REDIRECT_CODES.includes(e.code) || isStorageError) {
+        // Popup bloqueado o cookies bloqueadas → usar redirect (funciona en incógnito y Safari)
+        try {
+          const provider2 = new firebase.auth.GoogleAuthProvider();
+          provider2.addScope('profile');
+          provider2.addScope('email');
+          provider2.setCustomParameters({ prompt: 'select_account' });
+          this.toast('🔄 Redirigiendo a Google...');
+          await this._auth.signInWithRedirect(provider2);
+          return; // la página se recarga sola al volver
+        } catch(e2) {
+          console.error('[loginGoogle redirect]', e2.code, e2.message);
+          this.toast('⚠️ No se pudo iniciar sesión. Probá con email/contraseña.');
+        }
 
       } else {
         this.toast('⚠️ Error: ' + (e.message || e.code));
