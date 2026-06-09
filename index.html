@@ -3973,6 +3973,9 @@ const App = {
 
     const MIN_MOVE_METERS = 5;   // ignorar saltos menores a 5m
     const MAP_THROTTLE_MS = 1500; // mover el mapa máximo 1 vez cada 1.5s
+    const GPS_BUFFER_SIZE = 5;    // promedio de últimas 5 lecturas para suavizar drift
+
+    this._gpsBuf = []; // buffer circular de lecturas recientes
 
     const distMeters = (a1,o1,a2,o2) => {
       const R=6371000, dA=(a2-a1)*Math.PI/180, dO=(o2-o1)*Math.PI/180;
@@ -3980,25 +3983,39 @@ const App = {
       return R*2*Math.asin(Math.sqrt(s*s+c*Math.sin(dO/2)*Math.sin(dO/2)));
     };
 
+    // Promedio ponderado por precisión: lecturas más precisas pesan más
+    const smoothGPS = (rawLat, rawLng, rawAcc) => {
+      const weight = 1 / Math.max(rawAcc, 1);
+      this._gpsBuf.push({ lat: rawLat, lng: rawLng, w: weight });
+      if (this._gpsBuf.length > GPS_BUFFER_SIZE) this._gpsBuf.shift();
+      const totalW = this._gpsBuf.reduce((s, p) => s + p.w, 0);
+      return {
+        lat: this._gpsBuf.reduce((s, p) => s + p.lat * p.w, 0) / totalW,
+        lng: this._gpsBuf.reduce((s, p) => s + p.lng * p.w, 0) / totalW
+      };
+    };
+
     const onPos = (pos) => {
-      const lat = pos.coords.latitude;
-      const lng = pos.coords.longitude;
+      const rawLat = pos.coords.latitude;
+      const rawLng = pos.coords.longitude;
       const acc = Math.min(pos.coords.accuracy, 300);
       const gpsHeading = pos.coords.heading; // null si está quieto
 
       // ── Filtro de precisión: ignorar si la señal GPS es muy mala ──
-      // En navegación activa ser más estricto (20m), en reposo 40m
       const accThreshold = (this._navLine && this._navLine.length) ? 20 : 40;
       if (acc > accThreshold && this._lastLat !== null) {
         console.log(`[GPS] Punto ignorado: precisión ${acc.toFixed(0)}m > umbral ${accThreshold}m`);
         return;
       }
 
+      // ── Suavizado: promedio ponderado de últimas lecturas ──
+      const { lat, lng } = smoothGPS(rawLat, rawLng, acc);
+
       // ── Filtro de ruido: ignorar si se movió menos de MIN_MOVE_METERS ──
       if (this._lastLat !== null) {
         const d = distMeters(this._lastLat, this._lastLng, lat, lng);
         if (d < MIN_MOVE_METERS) {
-          // Solo actualizar el marcador visual, nada más
+          // Actualizar marcador con posición suavizada
           if (this._locMarker) this._locMarker.setLngLat([lng, lat]);
           return;
         }
