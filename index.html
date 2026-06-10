@@ -49,8 +49,10 @@
 <meta name="creation-date" content="2026-04-01">
 
 <!-- ── Favicon y app icons ── -->
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='7' fill='%23FF5F00'/><circle cx='16' cy='16' r='9' stroke='white' stroke-width='2' fill='none'/><circle cx='16' cy='16' r='3' fill='white'/><line x1='16' y1='7' x2='16' y2='25' stroke='white' stroke-width='1.5' stroke-dasharray='2 2'/><line x1='7' y1='16' x2='25' y2='16' stroke='white' stroke-width='1.5' stroke-dasharray='2 2'/></svg>">
-<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="icon" type="image/x-icon"    href="assets/favicon.ico">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180"    href="assets/apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192x192.png">
 <!-- ── Fuente: preload para evitar flash de texto sin estilo ── -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1092,6 +1094,11 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   position: relative;
   width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center;
+  /* Fuerza que el wrapper quede en la misma capa GPU que el marker de MapLibre.
+     Sin esto, la animación CSS del hijo crea una capa separada que no se actualiza
+     cuando MapLibre mueve el marker (transform del padre), causando el pin a 50km en mobile. */
+  transform: translateZ(0);
+  will-change: transform;
 }
 .user-loc-dot {
   position: absolute;
@@ -1101,19 +1108,25 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
   border-radius: 50%;
   box-shadow: 0 2px 8px rgba(37,99,235,.5);
   z-index: 2;
+  /* translateZ propio para no interferir con el padre */
+  transform: translateZ(0);
 }
 .user-loc-pulse {
   position: absolute;
   width: 30px; height: 30px;
-  background: rgba(37,99,235,.25);
+  border: 2px solid rgba(37,99,235,.6);
+  background: rgba(37,99,235,.18);
   border-radius: 50%;
+  /* Usar opacity+scale SIN crear compositing layer nueva:
+     opacity sola no crea stacking context separado en mobile */
   animation: locPulse 2s ease-out infinite;
   z-index: 1;
+  transform: translateZ(0);
 }
 @keyframes locPulse {
-  0%   { transform: scale(0.4); opacity: 1; }
-  70%  { transform: scale(1.4); opacity: 0; }
-  100% { transform: scale(1.4); opacity: 0; }
+  0%   { opacity: 1;   transform: translateZ(0) scale(0.4); }
+  70%  { opacity: 0;   transform: translateZ(0) scale(1.5); }
+  100% { opacity: 0;   transform: translateZ(0) scale(1.5); }
 }
 
 /* ═══ MOBILE FIRST — EXPLORE ═══ */
@@ -3140,9 +3153,6 @@ const App = {
       this._auth    = firebase.auth();
       this._storage = null; // Storage no activado — imágenes guardadas en Firestore (loop_imgs)
 
-      // ── Configuración Firestore: DEBE ir antes de cualquier .collection()/.get() ──
-      this._db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
-
       // ── Persistencia de sesión: SESSION funciona en incógnito (usa sessionStorage) ──
       // LOCAL usa IndexedDB que está bloqueado en incógnito y Safari estricto
       try {
@@ -3176,6 +3186,9 @@ const App = {
           console.log('[config] Anthropic key cargada ✓');
         }
       } catch(e) { console.warn('[config] No se pudo cargar Anthropic key:', e.message); }
+
+      // Long-polling: usar autoDetect (no mezclar con ForceLongPolling)
+      this._db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
 
       // Habilitar persistencia offline
       try {
@@ -3920,7 +3933,7 @@ const App = {
     const redraw = () => {
       this.mainMap && this.mainMap.once('styledata', () => {
         setTimeout(() => {
-          this.mainMap.on('styleimagemissing', (e) => { if(!e.id||!e.id.trim())return; const empty={width:1,height:1,data:new Uint8Array(4)}; if(!this.mainMap.hasImage(e.id))this.mainMap.addImage(e.id,empty,{sdf:false}); });
+          this.mainMap.on('styleimagemissing', (e) => { const empty={width:1,height:1,data:new Uint8Array(4)}; if(!this.mainMap.hasImage(e.id))this.mainMap.addImage(e.id,empty); });
           this.routes.forEach(r => this._drawRoute(r));
           this._drawFotoStopsOnMap();
           this._drawNegociosOnMap();
@@ -3959,11 +3972,9 @@ const App = {
     this.mainMap.on('load', () => {
       // Suprimir errores de imágenes faltantes en el sprite del mapa
       this.mainMap.on('styleimagemissing', (e) => {
-        // Saltear IDs vacíos o solo espacios (vienen del estilo del tile provider)
-        if (!e.id || !e.id.trim()) return;
-        // Crear un pixel transparente para que MapLibre no siga intentando cargar la imagen
+        // Crear un pixel transparente para que no siga intentando
         const empty = { width: 1, height: 1, data: new Uint8Array(4) };
-        if (!this.mainMap.hasImage(e.id)) this.mainMap.addImage(e.id, empty, { sdf: false });
+        if (!this.mainMap.hasImage(e.id)) this.mainMap.addImage(e.id, empty);
       });
       this.routes.forEach(r => this._drawRoute(r));
       this._drawFotoStopsOnMap();   // ← marcadores de fotostops + fotoloops
@@ -4093,13 +4104,19 @@ const App = {
             bearing = gpsHeading;  // hacia donde vas queda "arriba"
           }
 
-          // Pitch: 50 en 3D, 45 en followMe normal
-          const followPitch3d = this._is3D ? 50 : (this._followMe ? 45 : this.mainMap.getPitch());
+          // Pitch: en 3D=50, en followMe normal=45 SOLO si zoom >= 15.
+          // Si el usuario hizo zoom out (zoom < 15) usar pitch=0 (vista plana)
+          // porque en perspectiva con zoom bajo el pin parece desplazado kilómetros.
+          const currentZoom = this.mainMap.getZoom();
+          const followPitch3d = this._is3D ? 50
+            : (this._followMe && currentZoom >= 15) ? 45
+            : 0;
           this.mainMap.easeTo({
             center: [lng, lat],
             bearing,
             pitch: followPitch3d,
-            zoom: Math.max(this.mainMap.getZoom(), 16),
+            // No forzar zoom si el usuario bajó intencionalmente a < 14 (quiere ver más área)
+            zoom: currentZoom < 14 ? currentZoom : Math.max(currentZoom, 16),
             duration: 1200,
             easing: t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t  // ease in-out suave
           });
