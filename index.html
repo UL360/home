@@ -556,6 +556,139 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 .thread-reply-input input { flex: 1; border: 0.5px solid var(--bd); border-radius: 20px; padding: 7px 12px; font-size: 12px; color: var(--dk); background: var(--bg2); outline: none; font-family: var(--fB); }
 .thread-reply-input button { background: var(--or); border: none; border-radius: 50%; width: 30px; height: 30px; color: white; cursor: pointer; font-size: 14px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
 
+/* ═══════════════════════
+   HOME — Pantalla principal
+═══════════════════════ */
+#home { overflow-y:auto; background:var(--bg0); }
+.home-wrap { padding:20px 14px 100px; display:flex; flex-direction:column; gap:14px; }
+.home-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.home-greeting { font-size:12px; color:var(--gr); }
+.home-brand { font-family:var(--fH); font-size:18px; font-weight:800; color:var(--dk); }
+.home-brand span { color:var(--or); }
+.home-avatar {
+  width:38px; height:38px; border-radius:50%;
+  background:var(--orL); border:2px solid var(--or);
+  display:flex; align-items:center; justify-content:center;
+  font-size:15px; font-weight:700; color:var(--or); font-family:var(--fH);
+  cursor:pointer; flex-shrink:0;
+}
+/* Hero card — ¿Qué sale hoy? */
+.home-hero {
+  border-radius:18px; padding:20px 18px;
+  background:var(--c-viola); border:1px solid var(--c-viola-b);
+  cursor:pointer; transition:opacity .15s; position:relative; overflow:hidden;
+}
+.home-hero:hover { opacity:.9; }
+.home-hero-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.home-hero-pill { font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px; background:var(--c-viola-b); color:var(--c-viola-t); letter-spacing:.3px; text-transform:uppercase; }
+.home-hero-title { font-family:var(--fH); font-size:22px; font-weight:800; color:var(--c-viola-t); margin-bottom:4px; }
+.home-hero-sub { font-size:12px; color:var(--c-viola-b); }
+.home-hero-bar { display:flex; align-items:center; gap:8px; margin-top:14px; }
+.home-hero-progress { flex:1; height:4px; background:var(--c-viola-b); border-radius:2px; overflow:hidden; }
+.home-hero-progress-fill { width:60%; height:100%; background:var(--c-viola-t); border-radius:2px; }
+.home-hero-note { font-size:11px; color:var(--c-viola-b); }
+/* Grid 2x2 */
+.home-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.home-card {
+  background:var(--wh); border:0.5px solid var(--bd); border-radius:16px;
+  padding:16px 14px; cursor:pointer; transition:all .15s;
+}
+.home-card:hover { border-color:var(--or); transform:translateY(-1px); }
+.home-card-icon {
+  width:38px; height:38px; border-radius:11px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:18px; margin-bottom:12px;
+}
+.home-card-title { font-family:var(--fH); font-size:14px; font-weight:700; color:var(--dk); margin-bottom:2px; }
+.home-card-sub { font-size:11px; color:var(--gr); line-height:1.4; }
+/* Activos ahora */
+.home-section-title { font-family:var(--fH); font-size:14px; font-weight:700; color:var(--dk); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+.home-section-see { font-size:11px; color:var(--or); font-weight:600; cursor:pointer; }
+.home-active-card {
+  background:var(--wh); border:0.5px solid var(--bd); border-radius:14px;
+  padding:12px 14px; display:flex; align-items:center; gap:12px;
+  margin-bottom:8px; cursor:pointer; transition:border-color .12s;
+}
+.home-active-card:hover { border-color:var(--or); }
+.home-active-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.home-active-info { flex:1; min-width:0; }
+.home-active-name { font-size:13px; font-weight:600; color:var(--dk); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.home-active-meta { font-size:11px; color:var(--gr); margin-top:2px; }
+.home-active-tag { font-size:10px; padding:3px 9px; border-radius:20px; font-weight:700; flex-shrink:0; }
+
+/* ═══════════════════════
+   RULETA — ¿QUÉ SALE HOY?
+═══════════════════════ */
+#actividades { overflow-y:auto; background:var(--bg0); }
+.rul-header {
+  padding:18px 16px 0;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.rul-title {
+  font-family:var(--fH); font-size:22px; font-weight:800;
+  color:var(--dk); line-height:1.1;
+}
+.rul-title span { color:var(--or); }
+.rul-sub { font-size:13px; color:var(--gr); margin-top:3px; }
+.rul-wheel-wrap {
+  display:flex; flex-direction:column; align-items:center;
+  padding:24px 16px 0; position:relative;
+}
+.rul-pointer {
+  width:0; height:0;
+  border-left:14px solid transparent;
+  border-right:14px solid transparent;
+  border-top:26px solid var(--or);
+  filter:drop-shadow(0 3px 8px rgba(255,95,0,.5));
+  position:relative; z-index:5; margin-bottom:-4px;
+}
+#rul-canvas {
+  border-radius:50%;
+  display:block;
+  filter:drop-shadow(0 6px 28px rgba(0,0,0,.55));
+}
+.rul-spin-btn {
+  margin-top:26px;
+  width:100%; max-width:260px;
+  height:54px; border:none; border-radius:16px;
+  background:var(--or); color:white;
+  font-family:var(--fH); font-size:17px; font-weight:800;
+  cursor:pointer; letter-spacing:.4px;
+  display:flex; align-items:center; justify-content:center; gap:10px;
+  box-shadow:0 6px 24px rgba(255,95,0,.45);
+  transition:all .18s;
+}
+.rul-spin-btn:hover:not(:disabled) { background:var(--or2); transform:translateY(-2px); box-shadow:0 10px 32px rgba(255,95,0,.55); }
+.rul-spin-btn:disabled { background:var(--bg3); color:var(--gr); cursor:not-allowed; box-shadow:none; transform:none; }
+.rul-result {
+  margin:20px 16px 100px;
+  background:var(--wh); border-radius:18px;
+  border:0.5px solid var(--bd); overflow:hidden;
+  animation:fadeUp .35s cubic-bezier(.34,1.56,.64,1);
+}
+.rul-result-banner { height:6px; }
+.rul-result-body { padding:18px 16px 16px; }
+.rul-result-icon { font-size:36px; margin-bottom:10px; }
+.rul-result-name { font-family:var(--fH); font-size:20px; font-weight:800; color:var(--dk); margin-bottom:6px; }
+.rul-result-desc { font-size:13px; color:var(--md); line-height:1.6; margin-bottom:14px; }
+.rul-result-actions { display:flex; gap:9px; }
+.rul-act-btn {
+  flex:1; padding:10px 8px; border-radius:11px;
+  font-size:12px; font-weight:700; cursor:pointer;
+  font-family:var(--fB); border:0.5px solid var(--bd);
+  background:var(--lt); color:var(--md); transition:all .15s;
+}
+.rul-act-btn.primary { background:var(--or); border-color:var(--or); color:white; }
+.rul-act-btn:hover { opacity:.85; }
+.rul-history {
+  margin:0 16px 20px;
+  display:flex; gap:7px; flex-wrap:wrap;
+}
+.rul-hist-chip {
+  font-size:11px; padding:4px 11px; border-radius:20px;
+  background:var(--bg2); border:0.5px solid var(--bd); color:var(--gr);
+  display:flex; align-items:center; gap:4px;
+}
 /* ── Botón hamburger dentro del rail ── */
 #sb-toggle-btn {
   width: 100%; padding: 14px 0;
@@ -592,7 +725,8 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
   body.sb-rail-mode #detail,
   body.sb-rail-mode #loops,
   body.sb-rail-mode #ciudad-remota,
-  body.sb-rail-mode #eventos { margin-left: var(--side-w-rail) !important; left: var(--side-w-rail) !important; right: 0 !important; width: auto !important; }
+  body.sb-rail-mode #home,
+  body.sb-rail-mode #actividades,
   body.sb-rail-mode #crear-manual { margin-left: var(--side-w-rail) !important; left: var(--side-w-rail) !important; right: 0 !important; width: auto !important; }
 
   body.sb-open-mode #explore,
@@ -608,6 +742,8 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
   body.sb-open-mode #loops,
   body.sb-open-mode #ciudad-remota,
   body.sb-open-mode #crear-manual,
+  body.sb-open-mode #home,
+  body.sb-open-mode #actividades,
   body.sb-open-mode #eventos { margin-left: var(--side-w-open) !important; left: var(--side-w-open) !important; right: 0 !important; width: auto !important; }
 
   #menu-btn { display: none !important; }
@@ -1264,6 +1400,72 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 <body>
 
 <!-- ════════════ SPLASH ════════════ -->
+<!-- ════════════ HOME — Pantalla principal ════════════ -->
+<div id="home" class="screen" style="background:var(--bg0);">
+  <div class="home-wrap">
+
+    <!-- Topbar -->
+    <div class="home-topbar">
+      <div>
+        <div class="home-greeting" id="home-greeting">Buenas, loopeador</div>
+        <div class="home-brand">Urban <span>Loop</span> 360°</div>
+      </div>
+      <div class="home-avatar" id="home-avatar" onclick="App.sideNav('profile')">👤</div>
+    </div>
+
+    <!-- Hero: ¿Qué sale hoy? -->
+    <div class="home-hero" onclick="App.sideNav('actividades')">
+      <div class="home-hero-top">
+        <span class="home-hero-pill">Destacado</span>
+        <span style="font-size:20px;">🎡</span>
+      </div>
+      <div class="home-hero-title">¿Qué sale hoy?</div>
+      <div class="home-hero-sub">Girá la ruleta y decidí al azar</div>
+      <div class="home-hero-bar">
+        <div class="home-hero-progress"><div class="home-hero-progress-fill"></div></div>
+        <span class="home-hero-note" id="home-hero-note">Urban Loop te activa</span>
+      </div>
+    </div>
+
+    <!-- Grid 2x2 -->
+    <div class="home-grid">
+      <div class="home-card" onclick="App.sideNav('loops-urbanos')">
+        <div class="home-card-icon" style="background:var(--c-verde);">🔍</div>
+        <div class="home-card-title">Buscar actividad</div>
+        <div class="home-card-sub">Mate, bici, kayak...</div>
+      </div>
+      <div class="home-card" onclick="App.sideNav('grabar')">
+        <div class="home-card-icon" style="background:var(--c-naranja);">📹</div>
+        <div class="home-card-title">Nuevo loop</div>
+        <div class="home-card-sub">Subí tu salida</div>
+      </div>
+      <div class="home-card" onclick="App.sideNav('explore')">
+        <div class="home-card-icon" style="background:var(--c-rojo);">🗺️</div>
+        <div class="home-card-title">Explorar ciudad</div>
+        <div class="home-card-sub">Mapa en vivo</div>
+      </div>
+      <div class="home-card" onclick="App.sideNav('comunidad')">
+        <div class="home-card-icon" style="background:var(--c-azul);">👥</div>
+        <div class="home-card-title">Comunidad</div>
+        <div class="home-card-sub">Loops recientes</div>
+      </div>
+    </div>
+
+    <!-- Activos ahora -->
+    <div>
+      <div class="home-section-title">
+        Activos ahora
+        <span class="home-section-see" onclick="App.sideNav('loops-urbanos')">ver todos →</span>
+      </div>
+      <div id="home-activos-list">
+        <div style="font-size:13px;color:var(--gr);padding:8px 0;">Cargando loops...</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════ SPLASH ════════════ -->
 <div id="splash" class="screen active">
   <!-- Imagen de fondo -->
   <img class="sp-cover" 
@@ -1409,6 +1611,9 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <!-- PRINCIPAL -->
     <span class="sb-section-label">Principal</span>
+    <button class="sb-nav-btn" id="sb-btn-home" onclick="App.sideNav('home')" aria-label="Inicio" role="menuitem">
+      <span class="sb-icon">🏠</span><span class="sb-label">Inicio</span>
+    </button>
     <button class="sb-nav-btn" id="sb-btn-explore" onclick="App.sideNav('explore')" aria-label="Explorar mapa" role="menuitem">
       <span class="sb-icon">🗺️</span><span class="sb-label">Mapa</span>
     </button>
@@ -1417,6 +1622,9 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     </button>
     <button class="sb-nav-btn" id="sb-btn-explorar-ciudades" onclick="App.sideNav('explorar-ciudades')" aria-label="Explorar ciudades" role="menuitem">
       <span class="sb-icon">🔍</span><span class="sb-label">Explorar ciudades</span>
+    </button>
+    <button class="sb-nav-btn" id="sb-btn-actividades" onclick="App.sideNav('actividades')" aria-label="¿Qué sale hoy?" role="menuitem">
+      <span class="sb-icon">🎡</span><span class="sb-label">¿Qué sale hoy?</span>
     </button>
 
     <!-- COMUNIDAD -->
@@ -3074,11 +3282,12 @@ const App = {
 
   _hideSplash() {
     const sp = document.getElementById('splash');
-    if (!sp) { this.go('explore'); return; }
+    if (!sp) { this.go('home'); return; }
     sp.style.opacity = '0';
     sp.style.pointerEvents = 'none';
     setTimeout(() => {
-      this.go('explore');
+      this.go('home');
+      this._renderHome();
       // Mostrar menu-btn ahora que el splash terminó
       const mb = document.getElementById('menu-btn');
       if (mb) mb.classList.remove('hidden-splash');
@@ -3937,6 +4146,8 @@ const App = {
     if (sid==='eventos')         { this._renderEventos(); }
     if (sid==='ranking')         { this._renderRanking(); }
     if (sid==='explorar-ciudades') { this._renderExplorar(); }
+    if (sid==='actividades')       { setTimeout(()=>this._ruletaInit(), 80); }
+    if (sid==='home')              { this._renderHome(); }
     if (sid==='grabar')          { setTimeout(()=>this._initGrabMap(),100); }
     if (sid==='crear-manual')    { setTimeout(()=>this._cmInit(),200); }
     if (sid==='profile')         { this._updateProfileUI(); }
@@ -9672,6 +9883,275 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   },
 
   // ══════════════════════════════════════════
+  // MÓDULO 0 — HOME
+  // ══════════════════════════════════════════
+  _renderHome() {
+    // Saludo según hora
+    const h = new Date().getHours();
+    const greet = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+    const name = this._user?.displayName?.split(' ')[0] || 'loopeador';
+    const greetEl = document.getElementById('home-greeting');
+    if (greetEl) greetEl.textContent = `${greet}, ${name}`;
+
+    // Avatar
+    const av = document.getElementById('home-avatar');
+    if (av) {
+      const initials = name.slice(0,2).toUpperCase();
+      av.textContent = initials;
+    }
+
+    // Hero note: cuántos loops hay en la comunidad
+    const note = document.getElementById('home-hero-note');
+    if (note && this.routes) note.textContent = `${this.routes.length} loops en la comunidad`;
+
+    // Activos ahora — últimos 4 loops con datos
+    const list = document.getElementById('home-activos-list');
+    if (!list) return;
+
+    const TC = { running:'#E53E3E', ciclismo:'#185FA5', caminata:'#1D9E75', fotografia:'#B794F4', kayak:'#185FA5', otro:'#FF5F00' };
+    const TN = { running:'Running', ciclismo:'Bici', caminata:'Caminata', fotografia:'Foto-loop', kayak:'Kayak', otro:'Loop' };
+
+    const recent = (this.routes || [])
+      .filter(r => r.name)
+      .slice(0, 4);
+
+    if (!recent.length) {
+      list.innerHTML = `<div style="font-size:13px;color:var(--gr);padding:8px 0;">Todavía no hay loops. ¡Sé el primero!</div>`;
+      return;
+    }
+
+    list.innerHTML = recent.map(r => {
+      const color = TC[r.type] || '#FF5F00';
+      const tag   = TN[r.type] || 'Loop';
+      const city  = r.ciudad || r.cityId || '';
+      return `<div class="home-active-card" onclick="App.showDetail('${r.id}')">
+        <div class="home-active-dot" style="background:${color};"></div>
+        <div class="home-active-info">
+          <div class="home-active-name">${this._esc(r.name)}</div>
+          <div class="home-active-meta">📍 ${this._esc(city)}${r.dist?' · '+r.dist:''}</div>
+        </div>
+        <span class="home-active-tag" style="background:${color}22;color:${color};">${tag}</span>
+      </div>`;
+    }).join('');
+  },
+
+  // ══════════════════════════════════════════
+  // MÓDULO 4 — RULETA ¿QUÉ SALE HOY?
+  // ══════════════════════════════════════════
+  _ruletaSpinning: false,
+  _ruletaAngle: 0,
+  _ruletaHistory: [],
+
+  _ruletaActividades: [
+    { label:'Tomar\nmate',      icon:'☕', color:'#FF5F00', light:'#FF5F0022', desc:'Invitá a alguien. Afuera siempre es mejor.' },
+    { label:'Andar\nen bici',   icon:'🚲', color:'#1D9E75', light:'#1D9E7522', desc:'Salí a rodar. No importa el recorrido, importa la vuelta.' },
+    { label:'Kayak\no remo',    icon:'🛶', color:'#185FA5', light:'#185FA522', desc:'Al agua. Buscá un loop de kayak en la comunidad.' },
+    { label:'Ir al\ngym',       icon:'💪', color:'#B794F4', light:'#B794F422', desc:'Una hora para vos. El cuerpo te lo agradece.' },
+    { label:'Pasear\nla ciudad',icon:'👟', color:'#E53E3E', light:'#E53E3E22', desc:'Caminá sin destino fijo. La ciudad siempre sorprende.' },
+    { label:'Juntarse\namigos', icon:'🤝', color:'#FF5F00', light:'#FF5F0022', desc:'Nada de planes. Juntarse es el plan.' },
+    { label:'Ir a\nun té',      icon:'🍵', color:'#D69E2E', light:'#D69E2E22', desc:'Un lugar nuevo, algo rico, buena charla.' },
+    { label:'Foto\nloop',       icon:'📷', color:'#1D9E75', light:'#1D9E7522', desc:'Salí con el celu y armá un foto-loop del barrio.' },
+    { label:'Feria o\nmercado', icon:'🎪', color:'#185FA5', light:'#185FA522', desc:'Recorrés, mirás, comprás algo o no. Siempre vale.' },
+    { label:'Running\no caminata',icon:'🏃',color:'#E53E3E', light:'#E53E3E22', desc:'Buscá un loop de running en la comunidad y salís.' },
+  ],
+
+  // Colores del arco iris tipo Preguntados
+  _ruletaColors: [
+    '#FF5F00','#1D9E75','#185FA5','#B794F4',
+    '#E53E3E','#D69E2E','#FF5F00','#1D9E75',
+    '#185FA5','#E53E3E'
+  ],
+
+  _ruletaInit() {
+    this._ruletaAngle = Math.random() * Math.PI * 2;
+    this._ruletaDraw(this._ruletaAngle);
+  },
+
+  _ruletaDraw(angle) {
+    const canvas = document.getElementById('rul-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const acts = this._ruletaActividades;
+    const n = acts.length;
+    const slice = (2 * Math.PI) / n;
+    const cx = 150, cy = 150, r = 145, rInner = 38;
+
+    ctx.clearRect(0, 0, 300, 300);
+
+    for (let i = 0; i < n; i++) {
+      const start = angle + i * slice;
+      const end = start + slice;
+      const color = this._ruletaColors[i];
+
+      // Slice fill
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, start, end);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Slice stroke (separador blanco)
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // Texto — emoji + línea 1 + línea 2
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(start + slice / 2);
+      ctx.textAlign = 'right';
+      ctx.fillStyle = 'rgba(0,0,0,.28)';
+
+      const lines = acts[i].label.split('\n');
+      const textX = r - 10;
+
+      // Sombra para legibilidad
+      ctx.shadowColor = 'rgba(0,0,0,.3)';
+      ctx.shadowBlur = 3;
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 12px "Bai Jamjuree", sans-serif';
+      if (lines.length === 2) {
+        ctx.fillText(lines[0], textX, -7);
+        ctx.fillText(lines[1], textX, 8);
+      } else {
+        ctx.fillText(lines[0], textX, 4);
+      }
+      ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
+    // Aro exterior decorativo
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+    ctx.strokeStyle = 'rgba(255,255,255,.18)';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+
+    // Círculo central
+    ctx.beginPath();
+    ctx.arc(cx, cy, rInner, 0, 2 * Math.PI);
+    ctx.fillStyle = '#1E1E26';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // Logo UL360 en el centro
+    ctx.fillStyle = '#FF5F00';
+    ctx.font = 'bold 10px "Bai Jamjuree", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('UL', cx, cy - 4);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '8px "Bai Jamjuree", sans-serif';
+    ctx.fillText('360°', cx, cy + 8);
+  },
+
+  ruletaSpin() {
+    if (this._ruletaSpinning) return;
+    this._ruletaSpinning = true;
+    const btn = document.getElementById('rul-spin-btn');
+    const resultWrap = document.getElementById('rul-result-wrap');
+    if (btn) btn.disabled = true;
+    if (resultWrap) resultWrap.style.display = 'none';
+
+    const extraSpins = (6 + Math.floor(Math.random() * 5)) * 2 * Math.PI;
+    const randomStop = Math.random() * 2 * Math.PI;
+    const totalRot = extraSpins + randomStop;
+    const duration = 3600;
+    const startAngle = this._ruletaAngle;
+    const startTime = performance.now();
+    const self = this;
+
+    function easeOut(t) { return 1 - Math.pow(1 - t, 4); }
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      self._ruletaAngle = startAngle + totalRot * easeOut(t);
+      self._ruletaDraw(self._ruletaAngle);
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        self._ruletaAngle = self._ruletaAngle % (2 * Math.PI);
+        self._ruletaSpinning = false;
+        if (btn) btn.disabled = false;
+        self._ruletaShowResult();
+      }
+    }
+    requestAnimationFrame(frame);
+  },
+
+  _ruletaShowResult() {
+    const pointerAngle = 3 * Math.PI / 2;
+    const acts = this._ruletaActividades;
+    const n = acts.length;
+    const slice = (2 * Math.PI) / n;
+    const norm = ((pointerAngle - this._ruletaAngle) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    const idx = Math.floor(norm / slice) % n;
+    const act = acts[idx];
+    const color = this._ruletaColors[idx];
+
+    // Agregar al historial
+    this._ruletaHistory.unshift({ label: act.label.replace('\n', ' '), icon: act.icon, color });
+    if (this._ruletaHistory.length > 6) this._ruletaHistory.pop();
+    this._ruletaRenderHistory();
+
+    const resultWrap = document.getElementById('rul-result-wrap');
+    if (!resultWrap) return;
+    resultWrap.style.display = 'block';
+    resultWrap.innerHTML = `
+      <div class="rul-result">
+        <div class="rul-result-banner" style="background:${color};"></div>
+        <div class="rul-result-body">
+          <div class="rul-result-icon">${act.icon}</div>
+          <div class="rul-result-name">${act.label.replace('\n', ' ')}</div>
+          <div class="rul-result-desc">${act.desc}</div>
+          <div class="rul-result-actions">
+            <button class="rul-act-btn" onclick="App._ruletaBuscarLoops('${act.label.replace('\n', ' ')}')">🔍 Ver loops</button>
+            <button class="rul-act-btn" onclick="App.ruletaSpin()">🎡 Girar de nuevo</button>
+            <button class="rul-act-btn primary" onclick="App.sideNav('grabar')">📹 Grabarlo</button>
+          </div>
+        </div>
+      </div>`;
+
+    // Efecto de partículas
+    this._ruletaParticles(color);
+  },
+
+  _ruletaRenderHistory() {
+    const hist = document.getElementById('rul-history');
+    if (!hist) return;
+    if (!this._ruletaHistory.length) return;
+    hist.innerHTML = this._ruletaHistory.map(h =>
+      `<div class="rul-hist-chip" style="border-color:${h.color}33;color:${h.color};">${h.icon} ${h.label}</div>`
+    ).join('');
+  },
+
+  _ruletaBuscarLoops(actividad) {
+    this.sideNav('loops-urbanos');
+    setTimeout(() => {
+      const searchEl = document.getElementById('lu-search');
+      if (searchEl) { searchEl.value = actividad; searchEl.dispatchEvent(new Event('input')); }
+    }, 400);
+  },
+
+  _ruletaParticles(color) {
+    const colors = [color, '#FF5F00', '#ffffff', '#FFD700', '#1D9E75'];
+    for (let i = 0; i < 18; i++) {
+      const p = document.createElement('div');
+      const angle = (Math.random() * 360) * Math.PI / 180;
+      const dist = 60 + Math.random() * 120;
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist - 80;
+      p.className = 'fx-particle';
+      p.style.cssText = `left:50%;top:55%;background:${colors[Math.floor(Math.random()*colors.length)]};--tx:${tx}px;--ty:${ty}px;--dur:${0.5+Math.random()*.4}s;width:${6+Math.random()*6}px;height:${6+Math.random()*6}px;`;
+      document.body.appendChild(p);
+      setTimeout(() => p.remove(), 1000);
+    }
+  },
+
+  // ══════════════════════════════════════════
   // EXPLORAR CIUDADES — datos reales desde loops
   // ══════════════════════════════════════════
   _savedDests: [],
@@ -12753,6 +13233,35 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 })();
 </script>
+
+<!-- ════════════ ACTIVIDADES — ¿QUÉ SALE HOY? ════════════ -->
+<div id="actividades" class="screen" style="background:var(--bg0);">
+  <div class="rul-header">
+    <div>
+      <div class="rul-title">¿Qué sale <span>hoy</span>?</div>
+      <div class="rul-sub">Urban Loop te ayuda a decidir al azar</div>
+    </div>
+    <button onclick="App.go(App._prevScreen||'explore')" style="width:36px;height:36px;border-radius:10px;border:0.5px solid var(--bd);background:var(--lt);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gr);">✕</button>
+  </div>
+
+  <div class="rul-wheel-wrap">
+    <div class="rul-pointer"></div>
+    <canvas id="rul-canvas" width="300" height="300"></canvas>
+    <button class="rul-spin-btn" id="rul-spin-btn" onclick="App.ruletaSpin()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+      Girar la ruleta
+    </button>
+  </div>
+
+  <div id="rul-result-wrap" style="display:none;"></div>
+
+  <div style="padding:16px 16px 4px;">
+    <div style="font-size:11px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Historial de hoy</div>
+    <div id="rul-history" class="rul-history">
+      <div style="font-size:12px;color:var(--gr);padding:4px 0;">Girá la ruleta para empezar 🎡</div>
+    </div>
+  </div>
+</div>
 
 <!-- ── MODAL REGISTRO ── -->
 <div id="register-modal" style="display:none;position:fixed;inset:0;z-index:99990;background:rgba(0,0,0,.75);backdrop-filter:blur(8px);align-items:flex-end;justify-content:center;padding:0;">
