@@ -1092,30 +1092,25 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 /* ═══ GPS USER LOCATION MARKER ═══ */
 .user-loc-wrap {
   position: relative;
-  width: 30px; height: 30px;
+  width: 20px; height: 20px;
   display: flex; align-items: center; justify-content: center;
 }
+/* Un solo elemento — el punto pulsa con box-shadow.
+   Sin transform: scale() → sin capa GPU separada → el pin NO se mueve al hacer zoom. */
 .user-loc-dot {
-  position: absolute;
   width: 14px; height: 14px;
   background: #2563EB;
-  border: 3px solid #fff;
+  border: 2.5px solid #fff;
   border-radius: 50%;
-  box-shadow: 0 2px 8px rgba(37,99,235,.5);
-  z-index: 2;
-}
-.user-loc-pulse {
-  position: absolute;
-  width: 30px; height: 30px;
-  background: rgba(37,99,235,.25);
-  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(37,99,235,0.5);
   animation: locPulse 2s ease-out infinite;
-  z-index: 1;
+  flex-shrink: 0;
 }
+.user-loc-pulse { display: none; } /* ya no se usa */
 @keyframes locPulse {
-  0%   { transform: scale(0.4); opacity: 1; }
-  70%  { transform: scale(1.4); opacity: 0; }
-  100% { transform: scale(1.4); opacity: 0; }
+  0%   { box-shadow: 0 0 0 0   rgba(37,99,235,0.55); }
+  60%  { box-shadow: 0 0 0 12px rgba(37,99,235,0);   }
+  100% { box-shadow: 0 0 0 0   rgba(37,99,235,0);    }
 }
 
 /* ═══ MOBILE FIRST — EXPLORE ═══ */
@@ -1676,9 +1671,6 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       <button class="adm-tab" data-tab="negocios" onclick="App._admTab('negocios',this)">
         <span class="adm-tab-ic">🏪</span>Negocios
       </button>
-      <button class="adm-tab" data-tab="gps-test" onclick="App._admTab('gps-test',this)">
-        <span class="adm-tab-ic">📡</span>Test GPS
-      </button>
     </div>
 
     <!-- ── PROPUESTAS COMUNIDAD ── -->
@@ -1889,55 +1881,6 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       <div class="ac" style="margin-top:12px;">
         <div class="act">📋 Historial de envíos</div>
         <div id="adm-notif-history" style="display:flex;flex-direction:column;gap:8px;"></div>
-      </div>
-    </div>
-
-    <!-- ── TEST GPS / COORDENADAS ── -->
-    <div id="adm-tab-gps-test" class="adm-panel" style="display:none;">
-      <div class="ac">
-        <div class="act">📡 Test de ubicación y coordenadas</div>
-        <p style="font-size:12px;color:var(--t2);margin-bottom:12px;line-height:1.5;">
-          Verifica que el pin coincida con tu posición real. Detecta automáticamente si estás usando GPS chip, WiFi o IP.
-        </p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-          <div style="background:var(--bg1);border:0.5px solid var(--bd);border-radius:10px;padding:12px;text-align:center;">
-            <div style="font-size:10px;color:var(--t2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Latitud</div>
-            <div style="font-size:14px;font-weight:700;color:var(--tx);font-family:monospace;" id="gtest-lat">—</div>
-          </div>
-          <div style="background:var(--bg1);border:0.5px solid var(--bd);border-radius:10px;padding:12px;text-align:center;">
-            <div style="font-size:10px;color:var(--t2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Longitud</div>
-            <div style="font-size:14px;font-weight:700;color:var(--tx);font-family:monospace;" id="gtest-lng">—</div>
-          </div>
-          <div style="background:var(--bg1);border:0.5px solid var(--bd);border-radius:10px;padding:12px;text-align:center;">
-            <div style="font-size:10px;color:var(--t2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Precisión</div>
-            <div style="font-size:16px;font-weight:700;" id="gtest-acc">—</div>
-          </div>
-          <div style="background:var(--bg1);border:0.5px solid var(--bd);border-radius:10px;padding:12px;text-align:center;">
-            <div style="font-size:10px;color:var(--t2);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">Fuente</div>
-            <div style="font-size:13px;font-weight:700;" id="gtest-src">—</div>
-          </div>
-        </div>
-        <div id="gtest-map" style="width:100%;height:240px;border-radius:10px;border:0.5px solid var(--bd);overflow:hidden;background:var(--bg0);margin-bottom:10px;"></div>
-        <div style="background:var(--bg1);border:0.5px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:10px;">
-          <div style="font-size:11px;color:var(--t2);margin-bottom:6px;font-weight:700;">Diagnóstico</div>
-          <div id="gtest-diag" style="font-size:12px;color:var(--tx);line-height:1.7;">Presioná "Iniciar test" para comenzar.</div>
-        </div>
-        <div style="background:var(--bg1);border:0.5px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:12px;">
-          <div style="font-size:11px;color:var(--t2);margin-bottom:6px;font-weight:700;">Últimas lecturas</div>
-          <div id="gtest-history" style="font-size:11px;font-family:monospace;color:var(--t2);display:flex;flex-direction:column;gap:3px;">
-            <div style="color:var(--t3);">Sin lecturas aún</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="App._gtestStart()" id="gtest-btn-start"
-            style="flex:1;padding:12px;background:var(--or);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--fH);">
-            📡 Iniciar test
-          </button>
-          <button onclick="App._gtestStop()" id="gtest-btn-stop"
-            style="flex:1;padding:12px;background:var(--bg1);color:var(--t2);border:0.5px solid var(--bd);border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--fH);" disabled>
-            ⏹ Detener
-          </button>
-        </div>
       </div>
     </div>
 
@@ -4036,7 +3979,7 @@ const App = {
 
     const el = document.createElement('div');
     el.className = 'user-loc-wrap';
-    el.innerHTML = '<div class="user-loc-pulse"></div><div class="user-loc-dot"></div>';
+    el.innerHTML = '<div class="user-loc-dot"></div>';
 
     this._locMarker   = null;
     this._locCentered = true;
@@ -11303,185 +11246,6 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
   },
   _notifPerm: 'default',
   _notifLastCheck: 0,
-
-  // ══════════════════════════════════════════
-  // 📡 TEST GPS / COORDENADAS (Admin)
-  // ══════════════════════════════════════════
-  _gtestWatchId: null,
-  _gtestMap:     null,
-  _gtestMarker:  null,
-  _gtestHistory: [],
-
-  _gtestStart() {
-    const btnStart = document.getElementById('gtest-btn-start');
-    const btnStop  = document.getElementById('gtest-btn-stop');
-    const diagEl   = document.getElementById('gtest-diag');
-    if (!navigator.geolocation) {
-      if (diagEl) diagEl.innerHTML = '❌ Este navegador no soporta geolocalización.';
-      return;
-    }
-    if (btnStart) { btnStart.disabled = true; btnStart.textContent = '⏳ Buscando señal...'; }
-    if (btnStop)  btnStop.disabled = false;
-    if (diagEl)   diagEl.innerHTML  = '🔄 Intentando GPS chip (8s)...';
-    this._gtestHistory = [];
-
-    // Inicializar mapa test
-    if (!this._gtestMap) {
-      const c = document.getElementById('gtest-map');
-      if (c && typeof maplibregl !== 'undefined') {
-        this._gtestMap = new maplibregl.Map({
-          container: 'gtest-map',
-          style: 'https://api.maptiler.com/maps/streets-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
-          center: [-59.645, -30.749], zoom: 14,
-          attributionControl: false
-        });
-        this._gtestMap.on('styleimagemissing', e => {
-          if (!e.id || !e.id.trim()) return;
-          const empty = { width:1, height:1, data: new Uint8Array(4) };
-          if (!this._gtestMap.hasImage(e.id)) this._gtestMap.addImage(e.id, empty, { sdf:false });
-        });
-      }
-    }
-
-    // Estrategia doble:
-    // 1° intento: enableHighAccuracy:true, timeout:8s  → GPS chip (mobile) o falla rápido en desktop
-    // 2° intento: enableHighAccuracy:false, timeout:30s → WiFi/IP (siempre funciona en desktop)
-    const startWatch = (highAcc) => {
-      if (this._gtestWatchId !== null) {
-        navigator.geolocation.clearWatch(this._gtestWatchId);
-        this._gtestWatchId = null;
-      }
-      this._gtestWatchId = navigator.geolocation.watchPosition(
-        pos  => this._gtestOnPos(pos, highAcc),
-        err  => {
-          if (err.code === 3 /* TIMEOUT */ && highAcc) {
-            // Sin GPS chip — reintentar con WiFi/IP
-            if (diagEl) diagEl.innerHTML = '📶 Sin GPS chip. Usando WiFi / IP triangulation...';
-            startWatch(false);
-          } else {
-            this._gtestOnError(err);
-          }
-        },
-        {
-          enableHighAccuracy: highAcc,
-          timeout:            highAcc ? 8000 : 30000,
-          maximumAge:         highAcc ? 0    : 15000
-        }
-      );
-    };
-    startWatch(true);
-  },
-
-  _gtestOnPos(pos, highAcc) {
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
-    const acc = Math.round(pos.coords.accuracy);
-    const ts  = new Date().toLocaleTimeString('es-AR');
-
-    // Cards
-    const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
-    set('gtest-lat', lat.toFixed(6));
-    set('gtest-lng', lng.toFixed(6));
-    const accEl = document.getElementById('gtest-acc');
-    if (accEl) {
-      accEl.textContent = `±${acc}m`;
-      accEl.style.color = acc < 20 ? '#16A34A' : acc < 80 ? '#D97706' : '#DC2626';
-    }
-    const srcEl = document.getElementById('gtest-src');
-    if (srcEl) {
-      if (acc < 20)       { srcEl.textContent = '🛰️ GPS chip';  srcEl.style.color = '#16A34A'; }
-      else if (acc < 100) { srcEl.textContent = '📶 WiFi';      srcEl.style.color = '#D97706'; }
-      else                { srcEl.textContent = '🌐 IP / Red';  srcEl.style.color = '#DC2626'; }
-    }
-
-    // Diagnóstico
-    const diagEl = document.getElementById('gtest-diag');
-    if (diagEl) {
-      let html = '';
-      if (acc < 20)
-        html = `✅ <b>Señal GPS excelente</b> — chip activo (±${acc}m). El pin va a coincidir con tu posición real.`;
-      else if (acc < 80)
-        html = `🟡 <b>WiFi triangulation</b> — precisión ±${acc}m. Normal en desktop, error aceptable para navegación urbana.`;
-      else if (acc < 200)
-        html = `🟠 <b>Señal débil</b> — WiFi/IP (±${acc}m). El pin puede estar hasta ${acc}m lejos. Reiniciar el router puede ayudar.`;
-      else
-        html = `🔴 <b>Solo IP geolocation</b> — precisión ±${acc}m. Sin datos WiFi útiles. En desktop es normal; para pruebas reales usá el celu.`;
-
-      // Diferencia vs pin activo del app
-      if (this._locMarker) {
-        const ll = this._locMarker.getLngLat();
-        const dy = (lat - ll.lat) * 111320;
-        const dx = (lng - ll.lng) * 111320 * Math.cos(lat * Math.PI / 180);
-        const diff = Math.round(Math.sqrt(dx*dx + dy*dy));
-        html += `<br><br>📍 <b>vs pin activo de la app:</b> <span style="color:${diff<50?'#16A34A':diff<200?'#D97706':'#DC2626'};font-weight:700;">${diff}m de diferencia</span>`;
-      }
-      diagEl.innerHTML = html;
-    }
-
-    // Mapa
-    if (this._gtestMap) {
-      const mapReady = this._gtestMap.loaded();
-      const updateMap = () => {
-        if (!this._gtestMarker) {
-          const el = document.createElement('div');
-          el.style.cssText = 'width:16px;height:16px;background:#FF5F00;border:3px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.4);transform:translateZ(0);';
-          this._gtestMarker = new maplibregl.Marker({ element: el, anchor: 'center' })
-            .setLngLat([lng, lat]).addTo(this._gtestMap);
-        } else {
-          this._gtestMarker.setLngLat([lng, lat]);
-        }
-        this._gtestMap.easeTo({ center: [lng, lat], duration: 400 });
-
-        // Círculo de precisión
-        if (this._makeCircleGeoJSON) {
-          const data = this._makeCircleGeoJSON(lat, lng, acc);
-          const src  = this._gtestMap.getSource('gtest-circle');
-          if (src) { src.setData(data); }
-          else {
-            try {
-              this._gtestMap.addSource('gtest-circle', { type:'geojson', data });
-              this._gtestMap.addLayer({ id:'gtest-circle-fill', type:'fill',   source:'gtest-circle', paint:{ 'fill-color':'#FF5F00','fill-opacity':0.1  } });
-              this._gtestMap.addLayer({ id:'gtest-circle-line', type:'line',   source:'gtest-circle', paint:{ 'line-color':'#FF5F00','line-width':1.5,'line-opacity':0.6,'line-dasharray':[3,2] } });
-            } catch(_) {}
-          }
-        }
-      };
-      if (mapReady) updateMap();
-      else this._gtestMap.once('load', updateMap);
-    }
-
-    // Historial
-    this._gtestHistory.unshift({ lat, lng, acc, ts });
-    if (this._gtestHistory.length > 5) this._gtestHistory.pop();
-    const histEl = document.getElementById('gtest-history');
-    if (histEl) {
-      histEl.innerHTML = this._gtestHistory.map((r, i) =>
-        `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:0.5px solid var(--bd);color:${i===0?'var(--or)':'var(--t2)'};">
-          <span>${r.ts}</span>
-          <span>${r.lat.toFixed(5)}, ${r.lng.toFixed(5)}</span>
-          <span style="color:${r.acc<80?'#16A34A':'#DC2626'};">±${r.acc}m</span>
-        </div>`
-      ).join('');
-    }
-  },
-
-  _gtestOnError(err) {
-    const msgs = { 1:'Permiso denegado — habilitá la ubicación en el navegador.', 2:'Posición no disponible — sin señal GPS ni WiFi útil.', 3:'Tiempo agotado — el navegador no pudo obtener una posición.' };
-    const diagEl = document.getElementById('gtest-diag');
-    if (diagEl) diagEl.innerHTML = `❌ <b>Error GPS:</b> ${msgs[err.code] || err.message}<br><br><span style="color:var(--t2);font-size:11px;">En desktop sin GPS chip, asegurate de que el navegador tenga permiso de ubicación (ícono 📍 en la barra de dirección).</span>`;
-    this._gtestStop();
-  },
-
-  _gtestStop() {
-    if (this._gtestWatchId !== null) {
-      navigator.geolocation.clearWatch(this._gtestWatchId);
-      this._gtestWatchId = null;
-    }
-    const b1 = document.getElementById('gtest-btn-start');
-    const b2 = document.getElementById('gtest-btn-stop');
-    if (b1) { b1.disabled = false; b1.textContent = '📡 Iniciar test'; }
-    if (b2) b2.disabled = true;
-  },
 
   // City notif banner (mantener para compatibilidad con HTML existente)
   _initCityNotif() {
