@@ -1092,25 +1092,41 @@ body.day #toast { background:#1A1A2E !important; color:#FFFFFF !important; }
 /* ═══ GPS USER LOCATION MARKER ═══ */
 .user-loc-wrap {
   position: relative;
-  width: 20px; height: 20px;
+  width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center;
+  /* Fuerza que el wrapper quede en la misma capa GPU que el marker de MapLibre.
+     Sin esto, la animación CSS del hijo crea una capa separada que no se actualiza
+     cuando MapLibre mueve el marker (transform del padre), causando el pin a 50km en mobile. */
+  transform: translateZ(0);
+  will-change: transform;
 }
-/* Un solo elemento — el punto pulsa con box-shadow.
-   Sin transform: scale() → sin capa GPU separada → el pin NO se mueve al hacer zoom. */
 .user-loc-dot {
+  position: absolute;
   width: 14px; height: 14px;
   background: #2563EB;
-  border: 2.5px solid #fff;
+  border: 3px solid #fff;
   border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(37,99,235,0.5);
-  animation: locPulse 2s ease-out infinite;
-  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(37,99,235,.5);
+  z-index: 2;
+  /* translateZ propio para no interferir con el padre */
+  transform: translateZ(0);
 }
-.user-loc-pulse { display: none; } /* ya no se usa */
+.user-loc-pulse {
+  position: absolute;
+  width: 30px; height: 30px;
+  border: 2px solid rgba(37,99,235,.6);
+  background: rgba(37,99,235,.18);
+  border-radius: 50%;
+  /* Usar opacity+scale SIN crear compositing layer nueva:
+     opacity sola no crea stacking context separado en mobile */
+  animation: locPulse 2s ease-out infinite;
+  z-index: 1;
+  transform: translateZ(0);
+}
 @keyframes locPulse {
-  0%   { box-shadow: 0 0 0 0   rgba(37,99,235,0.55); }
-  60%  { box-shadow: 0 0 0 12px rgba(37,99,235,0);   }
-  100% { box-shadow: 0 0 0 0   rgba(37,99,235,0);    }
+  0%   { opacity: 1;   transform: translateZ(0) scale(0.4); }
+  70%  { opacity: 0;   transform: translateZ(0) scale(1.5); }
+  100% { opacity: 0;   transform: translateZ(0) scale(1.5); }
 }
 
 /* ═══ MOBILE FIRST — EXPLORE ═══ */
@@ -3979,7 +3995,7 @@ const App = {
 
     const el = document.createElement('div');
     el.className = 'user-loc-wrap';
-    el.innerHTML = '<div class="user-loc-dot"></div>';
+    el.innerHTML = '<div class="user-loc-pulse"></div><div class="user-loc-dot"></div>';
 
     this._locMarker   = null;
     this._locCentered = true;
@@ -4088,13 +4104,19 @@ const App = {
             bearing = gpsHeading;  // hacia donde vas queda "arriba"
           }
 
-          // Pitch: 50 en 3D, 45 en followMe normal
-          const followPitch3d = this._is3D ? 50 : (this._followMe ? 45 : this.mainMap.getPitch());
+          // Pitch: en 3D=50, en followMe normal=45 SOLO si zoom >= 15.
+          // Si el usuario hizo zoom out (zoom < 15) usar pitch=0 (vista plana)
+          // porque en perspectiva con zoom bajo el pin parece desplazado kilómetros.
+          const currentZoom = this.mainMap.getZoom();
+          const followPitch3d = this._is3D ? 50
+            : (this._followMe && currentZoom >= 15) ? 45
+            : 0;
           this.mainMap.easeTo({
             center: [lng, lat],
             bearing,
             pitch: followPitch3d,
-            zoom: Math.max(this.mainMap.getZoom(), 16),
+            // No forzar zoom si el usuario bajó intencionalmente a < 14 (quiere ver más área)
+            zoom: currentZoom < 14 ? currentZoom : Math.max(currentZoom, 16),
             duration: 1200,
             easing: t => t < 0.5 ? 2*t*t : -1+(4-2*t)*t  // ease in-out suave
           });
