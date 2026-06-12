@@ -563,7 +563,7 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
    HOME — Pantalla principal
 ═══════════════════════ */
 #home { overflow-y:auto; background:var(--bg0); }
-.home-wrap { padding:16px 14px 100px; display:flex; flex-direction:column; gap:12px; }
+.home-wrap { padding:16px 14px 100px; display:flex; flex-direction:column; gap:16px; }
 .home-topbar { display:flex; align-items:center; justify-content:space-between; }
 .home-topbar-left { display:flex; align-items:center; gap:10px; }
 .home-menu-btn { width:38px;height:38px;border-radius:50%;background:var(--bg2);border:0.5px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--md); }
@@ -571,7 +571,27 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 .home-brand { font-family:var(--fH); font-size:17px; font-weight:800; color:var(--dk); line-height:1.1; }
 .home-brand span { color:var(--or); }
 .home-avatar { width:38px;height:38px;border-radius:50%;background:var(--orL);border:2px solid var(--or);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--or);font-family:var(--fH);cursor:pointer;flex-shrink:0; }
-.home-title { font-family:var(--fH);font-size:22px;font-weight:800;color:var(--dk);text-align:center; }
+
+/* ── LOOP HERO BANNER ── */
+.loop-hero { background:var(--bg1);border:0.5px solid var(--bd);border-radius:20px;overflow:hidden;position:relative; }
+.loop-hero-top { padding:18px 16px 14px;border-bottom:0.5px solid var(--bd); }
+.loop-hero-eyebrow { display:flex;align-items:center;gap:6px;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--or);margin-bottom:8px; }
+.loop-hero-eyebrow::before { content:'';width:16px;height:1.5px;background:var(--or); }
+.loop-hero-title { font-family:var(--fH);font-size:26px;font-weight:800;color:var(--dk);line-height:1.1;letter-spacing:-0.5px; }
+.loop-hero-title em { font-style:normal;color:var(--or); }
+.loop-hero-sub { font-size:12px;color:var(--gr);margin-top:6px;line-height:1.55; }
+.loop-pillars { display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd); }
+.loop-pillar { background:var(--bg1);padding:14px 12px;display:flex;flex-direction:column;gap:4px;cursor:pointer;transition:background .15s; }
+.loop-pillar:hover { background:var(--bg2); }
+.loop-pillar-ico { font-size:22px; }
+.loop-pillar-name { font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk);line-height:1.2; }
+.loop-pillar-sub { font-size:10px;color:var(--gr);line-height:1.35; }
+.loop-pillar-arrow { font-size:10px;color:var(--or);font-weight:700;margin-top:auto;padding-top:6px; }
+.loop-cta-btn { width:100%;padding:16px;border:none;border-radius:14px;background:var(--or);color:#fff;font-family:var(--fH);font-size:16px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;letter-spacing:0.2px;box-shadow:0 6px 24px rgba(255,95,0,.4);transition:all .15s; }
+.loop-cta-btn:hover { background:var(--or2);transform:translateY(-1px); }
+.home-section-header { display:flex;align-items:center;justify-content:space-between;padding:0 2px; }
+.home-section-label { font-family:var(--fH);font-size:11px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:0.1em; }
+.home-title { font-family:var(--fH);font-size:20px;font-weight:800;color:var(--dk);text-align:center; }
 .home-title span { color:var(--or); }
 /* Tabs categoría */
 .hw-cats { display:flex; gap:8px; }
@@ -1426,8 +1446,72 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       <div class="home-avatar" id="home-avatar" onclick="App.sideNav('profile')">👤</div>
     </div>
 
-    <!-- Título -->
-    <div class="home-title">¿Qué hacemos <span>hoy?</span></div>
+    <!-- ═══ LOOP HERO ═══ -->
+    <div class="loop-hero">
+      <!-- Cabecera: qué es un Loop -->
+      <div class="loop-hero-top">
+        <div class="loop-hero-eyebrow">La identidad de Urban Loop 360°</div>
+        <div class="loop-hero-title">
+          El <em>Loop</em> es una<br>vuelta completa<br>a tu ciudad
+        </div>
+        <div class="loop-hero-sub">
+          Fotos geolocalizadas + recorridos colaborativos + comunidad de vecinos.<br>
+          Todo junto forma el Loop.
+        </div>
+      </div>
+      <!-- Tres pilares -->
+      <div class="loop-pillars">
+        <div class="loop-pillar" onclick="App.openFotoLoop()">
+          <div class="loop-pillar-ico">📸</div>
+          <div class="loop-pillar-name">FotoLoop</div>
+          <div class="loop-pillar-sub">Fotos reales de tu ciudad en el mapa</div>
+          <div class="loop-pillar-arrow">→</div>
+        </div>
+        <div class="loop-pillar" onclick="App.sideNav('loops-urbanos')">
+          <div class="loop-pillar-ico">🔁</div>
+          <div class="loop-pillar-name">Loops Urbanos</div>
+          <div class="loop-pillar-sub">Recorridos temáticos que conectan</div>
+          <div class="loop-pillar-arrow">→</div>
+        </div>
+        <div class="loop-pillar" onclick="App.sideNav('comunidad')">
+          <div class="loop-pillar-ico">👥</div>
+          <div class="loop-pillar-name">Loopers</div>
+          <div class="loop-pillar-sub">La comunidad detrás de todo</div>
+          <div class="loop-pillar-arrow">→</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CTA principal: Nuevo Loop -->
+    <button class="loop-cta-btn" onclick="App.sideNav('grabar')">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+      + Crear un nuevo Loop
+    </button>
+
+    <!-- Explorar ciudad -->
+    <div class="home-grid">
+      <div class="home-card" onclick="App.sideNav('explore')">
+        <div class="home-card-icon" style="background:#3B82F6;">🗺️</div>
+        <div><div class="home-card-title">Explorar ciudad</div><div class="home-card-sub">Loops y fotos en el mapa</div></div>
+      </div>
+      <div class="home-card" onclick="App.sideNav('loops-urbanos')">
+        <div class="home-card-icon" style="background:#FF5F00;">🔍</div>
+        <div><div class="home-card-title">Buscar Loops</div><div class="home-card-sub">Gastronomía, cultura, deporte</div></div>
+      </div>
+      <div class="home-card" onclick="App.openFotoLoop()">
+        <div class="home-card-icon" style="background:#EF4444;">📷</div>
+        <div><div class="home-card-title">FotoLoop</div><div class="home-card-sub">Sumá fotos al mapa</div></div>
+      </div>
+      <div class="home-card" onclick="App.sideNav('comunidad')">
+        <div class="home-card-icon" style="background:#8B5CF6;">👥</div>
+        <div><div class="home-card-title">Loopers</div><div class="home-card-sub">Comunidad</div></div>
+      </div>
+    </div>
+
+    <!-- Separador: Qué hacemos hoy -->
+    <div class="home-section-header">
+      <div class="home-section-label">¿Qué hacemos hoy?</div>
+    </div>
 
     <!-- Tabs categoría -->
     <div class="hw-cats">
@@ -1450,42 +1534,12 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <!-- Resultado (aparece al parar) -->
     <div id="hw-result-wrap" style="display:none;"></div>
 
-    <!-- Grid 2x3 -->
-    <div class="home-grid">
-      <div class="home-card" onclick="App.sideNav('loops-urbanos')">
-        <div class="home-card-icon" style="background:#FF5F00;">🔍</div>
-        <div><div class="home-card-title">Buscar actividad</div><div class="home-card-sub">Encontrá qué hacer</div></div>
-      </div>
-      <div class="home-card" onclick="App.sideNav('grabar')">
-        <div class="home-card-icon" style="background:#22C55E;">📹</div>
-        <div><div class="home-card-title">Nuevo Loop</div><div class="home-card-sub">Creá y compartí</div></div>
-      </div>
-      <div class="home-card" onclick="App.sideNav('explore')">
-        <div class="home-card-icon" style="background:#3B82F6;">🗺️</div>
-        <div><div class="home-card-title">Explorar ciudad</div><div class="home-card-sub">Lugares y experiencias</div></div>
-      </div>
-      <div class="home-card" onclick="App.sideNav('comunidad')">
-        <div class="home-card-icon" style="background:#8B5CF6;">👥</div>
-        <div><div class="home-card-title">Loopers</div><div class="home-card-sub">Comunidad</div></div>
-      </div>
-      <div class="home-card" onclick="App.sideNav('eventos')">
-        <div class="home-card-icon" style="background:#F59E0B;">📅</div>
-        <div><div class="home-card-title">Eventos Loop</div><div class="home-card-sub">Próximos eventos</div></div>
-      </div>
-      <div class="home-card" onclick="App.openFotoLoop()">
-        <div class="home-card-icon" style="background:#EF4444;">📷</div>
-        <div><div class="home-card-title">Fotoloop</div><div class="home-card-sub">Capturá momentos</div></div>
-      </div>
-    </div>
-
     <!-- Activos ahora -->
-    <div>
-      <div class="home-section-title">
-        Activos ahora
-        <span class="home-section-see" onclick="App.sideNav('loops-urbanos')">ver todos →</span>
-      </div>
-      <div id="home-activos-list"><div style="font-size:13px;color:var(--gr);padding:8px 0;">Cargando loops...</div></div>
+    <div class="home-section-header">
+      <div class="home-section-label">Activos ahora</div>
+      <span class="home-section-see" onclick="App.sideNav('loops-urbanos')" style="font-size:11px;color:var(--or);font-weight:600;cursor:pointer;">ver todos →</span>
     </div>
+    <div id="home-activos-list"><div style="font-size:13px;color:var(--gr);padding:4px 0;">Cargando loops...</div></div>
 
   </div>
 </div>
