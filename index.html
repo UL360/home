@@ -168,7 +168,8 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 /* Splash: imagen full-cover en mobile */
 #splash img.sp-cover {
   position:absolute; inset:0; width:100%; height:100%;
-  object-fit:cover; object-position:center 20%;
+  object-fit:contain; object-position:center center;
+  background:#000;
 }
 /* Desktop web: imagen contenida y centrada */
 @media (min-width: 769px) {
@@ -178,16 +179,18 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
     transform:translate(-50%,-56%);
     border-radius:22px;
     box-shadow:0 16px 60px rgba(0,0,0,.7);
-    object-position:center top;
+    object-fit:contain;
+    object-position:center center;
   }
 }
-/* Mobile: imagen no tan alta — mostrar más centrada */
+/* Mobile: imagen completa centrada */
 @media (max-width: 768px) {
   #splash img.sp-cover {
-    object-position: center 15%;
-    height: 70vh;
-    top: 0;
+    object-fit:contain;
+    object-position: center center;
+    height: 100%;
     width: 100%;
+    top: 0;
   }
   #splash .sp-content {
     padding-bottom: 40px !important;
@@ -758,6 +761,11 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
     box-shadow: none !important;
   }
   #side-panel.sb-rail {
+    width: 0 !important;
+    box-shadow: none !important;
+  }
+  /* Solo cuando se abre manualmente se muestra el rail */
+  body.sb-active #side-panel.sb-rail {
     width: var(--side-w-rail) !important;
     box-shadow: 4px 0 24px rgba(0,0,0,.35) !important;
   }
@@ -1484,8 +1492,8 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 <div id="splash" class="screen active">
   <!-- Imagen de fondo -->
   <img class="sp-cover" 
-    alt="Urban Loop 360 — Descubrí y grabá loops en tu ciudad" src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/imagendeinicio.png"
-    crossorigin="anonymous" alt="">
+    alt="Urban Loop 360 — Descubrí y grabá loops en tu ciudad" src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/6d08a563-b7bd-4856-9904-3cd8343950c9%20(1).png"
+    crossorigin="anonymous">
   <!-- Gradiente oscuro inferior -->
   <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,transparent 25%,rgba(0,0,0,.65) 60%,rgba(0,0,0,.92) 100%);"></div>
   <!-- Contenido -->
@@ -12253,7 +12261,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
 
     if (state === 0) {
       if (so) so.classList.remove('show');
-      document.body.classList.remove('sb-rail-mode','sb-open-mode');
+      document.body.classList.remove('sb-rail-mode','sb-open-mode','sb-active');
       // Mobile: restaurar menu-btn naranja
       if (isMobile && menuBtn) {
         menuBtn.style.opacity = '1';
@@ -12263,7 +12271,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     } else if (state === 1) {
       sp.classList.add('sb-rail');
       if (so) so.classList.remove('show');
-      document.body.classList.add('sb-rail-mode');
+      document.body.classList.add('sb-rail-mode','sb-active');
       document.body.classList.remove('sb-open-mode');
       // Mobile: ocultar menu-btn (el sb-toggle-btn dentro del rail lo reemplaza)
       if (isMobile && menuBtn) {
@@ -12274,7 +12282,7 @@ https://urbanloop360.app/loop/${this._qrId}`:'https://urbanloop360.app';
     } else {
       sp.classList.add('sb-open');
       if (isMobile && so) so.classList.add('show');
-      document.body.classList.add('sb-open-mode');
+      document.body.classList.add('sb-open-mode','sb-active');
       document.body.classList.remove('sb-rail-mode');
       // Mobile: ocultar menu-btn (el sidebar lo cubre)
       if (isMobile && menuBtn) {
