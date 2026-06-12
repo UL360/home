@@ -220,6 +220,17 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 .sp-loading span { width:8px; height:8px; border-radius:50%; background:var(--or); animation:dotAnim 1.2s ease-in-out infinite; }
 .sp-loading span:nth-child(2){animation-delay:.2s;} .sp-loading span:nth-child(3){animation-delay:.4s;}
 
+/* ── Animaciones splash recorrido ── */
+@keyframes drawRoute {
+  0%   { stroke-dashoffset: 600; }
+  100% { stroke-dashoffset: 0; }
+}
+@keyframes pinAppear {
+  0%   { opacity:0; transform:scale(0); }
+  70%  { transform:scale(1.3); }
+  100% { opacity:1; transform:scale(1); }
+}
+
 /* ═══════════════════════
    EXPLORE
 ═══════════════════════ */
@@ -1491,7 +1502,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       </div>
       <!-- Imagen principal -->
       <img
-        src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/194fb438-c755-480a-afbd-9ae17885e83c.png"
+        src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/7c7ce9ae-dabe-4877-904e-31649826b899.png"
         alt="Urban Loop 360° — Descubrí, viví y compartí loops en tu ciudad"
         crossorigin="anonymous">
       <!-- Gradiente + botones -->
@@ -1576,18 +1587,41 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 <div id="splash" class="screen active">
   <!-- Imagen de fondo -->
   <img class="sp-cover" 
-    alt="Urban Loop 360 — Descubrí y grabá loops en tu ciudad" src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/6d08a563-b7bd-4856-9904-3cd8343950c9%20(1).png"
+    alt="Urban Loop 360 — Descubrí y grabá loops en tu ciudad" src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/194fb438-c755-480a-afbd-9ae17885e83c.png"
     crossorigin="anonymous">
   <!-- Gradiente oscuro inferior -->
   <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,transparent 25%,rgba(0,0,0,.65) 60%,rgba(0,0,0,.92) 100%);"></div>
-  <!-- Contenido -->
-  <div class="sp-content" style="position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;padding-bottom:60px;animation:fadeUp .7s ease both;">
-    <div class="sp-title" style="font-family:var(--fH);font-size:34px;font-weight:700;color:white;letter-spacing:-0.5px;line-height:1.15;text-align:center;">
-      Urban <span style="color:var(--or);">Loop</span><br>
-      <span style="font-size:18px;font-weight:400;letter-spacing:3px;color:rgba(255,255,255,.65);">360°</span>
-    </div>
-    <div class="sp-loading" style="margin-top:28px;">
-      <span></span><span></span><span></span>
+  <!-- Contenido inferior: recorrido animado -->
+  <div style="position:absolute;bottom:0;left:0;right:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding-bottom:44px;animation:fadeUp .7s ease both;">
+
+    <!-- SVG: recorrido naranja que se dibuja como loader -->
+    <svg id="sp-route" viewBox="0 0 220 90" width="220" height="90" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
+      <!-- La ruta: forma de loop urbano con esquinas -->
+      <path id="sp-path"
+        d="M20,70 L20,45 L60,45 L60,20 L110,20 L110,45 L160,45 L160,70 L110,70 L110,55 L70,55 L70,70 Z"
+        stroke="#FF5F00" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"
+        fill="none"
+        style="stroke-dasharray:600;stroke-dashoffset:600;animation:drawRoute 2.2s cubic-bezier(.4,0,.2,1) forwards .3s;"/>
+
+      <!-- Pin de inicio -->
+      <g style="opacity:0;animation:pinAppear .3s ease forwards 2.4s;">
+        <circle cx="20" cy="70" r="5" fill="#FF5F00"/>
+        <circle cx="20" cy="70" r="8" fill="none" stroke="#FF5F00" stroke-width="1.5" opacity=".4"/>
+      </g>
+      <!-- Pin de fin -->
+      <g style="opacity:0;animation:pinAppear .3s ease forwards 2.5s;">
+        <circle cx="70" cy="70" r="5" fill="#FF5F00"/>
+        <path d="M70,58 L67,64 L73,64 Z" fill="#FF5F00"/>
+      </g>
+      <!-- Puntos intermedios -->
+      <circle cx="60" cy="45" r="3.5" fill="#FF5F00" style="opacity:0;animation:pinAppear .25s ease forwards 1.2s;"/>
+      <circle cx="110" cy="20" r="3.5" fill="#FF5F00" style="opacity:0;animation:pinAppear .25s ease forwards 1.6s;"/>
+      <circle cx="160" cy="45" r="3.5" fill="#FF5F00" style="opacity:0;animation:pinAppear .25s ease forwards 2.0s;"/>
+    </svg>
+
+    <!-- Texto debajo -->
+    <div style="font-family:var(--fH);font-size:11px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:2.5px;text-transform:uppercase;margin-top:10px;animation:fadeUp .5s ease both .4s;opacity:0;">
+      Cargando tu ciudad...
     </div>
   </div>
 </div>
