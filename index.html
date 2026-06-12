@@ -560,61 +560,60 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
    HOME — Pantalla principal
 ═══════════════════════ */
 #home { overflow-y:auto; background:var(--bg0); }
-.home-wrap { padding:20px 14px 100px; display:flex; flex-direction:column; gap:14px; }
-.home-topbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
-.home-greeting { font-size:12px; color:var(--gr); }
-.home-brand { font-family:var(--fH); font-size:18px; font-weight:800; color:var(--dk); }
+.home-wrap { padding:16px 14px 100px; display:flex; flex-direction:column; gap:12px; }
+.home-topbar { display:flex; align-items:center; justify-content:space-between; }
+.home-topbar-left { display:flex; align-items:center; gap:10px; }
+.home-menu-btn { width:38px;height:38px;border-radius:50%;background:var(--bg2);border:0.5px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--md); }
+.home-greeting { font-size:11px; color:var(--gr); }
+.home-brand { font-family:var(--fH); font-size:17px; font-weight:800; color:var(--dk); line-height:1.1; }
 .home-brand span { color:var(--or); }
-.home-avatar {
-  width:38px; height:38px; border-radius:50%;
-  background:var(--orL); border:2px solid var(--or);
-  display:flex; align-items:center; justify-content:center;
-  font-size:15px; font-weight:700; color:var(--or); font-family:var(--fH);
-  cursor:pointer; flex-shrink:0;
-}
-/* Hero card — ¿Qué sale hoy? */
-.home-hero {
-  border-radius:18px; padding:20px 18px;
-  background:var(--c-viola); border:1px solid var(--c-viola-b);
-  cursor:pointer; transition:opacity .15s; position:relative; overflow:hidden;
-}
-.home-hero:hover { opacity:.9; }
-.home-hero-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
-.home-hero-pill { font-size:10px; font-weight:700; padding:3px 10px; border-radius:20px; background:var(--c-viola-b); color:var(--c-viola-t); letter-spacing:.3px; text-transform:uppercase; }
-.home-hero-title { font-family:var(--fH); font-size:22px; font-weight:800; color:var(--c-viola-t); margin-bottom:4px; }
-.home-hero-sub { font-size:12px; color:var(--c-viola-b); }
-.home-hero-bar { display:flex; align-items:center; gap:8px; margin-top:14px; }
-.home-hero-progress { flex:1; height:4px; background:var(--c-viola-b); border-radius:2px; overflow:hidden; }
-.home-hero-progress-fill { width:60%; height:100%; background:var(--c-viola-t); border-radius:2px; }
-.home-hero-note { font-size:11px; color:var(--c-viola-b); }
-/* Grid 2x2 */
-.home-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.home-card {
-  background:var(--wh); border:0.5px solid var(--bd); border-radius:16px;
-  padding:16px 14px; cursor:pointer; transition:all .15s;
-}
-.home-card:hover { border-color:var(--or); transform:translateY(-1px); }
-.home-card-icon {
-  width:38px; height:38px; border-radius:11px;
-  display:flex; align-items:center; justify-content:center;
-  font-size:18px; margin-bottom:12px;
-}
-.home-card-title { font-family:var(--fH); font-size:14px; font-weight:700; color:var(--dk); margin-bottom:2px; }
-.home-card-sub { font-size:11px; color:var(--gr); line-height:1.4; }
+.home-avatar { width:38px;height:38px;border-radius:50%;background:var(--orL);border:2px solid var(--or);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--or);font-family:var(--fH);cursor:pointer;flex-shrink:0; }
+.home-title { font-family:var(--fH);font-size:22px;font-weight:800;color:var(--dk);text-align:center; }
+.home-title span { color:var(--or); }
+/* Tabs categoría */
+.hw-cats { display:flex; gap:8px; }
+.hw-cat-btn { flex:1;padding:8px 4px 7px;border-radius:22px;border:1.5px solid var(--bd);background:var(--wh);font-family:var(--fH);font-size:12px;font-weight:700;color:var(--gr);cursor:pointer;transition:all .18s;display:flex;flex-direction:column;align-items:center;gap:3px; }
+.hw-cat-btn .hw-cat-ico { font-size:18px; }
+.hw-cat-btn.on-ocio      { color:#FF5F00;background:var(--orL);border-color:#FF5F00; }
+.hw-cat-btn.on-deportes  { color:#185FA5;background:#E6F1FB;border-color:#185FA5; }
+.hw-cat-btn.on-aventuras { color:#3B6D11;background:#EAF3DE;border-color:#3B6D11; }
+/* Puntero + rueda */
+.hw-wheel-wrap { display:flex;flex-direction:column;align-items:center; }
+.hw-pointer { width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-top:22px solid var(--or);filter:drop-shadow(0 2px 6px rgba(255,95,0,.5));margin-bottom:-3px;position:relative;z-index:2; }
+#hw-canvas { display:block;border-radius:50%;filter:drop-shadow(0 4px 18px rgba(0,0,0,.35)); }
+/* Botón girar */
+.hw-spin-btn { width:100%;max-width:240px;height:50px;border:none;border-radius:14px;background:var(--or);color:#fff;font-family:var(--fH);font-size:16px;font-weight:800;cursor:pointer;margin-top:16px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 5px 20px rgba(255,95,0,.4);transition:all .15s;letter-spacing:.3px; }
+.hw-spin-btn:hover:not(:disabled) { background:var(--or2);transform:translateY(-2px);box-shadow:0 8px 28px rgba(255,95,0,.5); }
+.hw-spin-btn:disabled { background:var(--bg3);color:var(--gr);cursor:not-allowed;box-shadow:none;transform:none; }
+/* Card resultado */
+.hw-result { background:var(--wh);border-radius:18px;border:0.5px solid var(--bd);overflow:hidden;animation:fadeUp .3s cubic-bezier(.34,1.56,.64,1); }
+.hw-result-top { padding:14px 16px 10px;display:flex;align-items:center;gap:12px; }
+.hw-result-ico { font-size:34px;flex-shrink:0; }
+.hw-result-name { font-family:var(--fH);font-size:17px;font-weight:800; }
+.hw-result-desc { font-size:12px;color:var(--md);margin-top:3px;line-height:1.5; }
+.hw-points { display:inline-flex;align-items:center;gap:5px;margin:0 16px 12px;padding:6px 12px;border-radius:22px;background:var(--bg2);border:0.5px solid var(--bd);font-size:12px;font-weight:700;color:var(--or); }
+.hw-actions { display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px 14px; }
+.hw-action-btn { display:flex;flex-direction:column;align-items:center;gap:5px;padding:12px 8px;border-radius:14px;border:0.5px solid var(--bd);background:var(--bg2);cursor:pointer;transition:all .15s;font-family:var(--fH);font-size:12px;font-weight:700;color:var(--dk); }
+.hw-action-btn .hw-a-ico { font-size:20px; }
+.hw-action-btn:hover { border-color:var(--or);background:var(--orL);color:var(--or); }
+.hw-action-btn.primary { background:var(--or);border-color:var(--or);color:#fff; }
+.hw-action-btn.primary:hover { background:var(--or2); }
+/* Grid 2x3 */
+.home-grid { display:grid;grid-template-columns:1fr 1fr;gap:8px; }
+.home-card { background:var(--wh);border:0.5px solid var(--bd);border-radius:14px;padding:12px 10px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s; }
+.home-card:hover { border-color:var(--or); }
+.home-card-icon { width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px; }
+.home-card-title { font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);line-height:1.2; }
+.home-card-sub { font-size:10px;color:var(--gr);margin-top:2px;line-height:1.3; }
 /* Activos ahora */
-.home-section-title { font-family:var(--fH); font-size:14px; font-weight:700; color:var(--dk); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
-.home-section-see { font-size:11px; color:var(--or); font-weight:600; cursor:pointer; }
-.home-active-card {
-  background:var(--wh); border:0.5px solid var(--bd); border-radius:14px;
-  padding:12px 14px; display:flex; align-items:center; gap:12px;
-  margin-bottom:8px; cursor:pointer; transition:border-color .12s;
-}
+.home-section-title { font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);display:flex;align-items:center;justify-content:space-between; }
+.home-section-see { font-size:11px;color:var(--or);font-weight:600;cursor:pointer; }
+.home-active-card { background:var(--wh);border:0.5px solid var(--bd);border-radius:13px;padding:11px 13px;display:flex;align-items:center;gap:11px;margin-top:8px;cursor:pointer;transition:border-color .12s; }
 .home-active-card:hover { border-color:var(--or); }
-.home-active-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
-.home-active-info { flex:1; min-width:0; }
-.home-active-name { font-size:13px; font-weight:600; color:var(--dk); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.home-active-meta { font-size:11px; color:var(--gr); margin-top:2px; }
-.home-active-tag { font-size:10px; padding:3px 9px; border-radius:20px; font-weight:700; flex-shrink:0; }
+.home-active-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+.home-active-name { font-size:13px;font-weight:600;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.home-active-meta { font-size:11px;color:var(--gr);margin-top:1px; }
+.home-active-tag { font-size:10px;padding:3px 8px;border-radius:20px;font-weight:700;flex-shrink:0; }
 
 /* ═══════════════════════
    RULETA — ¿QUÉ SALE HOY?
@@ -1406,48 +1405,66 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <!-- Topbar -->
     <div class="home-topbar">
-      <div>
-        <div class="home-greeting" id="home-greeting">Buenas, loopeador</div>
-        <div class="home-brand">Urban <span>Loop</span> 360°</div>
+      <div class="home-topbar-left">
+        <div class="home-menu-btn" onclick="App.toggleSidebar()" aria-label="Menú">
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true"><rect y="0" width="18" height="2" rx="1" fill="currentColor"/><rect y="6" width="14" height="2" rx="1" fill="currentColor"/><rect y="12" width="10" height="2" rx="1" fill="currentColor"/></svg>
+        </div>
+        <div>
+          <div class="home-greeting" id="home-greeting">Buenas, loopeador</div>
+          <div class="home-brand">Urban <span>Loop</span> 360°</div>
+        </div>
       </div>
       <div class="home-avatar" id="home-avatar" onclick="App.sideNav('profile')">👤</div>
     </div>
 
-    <!-- Hero: ¿Qué sale hoy? -->
-    <div class="home-hero" onclick="App.sideNav('actividades')">
-      <div class="home-hero-top">
-        <span class="home-hero-pill">Destacado</span>
-        <span style="font-size:20px;">🎡</span>
-      </div>
-      <div class="home-hero-title">¿Qué sale hoy?</div>
-      <div class="home-hero-sub">Girá la ruleta y decidí al azar</div>
-      <div class="home-hero-bar">
-        <div class="home-hero-progress"><div class="home-hero-progress-fill"></div></div>
-        <span class="home-hero-note" id="home-hero-note">Urban Loop te activa</span>
-      </div>
+    <!-- Título -->
+    <div class="home-title">¿Qué hacemos <span>hoy?</span></div>
+
+    <!-- Tabs categoría -->
+    <div class="hw-cats">
+      <button class="hw-cat-btn on-ocio"     id="hw-tab-ocio"      onclick="App.hwSetCat('ocio')"><span class="hw-cat-ico">☀️</span>Ocio</button>
+      <button class="hw-cat-btn"             id="hw-tab-deportes"  onclick="App.hwSetCat('deportes')"><span class="hw-cat-ico">⚡</span>Deportes</button>
+      <button class="hw-cat-btn"             id="hw-tab-aventuras" onclick="App.hwSetCat('aventuras')"><span class="hw-cat-ico">🌿</span>Aventuras</button>
     </div>
 
-    <!-- Grid 2x2 -->
+    <!-- Rueda con puntero -->
+    <div class="hw-wheel-wrap">
+      <div class="hw-pointer"></div>
+      <canvas id="hw-canvas" width="280" height="280"></canvas>
+      <button class="hw-spin-btn" id="hw-spin-btn" onclick="App.hwSpin()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        ¡Girar!
+      </button>
+    </div>
+
+    <!-- Resultado (aparece al parar) -->
+    <div id="hw-result-wrap" style="display:none;"></div>
+
+    <!-- Grid 2x3 -->
     <div class="home-grid">
       <div class="home-card" onclick="App.sideNav('loops-urbanos')">
-        <div class="home-card-icon" style="background:var(--c-verde);">🔍</div>
-        <div class="home-card-title">Buscar actividad</div>
-        <div class="home-card-sub">Mate, bici, kayak...</div>
+        <div class="home-card-icon" style="background:#FF5F00;">🔍</div>
+        <div><div class="home-card-title">Buscar actividad</div><div class="home-card-sub">Encontrá qué hacer</div></div>
       </div>
       <div class="home-card" onclick="App.sideNav('grabar')">
-        <div class="home-card-icon" style="background:var(--c-naranja);">📹</div>
-        <div class="home-card-title">Nuevo loop</div>
-        <div class="home-card-sub">Subí tu salida</div>
+        <div class="home-card-icon" style="background:#22C55E;">📹</div>
+        <div><div class="home-card-title">Nuevo Loop</div><div class="home-card-sub">Creá y compartí</div></div>
       </div>
       <div class="home-card" onclick="App.sideNav('explore')">
-        <div class="home-card-icon" style="background:var(--c-rojo);">🗺️</div>
-        <div class="home-card-title">Explorar ciudad</div>
-        <div class="home-card-sub">Mapa en vivo</div>
+        <div class="home-card-icon" style="background:#3B82F6;">🗺️</div>
+        <div><div class="home-card-title">Explorar ciudad</div><div class="home-card-sub">Lugares y experiencias</div></div>
       </div>
       <div class="home-card" onclick="App.sideNav('comunidad')">
-        <div class="home-card-icon" style="background:var(--c-azul);">👥</div>
-        <div class="home-card-title">Comunidad</div>
-        <div class="home-card-sub">Loops recientes</div>
+        <div class="home-card-icon" style="background:#8B5CF6;">👥</div>
+        <div><div class="home-card-title">Loopers</div><div class="home-card-sub">Comunidad</div></div>
+      </div>
+      <div class="home-card" onclick="App.sideNav('eventos')">
+        <div class="home-card-icon" style="background:#F59E0B;">📅</div>
+        <div><div class="home-card-title">Eventos Loop</div><div class="home-card-sub">Próximos eventos</div></div>
+      </div>
+      <div class="home-card" onclick="App.sideNav('grabar')">
+        <div class="home-card-icon" style="background:#EF4444;">📷</div>
+        <div><div class="home-card-title">Fotoloop</div><div class="home-card-sub">Capturá momentos</div></div>
       </div>
     </div>
 
@@ -1457,9 +1474,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
         Activos ahora
         <span class="home-section-see" onclick="App.sideNav('loops-urbanos')">ver todos →</span>
       </div>
-      <div id="home-activos-list">
-        <div style="font-size:13px;color:var(--gr);padding:8px 0;">Cargando loops...</div>
-      </div>
+      <div id="home-activos-list"><div style="font-size:13px;color:var(--gr);padding:8px 0;">Cargando loops...</div></div>
     </div>
 
   </div>
@@ -9883,56 +9898,272 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
   },
 
   // ══════════════════════════════════════════
-  // MÓDULO 0 — HOME
+  // MÓDULO 0 — HOME + RUEDA GIRATORIA
   // ══════════════════════════════════════════
+  _hwCat: 'ocio',
+  _hwAngle: 0,
+  _hwSpinning: false,
+  _hwUserPoints: 0,
+
+  _hwData: {
+    ocio: {
+      accent:'#FF5F00', light:'#FFF3EC', textDark:'#7A3500',
+      items:[
+        { icon:'☕', label:'Mate / Té',    full:'Tomar mate o té',          desc:'Salí a tomar algo rico. Al aire libre siempre es mejor.',         pts:20 },
+        { icon:'📷', label:'Fotografía',   full:'Fotografía urbana',        desc:'Recorrés la ciudad con el celu y armás un foto-loop.',             pts:30 },
+        { icon:'🧺', label:'Picnic',       full:'Picnic al aire libre',     desc:'Plaza, parque, río. Llevás la manta y lo que haya en casa.',       pts:25 },
+        { icon:'🎭', label:'Cine/Teatro',  full:'Cine, teatro o recital',   desc:'Salida cultural. Solos, en pareja o en grupo.',                    pts:35 },
+        { icon:'🐕', label:'Pasear',       full:'Pasear o vuelta al perro', desc:'Una vuelta corta o larga. La ciudad se ve mejor caminando.',       pts:15 },
+      ]
+    },
+    deportes: {
+      accent:'#185FA5', light:'#E6F1FB', textDark:'#0C447C',
+      items:[
+        { icon:'⚽', label:'Fútbol',   full:'Fútbol',          desc:'Armá un picado o buscá canchas disponibles cerca tuyo.',      pts:40 },
+        { icon:'🎾', label:'Tenis',    full:'Tenis',           desc:'Reservá una cancha y buscá un compañero de práctica.',         pts:35 },
+        { icon:'🏓', label:'Pádel',    full:'Pádel',           desc:'El deporte del momento. Buscá un loop de pádel en tu zona.',  pts:35 },
+        { icon:'🏊', label:'Natación', full:'Natación',        desc:'Pileta, río o laguna. El agua siempre está buena.',            pts:40 },
+        { icon:'🚲', label:'Bici',     full:'Salir en bici',   desc:'Ruta corta o larga. Solo o en grupo, siempre es un loop.',    pts:30 },
+        { icon:'🏃', label:'Running',  full:'Running',         desc:'Calzate y salí. Cualquier recorrido suma.',                   pts:30 },
+        { icon:'🧘', label:'Yoga',     full:'Yoga / Cardio',   desc:'Al aire libre o en el gym. El cuerpo te lo agradece.',        pts:25 },
+        { icon:'🚴', label:'Ciclismo', full:'Ciclismo urbano', desc:'Pedaleá por la ciudad y descubrí nuevas rutas.',              pts:35 },
+      ]
+    },
+    aventuras: {
+      accent:'#3B6D11', light:'#EAF3DE', textDark:'#27500A',
+      items:[
+        { icon:'🛶', label:'Kayak',      full:'Kayak en ríos y lagunas',       desc:'Remás en aguas tranquilas y armás un foto-loop del paisaje.',   pts:60 },
+        { icon:'🎣', label:'Pesca',      full:'Pesca con mosca en el Paraná',  desc:'Una de las mejores experiencias del litoral argentino.',         pts:55 },
+        { icon:'🥾', label:'Trekking',   full:'Trekking en montes y senderos', desc:'Calzate bien, llevá agua y explorá los senderos cercanos.',      pts:65 },
+        { icon:'🧗', label:'Escalada',   full:'Escalada deportiva',            desc:'Desafío físico y mental. Buscá una pared o un sector natural.',  pts:70 },
+        { icon:'🐴', label:'Cabalgatas', full:'Cabalgatas',                    desc:'Recorrés campo o serranías a caballo. Siempre un loop épico.',   pts:60 },
+        { icon:'⛺', label:'Camping',    full:'Camping',                       desc:'Una noche afuera lo cambia todo. Armá el loop de campamento.',   pts:75 },
+        { icon:'🏄', label:'SUP',        full:'SUP / Tabla',                   desc:'Stand up paddle en ríos y lagunas. Fuerza y equilibrio.',        pts:65 },
+        { icon:'🌾', label:'Campo',      full:'Caminar en el campo',           desc:'Silencio, naturaleza y un recorrido sin pavimento.',             pts:50 },
+      ]
+    }
+  },
+
   _renderHome() {
-    // Saludo según hora
     const h = new Date().getHours();
-    const greet = h < 12 ? 'Buenos días' : h < 19 ? 'Buenas tardes' : 'Buenas noches';
+    const greet = h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches';
     const name = this._user?.displayName?.split(' ')[0] || 'loopeador';
-    const greetEl = document.getElementById('home-greeting');
-    if (greetEl) greetEl.textContent = `${greet}, ${name}`;
-
-    // Avatar
+    const el = document.getElementById('home-greeting');
+    if (el) el.textContent = `${greet}, ${name}`;
     const av = document.getElementById('home-avatar');
-    if (av) {
-      const initials = name.slice(0,2).toUpperCase();
-      av.textContent = initials;
-    }
+    if (av) av.textContent = name.slice(0,2).toUpperCase();
 
-    // Hero note: cuántos loops hay en la comunidad
-    const note = document.getElementById('home-hero-note');
-    if (note && this.routes) note.textContent = `${this.routes.length} loops en la comunidad`;
-
-    // Activos ahora — últimos 4 loops con datos
     const list = document.getElementById('home-activos-list');
-    if (!list) return;
+    if (list) {
+      const TC={running:'#E53E3E',ciclismo:'#185FA5',caminata:'#1D9E75',fotografia:'#B794F4',kayak:'#185FA5',otro:'#FF5F00'};
+      const TN={running:'Running',ciclismo:'Bici',caminata:'Caminata',fotografia:'Foto-loop',kayak:'Kayak',otro:'Loop'};
+      const recent=(this.routes||[]).filter(r=>r.name).slice(0,4);
+      list.innerHTML = recent.length
+        ? recent.map(r=>{
+            const color=TC[r.type]||'#FF5F00', tag=TN[r.type]||'Loop';
+            return `<div class="home-active-card" onclick="App.showDetail('${r.id}')">
+              <div class="home-active-dot" style="background:${color};"></div>
+              <div style="flex:1;min-width:0;">
+                <div class="home-active-name">${this._esc(r.name)}</div>
+                <div class="home-active-meta">📍 ${this._esc(r.ciudad||r.cityId||'')}${r.dist?' · '+r.dist:''}</div>
+              </div>
+              <span class="home-active-tag" style="background:${color}22;color:${color};">${tag}</span>
+            </div>`;
+          }).join('')
+        : '<div style="font-size:13px;color:var(--gr);padding:8px 0;">Todavía no hay loops. ¡Sé el primero!</div>';
+    }
+    setTimeout(()=>this._hwInit(), 80);
+  },
 
-    const TC = { running:'#E53E3E', ciclismo:'#185FA5', caminata:'#1D9E75', fotografia:'#B794F4', kayak:'#185FA5', otro:'#FF5F00' };
-    const TN = { running:'Running', ciclismo:'Bici', caminata:'Caminata', fotografia:'Foto-loop', kayak:'Kayak', otro:'Loop' };
+  _hwInit() {
+    this._hwAngle = Math.random() * Math.PI * 2;
+    this._hwDraw(this._hwAngle);
+  },
 
-    const recent = (this.routes || [])
-      .filter(r => r.name)
-      .slice(0, 4);
+  _hwDraw(angle) {
+    const canvas = document.getElementById('hw-canvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const data = this._hwData[this._hwCat];
+    const items = data.items;
+    const n = items.length;
+    const slice = Math.PI*2/n;
+    const cx=140, cy=140, r=134, rIn=40;
 
-    if (!recent.length) {
-      list.innerHTML = `<div style="font-size:13px;color:var(--gr);padding:8px 0;">Todavía no hay loops. ¡Sé el primero!</div>`;
-      return;
+    ctx.clearRect(0,0,280,280);
+
+    for (let i=0; i<n; i++) {
+      const s = angle + i*slice;
+      const e = s + slice;
+      // Alternar claro/más claro para distinguir sectores
+      const fills = [data.accent, data.light];
+      // Colores tipo Preguntados — rotar paleta vibrante
+      const palette = ['#FF5F00','#1D9E75','#185FA5','#B794F4','#E53E3E','#D69E2E','#FF5F00','#1D9E75'];
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.arc(cx,cy,r,s,e);
+      ctx.closePath();
+      ctx.fillStyle = palette[i % palette.length];
+      ctx.fill();
+      ctx.strokeStyle='#fff';
+      ctx.lineWidth=3;
+      ctx.stroke();
+
+      const mid = s+slice/2;
+      const ir = n>6 ? 86 : 90;
+      const ex = cx+Math.cos(mid)*ir;
+      const ey = cy+Math.sin(mid)*ir;
+
+      ctx.save();
+      ctx.font = `${n>6?'17':'20'}px serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(items[i].icon, ex, ey-8);
+      ctx.shadowColor='rgba(0,0,0,.3)'; ctx.shadowBlur=3;
+      ctx.font = `800 ${n>6?'8.5':'9.5'}px "Bai Jamjuree",system-ui`;
+      ctx.fillStyle='#fff';
+      const words = items[i].label.split('/');
+      if (words.length===2) {
+        ctx.fillText(words[0].trim(), ex, ey+5);
+        ctx.fillText(words[1].trim(), ex, ey+16);
+      } else { ctx.fillText(items[i].label, ex, ey+8); }
+      ctx.shadowBlur=0;
+      ctx.restore();
     }
 
-    list.innerHTML = recent.map(r => {
-      const color = TC[r.type] || '#FF5F00';
-      const tag   = TN[r.type] || 'Loop';
-      const city  = r.ciudad || r.cityId || '';
-      return `<div class="home-active-card" onclick="App.showDetail('${r.id}')">
-        <div class="home-active-dot" style="background:${color};"></div>
-        <div class="home-active-info">
-          <div class="home-active-name">${this._esc(r.name)}</div>
-          <div class="home-active-meta">📍 ${this._esc(city)}${r.dist?' · '+r.dist:''}</div>
+    // Centro
+    ctx.beginPath(); ctx.arc(cx,cy,rIn,0,Math.PI*2);
+    ctx.fillStyle=data.accent; ctx.fill();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.stroke();
+    ctx.fillStyle='#fff';
+    ctx.font='bold 12px "Bai Jamjuree",system-ui';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('UL',cx,cy-5);
+    ctx.font='9px "Bai Jamjuree",system-ui';
+    ctx.fillText('360°',cx,cy+8);
+  },
+
+  hwSpin() {
+    if (this._hwSpinning) return;
+    this._hwSpinning = true;
+    const btn = document.getElementById('hw-spin-btn');
+    const rw  = document.getElementById('hw-result-wrap');
+    if (btn) btn.disabled = true;
+    if (rw)  rw.style.display = 'none';
+
+    const extraSpins = (6 + Math.floor(Math.random()*5)) * Math.PI*2;
+    const randomStop = Math.random() * Math.PI*2;
+    const total = extraSpins + randomStop;
+    const duration = 3800;
+    const startAngle = this._hwAngle;
+    const startTime = performance.now();
+    const self = this;
+
+    function easeOut(t) { return 1 - Math.pow(1-t, 4); }
+
+    function frame(now) {
+      const t = Math.min((now-startTime)/duration, 1);
+      self._hwAngle = startAngle + total * easeOut(t);
+      self._hwDraw(self._hwAngle);
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        self._hwAngle = self._hwAngle % (Math.PI*2);
+        self._hwSpinning = false;
+        if (btn) btn.disabled = false;
+        self._hwShowResult();
+      }
+    }
+    requestAnimationFrame(frame);
+  },
+
+  hwSetCat(cat) {
+    this._hwCat = cat;
+    ['ocio','deportes','aventuras'].forEach(c=>{
+      const b = document.getElementById('hw-tab-'+c);
+      if (b) b.className = 'hw-cat-btn'+(c===cat?' on-'+c:'');
+    });
+    const rw = document.getElementById('hw-result-wrap');
+    if (rw) rw.style.display='none';
+    this._hwAngle = Math.random()*Math.PI*2;
+    this._hwDraw(this._hwAngle);
+  },
+
+  _hwShowResult() {
+    // El puntero está arriba (270° = 3π/2)
+    const pointer = 3*Math.PI/2;
+    const data  = this._hwData[this._hwCat];
+    const n     = data.items.length;
+    const slice = Math.PI*2/n;
+    const norm  = ((pointer - this._hwAngle) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+    const idx   = Math.floor(norm/slice) % n;
+    const act   = data.items[idx];
+
+    this._hwUserPoints += act.pts;
+
+    const palette=['#FF5F00','#1D9E75','#185FA5','#B794F4','#E53E3E','#D69E2E','#FF5F00','#1D9E75'];
+    const color = palette[idx % palette.length];
+
+    const rw = document.getElementById('hw-result-wrap');
+    if (!rw) return;
+    rw.style.display = 'block';
+    rw.innerHTML = `
+      <div class="hw-result">
+        <div style="height:5px;background:${color};"></div>
+        <div class="hw-result-top">
+          <div class="hw-result-ico">${act.icon}</div>
+          <div>
+            <div class="hw-result-name" style="color:${color};">${act.full}</div>
+            <div class="hw-result-desc">${act.desc}</div>
+          </div>
         </div>
-        <span class="home-active-tag" style="background:${color}22;color:${color};">${tag}</span>
+        <div class="hw-points">⭐ +${act.pts} puntos al completarlo &nbsp;·&nbsp; Total acumulado: ${this._hwUserPoints} pts</div>
+        <div class="hw-actions">
+          <button class="hw-action-btn primary" onclick="App.sideNav('grabar')">
+            <span class="hw-a-ico">📹</span>Grabar Loop
+          </button>
+          <button class="hw-action-btn primary" onclick="App.sideNav('grabar')">
+            <span class="hw-a-ico">📷</span>Fotoloop
+          </button>
+          <button class="hw-action-btn" onclick="App._hwInvitar('${act.full.replace(/'/g,"\\'")}')">
+            <span class="hw-a-ico">👥</span>Invitar amigos
+          </button>
+          <button class="hw-action-btn" onclick="App._hwCompartir('${act.full.replace(/'/g,"\\'")}')">
+            <span class="hw-a-ico">📤</span>Compartir
+          </button>
+        </div>
       </div>`;
-    }).join('');
+
+    rw.scrollIntoView({behavior:'smooth',block:'nearest'});
+    this._hwParticles(color);
+  },
+
+  _hwInvitar(nombre) {
+    if (navigator.share) {
+      navigator.share({title:'Urban Loop 360°',text:`¡Te invito a: ${nombre}! Armemos un loop 🚀`,url:location.href});
+    } else {
+      navigator.clipboard?.writeText(`¡Hagamos: ${nombre} con Urban Loop 360! 🚀`);
+      this.toast('👥 Invitación copiada al portapapeles');
+    }
+  },
+
+  _hwCompartir(nombre) {
+    if (navigator.share) {
+      navigator.share({title:'Urban Loop 360°',text:`Hoy la actividad es: ${nombre} 🎯`,url:location.href});
+    } else {
+      this.toast('📤 ¡Compartido: '+nombre+'!');
+    }
+  },
+
+  _hwParticles(color) {
+    const cols=[color,'#FF5F00','#fff','#FFD700','#1D9E75'];
+    for(let i=0;i<16;i++){
+      const p=document.createElement('div');
+      const a=(Math.random()*360)*Math.PI/180, d=50+Math.random()*110;
+      p.className='fx-particle';
+      p.style.cssText=`left:50%;top:42%;background:${cols[Math.floor(Math.random()*cols.length)]};--tx:${Math.cos(a)*d}px;--ty:${Math.sin(a)*d-70}px;--dur:${.5+Math.random()*.4}s;width:${5+Math.random()*7}px;height:${5+Math.random()*7}px;`;
+      document.body.appendChild(p);
+      setTimeout(()=>p.remove(),950);
+    }
   },
 
   // ══════════════════════════════════════════
