@@ -1648,8 +1648,8 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <button class="sb-nav-btn" id="sb-btn-explorar-ciudades" onclick="App.sideNav('explorar-ciudades')" aria-label="Explorar ciudades" role="menuitem">
       <span class="sb-icon">🔍</span><span class="sb-label">Explorar ciudades</span>
     </button>
-    <button class="sb-nav-btn" id="sb-btn-actividades" onclick="App.sideNav('actividades')" aria-label="¿Qué sale hoy?" role="menuitem">
-      <span class="sb-icon">🎡</span><span class="sb-label">¿Qué sale hoy?</span>
+    <button class="sb-nav-btn" id="sb-btn-actividades" onclick="App.sideNav('home')" aria-label="¿Qué hacemos hoy?" role="menuitem">
+      <span class="sb-icon">🎡</span><span class="sb-label">¿Qué hacemos hoy?</span>
     </button>
 
     <!-- COMUNIDAD -->
@@ -4171,7 +4171,7 @@ const App = {
     if (sid==='eventos')         { this._renderEventos(); }
     if (sid==='ranking')         { this._renderRanking(); }
     if (sid==='explorar-ciudades') { this._renderExplorar(); }
-    if (sid==='actividades')       { setTimeout(()=>this._ruletaInit(), 80); }
+    if (sid==='actividades')       { sid='home'; this.go('home'); this._renderHome(); return; }
     if (sid==='home')              { this._renderHome(); }
     if (sid==='grabar')          { setTimeout(()=>this._initGrabMap(),100); }
     if (sid==='crear-manual')    { setTimeout(()=>this._cmInit(),200); }
