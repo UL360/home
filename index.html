@@ -612,32 +612,35 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 /* ── LOOP HERO BANNER ── */
 .home-hero-img {
   position:relative;
-  width:100%; height:100vh;
-  overflow:hidden;
+  width:100%;
   background:#000;
   flex-shrink:0;
 }
 .home-hero-img img {
-  width:100%; height:100%;
+  width:100%;
+  height:auto;
   display:block;
-  object-fit:cover;
-  object-position:center 18%;
+  max-height:82vh;
+  object-fit:contain;
+  object-position:center top;
 }
 .home-hero-img::after {
-  content:''; position:absolute; inset:0;
+  content:''; position:absolute;
+  bottom:0; left:0; right:0; height:140px;
   background:linear-gradient(to bottom,
-    transparent 68%,
-    rgba(10,10,16,.25) 80%,
-    rgba(10,10,16,.65) 91%,
+    transparent 0%,
+    rgba(10,10,16,.6) 60%,
     #0a0f1a 100%
   );
+  pointer-events:none;
 }
 .home-hero-btns {
-  position:absolute;
-  bottom:0; left:0; right:0;
+  position:relative;
   z-index:2;
-  padding:0 16px 32px;
+  padding:12px 16px 28px;
   display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  background:#0a0f1a;
+  margin-top:-4px;
 }
 .hero-btn-primary {
   padding:15px 8px; border:none; border-radius:14px;
@@ -1527,10 +1530,10 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <div class="home-hero-img">
       <!-- Topbar flotante -->
       <div style="position:absolute;top:0;left:0;right:0;z-index:3;padding:14px 14px 0;display:flex;align-items:center;justify-content:space-between;">
-        <div class="home-menu-btn" onclick="App.toggleSidebar()" aria-label="Menú" style="background:rgba(0,0,0,.45);backdrop-filter:blur(10px);border-color:rgba(255,255,255,.15);color:#fff;">
+        <div class="home-menu-btn" onclick="App.toggleSidebar()" aria-label="Menú" style="background:rgba(255,255,255,.15);backdrop-filter:blur(10px);border-color:rgba(255,255,255,.2);color:#fff;">
           <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true"><rect y="0" width="18" height="2" rx="1" fill="white"/><rect y="6" width="14" height="2" rx="1" fill="white"/><rect y="12" width="10" height="2" rx="1" fill="white"/></svg>
         </div>
-        <div class="home-avatar" id="home-avatar" onclick="App.sideNav('profile')" style="border-color:rgba(255,255,255,.5);background:rgba(0,0,0,.4);">👤</div>
+        <div class="home-avatar" id="home-avatar" onclick="App.sideNav('profile')" style="border-color:rgba(255,255,255,.5);background:rgba(255,255,255,.15);">👤</div>
       </div>
       <!-- Imagen principal SIN hero encima -->
       <img
