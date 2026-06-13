@@ -612,8 +612,7 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 /* ── LOOP HERO BANNER ── */
 .home-hero-img {
   position:relative;
-  width:100%;
-  height:calc(100vh - 110px); /* deja espacio para los botones */
+  width:100%; height:100vh;
   overflow:hidden;
   background:#000;
   flex-shrink:0;
@@ -621,15 +620,15 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 .home-hero-img img {
   width:100%; height:100%;
   display:block;
-  object-fit:contain;
+  object-fit:cover;
   object-position:center top;
 }
 .home-hero-img::after {
   content:''; position:absolute; inset:0;
   background:linear-gradient(to bottom,
-    transparent 55%,
-    rgba(10,10,16,.5) 75%,
-    rgba(10,10,16,.92) 90%,
+    transparent 62%,
+    rgba(10,10,16,.3) 75%,
+    rgba(10,10,16,.7) 88%,
     #0a0f1a 100%
   );
 }
@@ -637,7 +636,7 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
   position:absolute;
   bottom:0; left:0; right:0;
   z-index:2;
-  padding:0 16px 20px;
+  padding:0 16px 32px;
   display:grid; grid-template-columns:1fr 1fr; gap:12px;
 }
 .hero-btn-primary {
@@ -1535,7 +1534,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       </div>
       <!-- Imagen principal SIN hero encima -->
       <img
-        src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/194fb438-c755-480a-afbd-9ae17885e83c.png"
+        src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/Copilot_20260613_185803%20(1).png"
         alt="Urban Loop 360° — Descubrí, viví y compartí loops en tu ciudad"
         crossorigin="anonymous">
       <!-- Solo gradiente sutil + dos botones -->
