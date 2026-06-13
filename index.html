@@ -614,9 +614,9 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
 .home-hero-img::after {
   content:''; position:absolute; inset:0;
   background:linear-gradient(to bottom,
-    transparent 45%,
-    rgba(10,10,16,.55) 65%,
-    rgba(10,10,16,.97) 90%,
+    transparent 60%,
+    rgba(10,10,16,.7) 80%,
+    rgba(10,10,16,.96) 95%,
     var(--bg0) 100%
   );
 }
@@ -1511,93 +1511,35 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 
     <!-- ══ HERO IMAGEN FULL-WIDTH ══ -->
     <div class="home-hero-img">
-      <!-- Topbar flotante sobre la imagen -->
+      <!-- Topbar flotante -->
       <div style="position:absolute;top:0;left:0;right:0;z-index:3;padding:14px 14px 0;display:flex;align-items:center;justify-content:space-between;">
         <div class="home-menu-btn" onclick="App.toggleSidebar()" aria-label="Menú" style="background:rgba(0,0,0,.45);backdrop-filter:blur(10px);border-color:rgba(255,255,255,.15);color:#fff;">
           <svg width="18" height="14" viewBox="0 0 18 14" fill="none" aria-hidden="true"><rect y="0" width="18" height="2" rx="1" fill="white"/><rect y="6" width="14" height="2" rx="1" fill="white"/><rect y="12" width="10" height="2" rx="1" fill="white"/></svg>
         </div>
         <div class="home-avatar" id="home-avatar" onclick="App.sideNav('profile')" style="border-color:rgba(255,255,255,.5);background:rgba(0,0,0,.4);">👤</div>
       </div>
-      <!-- Imagen principal -->
+      <!-- Imagen principal SIN hero encima -->
       <img
         src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/194fb438-c755-480a-afbd-9ae17885e83c.png"
         alt="Urban Loop 360° — Descubrí, viví y compartí loops en tu ciudad"
         crossorigin="anonymous">
-      <!-- Gradiente + botones -->
+      <!-- Solo gradiente sutil + dos botones -->
       <div class="home-hero-btns">
         <button class="hero-btn-ghost" onclick="App.sideNav('explore')">
           <span class="btn-ico">🗺️</span>
           Explorar Loops
         </button>
-        <button class="hero-btn-primary" onclick="App.sideNav('grabar')">
+        <button class="hero-btn-primary" onclick="App.openLoopModal()">
           <span class="btn-ico">✚</span>
           Crear tu Loop
         </button>
       </div>
     </div>
 
-    <!-- ══ CONTENIDO INFERIOR ══ -->
-    <div class="home-below">
-
-      <!-- Greeting -->
-      <div style="display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div class="home-greeting" id="home-greeting">Buenas, loopeador</div>
-          <div class="home-brand">Urban <span>Loop</span> 360°</div>
-        </div>
-      </div>
-
-      <!-- Accesos rápidos -->
-      <div class="home-grid">
-        <div class="home-card" onclick="App.openFotoLoop()">
-          <div class="home-card-icon" style="background:#EF4444;">📷</div>
-          <div><div class="home-card-title">FotoLoop</div><div class="home-card-sub">Sumá fotos al mapa</div></div>
-        </div>
-        <div class="home-card" onclick="App.sideNav('loops-urbanos')">
-          <div class="home-card-icon" style="background:#FF5F00;">🔍</div>
-          <div><div class="home-card-title">Buscar Loops</div><div class="home-card-sub">Gastronomía, cultura, deporte</div></div>
-        </div>
-        <div class="home-card" onclick="App.sideNav('comunidad')">
-          <div class="home-card-icon" style="background:#8B5CF6;">👥</div>
-          <div><div class="home-card-title">Loopers</div><div class="home-card-sub">Comunidad</div></div>
-        </div>
-        <div class="home-card" onclick="App.sideNav('eventos')">
-          <div class="home-card-icon" style="background:#F59E0B;">📅</div>
-          <div><div class="home-card-title">Eventos Loop</div><div class="home-card-sub">Próximos eventos</div></div>
-        </div>
-      </div>
-
-      <!-- ¿Qué hacemos hoy? -->
-      <div class="home-section-header">
-        <div class="home-section-label">¿Qué hacemos hoy?</div>
-      </div>
-
-      <div class="hw-cats">
-        <button class="hw-cat-btn on-ocio"     id="hw-tab-ocio"      onclick="App.hwSetCat('ocio')"><span class="hw-cat-ico">☀️</span>Ocio</button>
-        <button class="hw-cat-btn"             id="hw-tab-deportes"  onclick="App.hwSetCat('deportes')"><span class="hw-cat-ico">⚡</span>Deportes</button>
-        <button class="hw-cat-btn"             id="hw-tab-aventuras" onclick="App.hwSetCat('aventuras')"><span class="hw-cat-ico">🌿</span>Aventuras</button>
-        <button class="hw-cat-btn"             id="hw-tab-amigos"    onclick="App.hwSetCat('amigos')"><span class="hw-cat-ico">🍻</span>Amigos</button>
-      </div>
-
-      <div class="hw-wheel-wrap">
-        <div class="hw-pointer"></div>
-        <canvas id="hw-canvas" width="280" height="280"></canvas>
-        <button class="hw-spin-btn" id="hw-spin-btn" onclick="App.hwSpin()">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
-          ¡Girar!
-        </button>
-      </div>
-
-      <div id="hw-result-wrap" style="display:none;"></div>
-
-      <!-- Activos ahora -->
-      <div class="home-section-header">
-        <div class="home-section-label">Activos ahora</div>
-        <span onclick="App.sideNav('loops-urbanos')" style="font-size:11px;color:var(--or);font-weight:600;cursor:pointer;">ver todos →</span>
-      </div>
-      <div id="home-activos-list"><div style="font-size:13px;color:var(--gr);padding:4px 0;">Cargando loops...</div></div>
-
-    </div>
+    <!-- IDs necesarios para el JS de home -->
+    <div id="home-greeting" style="display:none;">Buenas, loopeador</div>
+    <div id="home-avatar"   style="display:none;"></div>
+    <div id="home-activos-list" style="display:none;"></div>
   </div>
 </div>
 
@@ -1790,7 +1732,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
     <button class="sb-nav-btn" id="sb-btn-explorar-ciudades" onclick="App.sideNav('explorar-ciudades')" aria-label="Explorar ciudades" role="menuitem">
       <span class="sb-icon">🔍</span><span class="sb-label">Explorar ciudades</span>
     </button>
-    <button class="sb-nav-btn" id="sb-btn-actividades" onclick="App.sideNav('home')" aria-label="¿Qué hacemos hoy?" role="menuitem">
+    <button class="sb-nav-btn" id="sb-btn-actividades" onclick="App.sideNav('actividades')" aria-label="¿Qué hacemos hoy?" role="menuitem">
       <span class="sb-icon">🎡</span><span class="sb-label">¿Qué hacemos hoy?</span>
     </button>
 
@@ -3027,16 +2969,22 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 <!-- ════════════ CITY NOTIFICATION ════════════ -->
 <div id="city-notif">
   <div class="cn-hdr">
-    <div class="cn-icon">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--or)" stroke-width="2.2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-    </div>
-    <div class="cn-title" id="cn-title">Pasando por La Paz</div>
+    <div class="cn-icon">🎡</div>
+    <div class="cn-title" id="cn-title">¿Qué hacemos hoy?</div>
     <button class="cn-close" onclick="App.closeCityNotif()">×</button>
   </div>
-  <div class="cn-symbols" id="cn-symbols"></div>
+  <!-- Teaser ruleta -->
+  <div style="padding:4px 12px 10px;display:flex;align-items:center;gap:10px;">
+    <div style="flex:1;">
+      <div style="font-family:var(--fH);font-size:13px;font-weight:700;color:var(--dk);line-height:1.3;margin-bottom:3px;">¡Girá la ruleta y<br>decidí qué hacer!</div>
+      <div style="font-size:11px;color:var(--gr);line-height:1.4;">Ocio · Deporte · Aventuras · Amigos</div>
+    </div>
+    <div style="font-size:36px;line-height:1;">🎯</div>
+  </div>
+  <div id="cn-symbols" style="display:none;"></div>
+  <div id="cn-loops-ct" style="display:none;"></div>
   <div class="cn-footer">
-    <div class="cn-loops-ct" id="cn-loops-ct">0 loops disponibles</div>
-    <button class="cn-ver-btn" onclick="App.closeCityNotif();App.go('loops-urbanos')">Ver loops →</button>
+    <button class="cn-ver-btn" style="width:100%;justify-content:center;" onclick="App.closeCityNotif();App.sideNav('actividades')">🎡 Ir a la ruleta →</button>
   </div>
 </div>
 
@@ -4313,7 +4261,7 @@ const App = {
     if (sid==='eventos')         { this._renderEventos(); }
     if (sid==='ranking')         { this._renderRanking(); }
     if (sid==='explorar-ciudades') { this._renderExplorar(); }
-    if (sid==='actividades')       { sid='home'; this.go('home'); this._renderHome(); return; }
+    if (sid==='actividades')       { this.go('actividades'); this._renderHacemosHoy(); }
     if (sid==='home')              { this._renderHome(); }
     if (sid==='grabar')          { setTimeout(()=>this._initGrabMap(),100); }
     if (sid==='crear-manual')    { setTimeout(()=>this._cmInit(),200); }
@@ -10140,6 +10088,21 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
     setTimeout(()=>this._hwInit(), 80);
   },
 
+  _renderHacemosHoy() {
+    // Inicializar la rueda al entrar a la sección actividades
+    if (!this._hwCat) this._hwCat = 'ocio';
+    setTimeout(() => {
+      this._hwInit();
+      // Marcar tab activo correcto
+      ['ocio','deportes','aventuras','amigos'].forEach(c => {
+        const btn = document.getElementById('hw-tab-' + c);
+        if (btn) {
+          btn.className = 'hw-cat-btn' + (c === this._hwCat ? ' on-' + c : '');
+        }
+      });
+    }, 80);
+  },
+
   _hwInit() {
     this._hwAngle = Math.random() * Math.PI * 2;
     this._hwDraw(this._hwAngle);
@@ -13631,31 +13594,43 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 <!-- ════════════ ACTIVIDADES — ¿QUÉ SALE HOY? ════════════ -->
-<div id="actividades" class="screen" style="background:var(--bg0);">
-  <div class="rul-header">
-    <div>
-      <div class="rul-title">¿Qué sale <span>hoy</span>?</div>
-      <div class="rul-sub">Urban Loop te ayuda a decidir al azar</div>
+<div id="actividades" class="screen" style="background:var(--bg0);overflow-y:auto;">
+  <div style="padding:16px 14px 100px;display:flex;flex-direction:column;gap:14px;">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--or);margin-bottom:4px;">Urban Loop 360°</div>
+        <div style="font-family:var(--fH);font-size:24px;font-weight:800;color:var(--dk);line-height:1.1;">¿Qué hacemos<br><span style="color:var(--or);">hoy?</span></div>
+      </div>
+      <div style="font-size:42px;line-height:1;">🎡</div>
     </div>
-    <button onclick="App.go(App._prevScreen||'explore')" style="width:36px;height:36px;border-radius:10px;border:0.5px solid var(--bd);background:var(--lt);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--gr);">✕</button>
-  </div>
 
-  <div class="rul-wheel-wrap">
-    <div class="rul-pointer"></div>
-    <canvas id="rul-canvas" width="300" height="300"></canvas>
-    <button class="rul-spin-btn" id="rul-spin-btn" onclick="App.ruletaSpin()">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
-      Girar la ruleta
-    </button>
-  </div>
-
-  <div id="rul-result-wrap" style="display:none;"></div>
-
-  <div style="padding:16px 16px 4px;">
-    <div style="font-size:11px;font-weight:700;color:var(--gr);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;">Historial de hoy</div>
-    <div id="rul-history" class="rul-history">
-      <div style="font-size:12px;color:var(--gr);padding:4px 0;">Girá la ruleta para empezar 🎡</div>
+    <div style="font-size:13px;color:var(--gr);line-height:1.6;">
+      Girá la ruleta y dejá que la ciudad decida. Ocio, deportes, aventuras o una noche con amigos — siempre hay algo para hacer.
     </div>
+
+    <!-- Tabs categoría -->
+    <div class="hw-cats">
+      <button class="hw-cat-btn on-ocio"     id="hw-tab-ocio"      onclick="App.hwSetCat('ocio')"><span class="hw-cat-ico">☀️</span>Ocio</button>
+      <button class="hw-cat-btn"             id="hw-tab-deportes"  onclick="App.hwSetCat('deportes')"><span class="hw-cat-ico">⚡</span>Deportes</button>
+      <button class="hw-cat-btn"             id="hw-tab-aventuras" onclick="App.hwSetCat('aventuras')"><span class="hw-cat-ico">🌿</span>Aventuras</button>
+      <button class="hw-cat-btn"             id="hw-tab-amigos"    onclick="App.hwSetCat('amigos')"><span class="hw-cat-ico">🍻</span>Amigos</button>
+    </div>
+
+    <!-- Rueda -->
+    <div class="hw-wheel-wrap">
+      <div class="hw-pointer"></div>
+      <canvas id="hw-canvas" width="280" height="280"></canvas>
+      <button class="hw-spin-btn" id="hw-spin-btn" onclick="App.hwSpin()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+        ¡Girar!
+      </button>
+    </div>
+
+    <!-- Resultado -->
+    <div id="hw-result-wrap" style="display:none;"></div>
+
   </div>
 </div>
 
