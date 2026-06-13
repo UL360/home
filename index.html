@@ -230,6 +230,24 @@ html, body { width:100%; height:100%; overflow:hidden; font-family:var(--fB); co
   70%  { transform:scale(1.3); }
   100% { opacity:1; transform:scale(1); }
 }
+@keyframes logoBounce {
+  0%   { opacity:0; transform:scale(0) translateY(30px); }
+  55%  { opacity:1; transform:scale(1.18) translateY(-8px); }
+  72%  { transform:scale(0.93) translateY(4px); }
+  85%  { transform:scale(1.06) translateY(-3px); }
+  100% { opacity:1; transform:scale(1) translateY(0); }
+}
+@keyframes logoWiggle {
+  0%,100% { transform:rotate(0deg) scale(1); }
+  20%  { transform:rotate(-6deg) scale(1.05); }
+  40%  { transform:rotate(5deg) scale(1.05); }
+  60%  { transform:rotate(-3deg) scale(1.02); }
+  80%  { transform:rotate(2deg) scale(1.02); }
+}
+@keyframes splashFadeOut {
+  0%   { opacity:1; }
+  100% { opacity:0; }
+}
 
 /* ═══════════════════════
    EXPLORE
@@ -1584,46 +1602,54 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
 </div>
 
 <!-- ════════════ SPLASH ════════════ -->
-<div id="splash" class="screen active">
-  <!-- Imagen de fondo -->
-  <img class="sp-cover" 
-    alt="Urban Loop 360 — Descubrí y grabá loops en tu ciudad" src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/7c7ce9ae-dabe-4877-904e-31649826b899.png"
-    crossorigin="anonymous">
-  <!-- Gradiente oscuro inferior -->
-  <div style="position:absolute;inset:0;z-index:1;background:linear-gradient(to bottom,transparent 25%,rgba(0,0,0,.65) 60%,rgba(0,0,0,.92) 100%);"></div>
-  <!-- Contenido inferior: recorrido animado -->
-  <div style="position:absolute;bottom:0;left:0;right:0;z-index:2;display:flex;flex-direction:column;align-items:center;padding-bottom:44px;animation:fadeUp .7s ease both;">
+<div id="splash" class="screen active" style="background:#FF5F00;">
 
-    <!-- SVG: recorrido naranja que se dibuja como loader -->
-    <svg id="sp-route" viewBox="0 0 220 90" width="220" height="90" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
-      <!-- La ruta: forma de loop urbano con esquinas -->
-      <path id="sp-path"
+  <!-- FASE 1: Logo con animación (0-1.2s) -->
+  <div style="position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;">
+
+    <!-- Logo bounce + wiggle -->
+    <div id="sp-logo-wrap" style="animation:logoBounce .8s cubic-bezier(.34,1.56,.64,1) both .1s;">
+      <img src="https://raw.githubusercontent.com/UL360/home/refs/heads/main/imagenes/LOGO%20SOLO.png"
+        alt="Urban Loop 360°"
+        id="sp-logo-img"
+        style="width:140px;height:140px;object-fit:contain;filter:drop-shadow(0 12px 32px rgba(0,0,0,.25));animation:logoWiggle .6s ease both 1.0s;">
+    </div>
+
+    <!-- Nombre de la app -->
+    <div style="text-align:center;opacity:0;animation:fadeUp .5s ease both .7s;">
+      <div style="font-family:var(--fH);font-size:28px;font-weight:800;color:#fff;letter-spacing:-0.5px;line-height:1;">
+        Urban <span style="color:rgba(0,0,0,.25);">Loop</span>
+      </div>
+      <div style="font-family:var(--fH);font-size:13px;font-weight:600;color:rgba(255,255,255,.7);letter-spacing:4px;margin-top:2px;">360°</div>
+    </div>
+  </div>
+
+  <!-- FASE 2: Recorrido blanco que se dibuja (arranca en 1.4s) -->
+  <div style="position:absolute;bottom:0;left:0;right:0;z-index:3;display:flex;flex-direction:column;align-items:center;padding-bottom:52px;opacity:0;animation:fadeUp .4s ease both 1.4s;">
+
+    <svg viewBox="0 0 220 90" width="200" height="80" fill="none" xmlns="http://www.w3.org/2000/svg" style="overflow:visible;">
+      <path
         d="M20,70 L20,45 L60,45 L60,20 L110,20 L110,45 L160,45 L160,70 L110,70 L110,55 L70,55 L70,70 Z"
-        stroke="#FF5F00" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"
+        stroke="rgba(255,255,255,0.9)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"
         fill="none"
-        style="stroke-dasharray:600;stroke-dashoffset:600;animation:drawRoute 2.2s cubic-bezier(.4,0,.2,1) forwards .3s;"/>
-
-      <!-- Pin de inicio -->
-      <g style="opacity:0;animation:pinAppear .3s ease forwards 2.4s;">
-        <circle cx="20" cy="70" r="5" fill="#FF5F00"/>
-        <circle cx="20" cy="70" r="8" fill="none" stroke="#FF5F00" stroke-width="1.5" opacity=".4"/>
+        style="stroke-dasharray:600;stroke-dashoffset:600;animation:drawRoute 2s cubic-bezier(.4,0,.2,1) forwards .1s;"/>
+      <!-- Puntos intermedios blancos -->
+      <circle cx="60"  cy="45" r="4" fill="white" style="opacity:0;animation:pinAppear .25s ease forwards 0.8s;"/>
+      <circle cx="110" cy="20" r="4" fill="white" style="opacity:0;animation:pinAppear .25s ease forwards 1.2s;"/>
+      <circle cx="160" cy="45" r="4" fill="white" style="opacity:0;animation:pinAppear .25s ease forwards 1.5s;"/>
+      <circle cx="110" cy="70" r="4" fill="white" style="opacity:0;animation:pinAppear .25s ease forwards 1.8s;"/>
+      <!-- Pin final -->
+      <g style="opacity:0;animation:pinAppear .3s ease forwards 1.95s;">
+        <circle cx="70" cy="70" r="6" fill="white"/>
+        <circle cx="70" cy="70" r="10" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="2"/>
       </g>
-      <!-- Pin de fin -->
-      <g style="opacity:0;animation:pinAppear .3s ease forwards 2.5s;">
-        <circle cx="70" cy="70" r="5" fill="#FF5F00"/>
-        <path d="M70,58 L67,64 L73,64 Z" fill="#FF5F00"/>
-      </g>
-      <!-- Puntos intermedios -->
-      <circle cx="60" cy="45" r="3.5" fill="#FF5F00" style="opacity:0;animation:pinAppear .25s ease forwards 1.2s;"/>
-      <circle cx="110" cy="20" r="3.5" fill="#FF5F00" style="opacity:0;animation:pinAppear .25s ease forwards 1.6s;"/>
-      <circle cx="160" cy="45" r="3.5" fill="#FF5F00" style="opacity:0;animation:pinAppear .25s ease forwards 2.0s;"/>
     </svg>
 
-    <!-- Texto debajo -->
-    <div style="font-family:var(--fH);font-size:11px;font-weight:700;color:rgba(255,255,255,.45);letter-spacing:2.5px;text-transform:uppercase;margin-top:10px;animation:fadeUp .5s ease both .4s;opacity:0;">
+    <div style="font-family:var(--fH);font-size:10px;font-weight:700;color:rgba(255,255,255,.55);letter-spacing:3px;text-transform:uppercase;margin-top:12px;">
       Cargando tu ciudad...
     </div>
   </div>
+
 </div>
 
 <!-- ════════════ EXPLORE ════════════ -->
