@@ -2695,7 +2695,7 @@ body.day .layer-chip.all  { background:var(--orL); border-color:var(--or); color
       <button id="rank-tab-loopers"   onclick="App.rankSetTab('loopers',this)"   class="com-tab on"  style="flex:1;font-size:11px;padding:10px 4px;">👟 Loopers</button>
       <button id="rank-tab-loops"    onclick="App.rankSetTab('loops',this)"    class="com-tab"     style="flex:1;font-size:11px;padding:10px 4px;">🔄 Loops</button>
       <button id="rank-tab-foto"     onclick="App.rankSetTab('foto',this)"     class="com-tab"     style="flex:1;font-size:11px;padding:10px 4px;">📸 Foto</button>
-      <button id="rank-tab-comercios" onclick="App.rankSetTab('comercios',this)" class="com-tab"  style="flex:1;font-size:11px;padding:10px 4px;">🏪 Comercios</button>
+      <button id="rank-tab-ruleta"   onclick="App.rankSetTab('ruleta',this)"   class="com-tab"     style="flex:1;font-size:11px;padding:10px 4px;">🎡 Ruleta</button>
       <button id="rank-tab-todo"     onclick="App.rankSetTab('todo',this)"     class="com-tab"     style="flex:1;font-size:11px;padding:10px 4px;">🌐 Todo</button>
     </div>
   </div>
@@ -10014,6 +10014,52 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       }
     }
 
+    /* ══ TAB: RULETA ══ */
+    else if (tab === 'ruleta') {
+      if (subtitle)  subtitle.textContent  = 'Actividades completadas · puntos reales';
+      if (listTitle) listTitle.textContent = 'Top Loopers por actividades';
+      if (pCard) pCard.style.display = 'none';
+
+      let loopers = [];
+      try {
+        const snap = await this._db.collection('usuarios_pts')
+          .orderBy('pts','desc').limit(20).get();
+        snap.forEach(d => loopers.push({ id:d.id, ...d.data() }));
+      } catch(e) { console.warn('[rank-ruleta]', e); }
+
+      if (!list) return;
+      if (!loopers.length) {
+        list.innerHTML = `<div style="text-align:center;padding:32px 20px;">
+          <div style="font-size:48px;margin-bottom:12px;">🎡</div>
+          <div style="font-family:var(--fH);font-size:16px;font-weight:700;color:var(--dk);margin-bottom:6px;">¡Sé el primero!</div>
+          <div style="font-size:13px;color:var(--gr);line-height:1.6;">Girá la ruleta, completá actividades<br>y acumulá puntos reales.</div>
+        </div>`;
+        return;
+      }
+
+      const medals = ['🥇','🥈','🥉'];
+      const maxPts = loopers[0]?.pts || 1;
+      list.innerHTML = loopers.map((u, i) => {
+        const pct   = Math.round((u.pts / maxPts) * 100);
+        const medal = medals[i] || (i+1);
+        const foto  = u.photoURL ? `<img src="${u.photoURL}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">` 
+                                  : `<div style="width:40px;height:40px;border-radius:50%;background:var(--orL);display:flex;align-items:center;justify-content:center;font-size:20px;">👤</div>`;
+        return `
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--bd);">
+          <div style="font-size:18px;width:28px;text-align:center;flex-shrink:0;">${medal}</div>
+          ${foto}
+          <div style="flex:1;min-width:0;">
+            <div style="font-family:var(--fH);font-size:14px;font-weight:700;color:var(--dk);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${u.displayName||'Looper'}</div>
+            <div style="font-size:11px;color:var(--gr);margin-top:2px;">🎯 ${u.actividades||0} actividades completadas</div>
+            <div style="height:4px;background:var(--bg2);border-radius:2px;margin-top:5px;">
+              <div style="height:4px;background:var(--or);border-radius:2px;width:${pct}%;transition:width .5s ease;"></div>
+            </div>
+          </div>
+          <div style="font-family:var(--fH);font-size:16px;font-weight:800;color:var(--or);flex-shrink:0;">${(u.pts||0).toLocaleString()}<span style="font-size:10px;font-weight:600;color:var(--gr);"> pts</span></div>
+        </div>`;
+      }).join('');
+    }
+
     /* ══ TAB: TODO ══ */
     else {
       if (subtitle)  subtitle.textContent  = 'Todo · loops + fotoloops';
@@ -10295,6 +10341,9 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
 
     const rw = document.getElementById('hw-result-wrap');
     if (!rw) return;
+        // Guardar pendiente para ¡Lo hice!
+    this._hwPendiente = { act, color, idx };
+
     rw.style.display = 'block';
     rw.innerHTML = `
       <div class="hw-result">
@@ -10306,7 +10355,13 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
             <div class="hw-result-desc">${act.desc}</div>
           </div>
         </div>
-        <div class="hw-points">⭐ +${act.pts} puntos al completarlo &nbsp;·&nbsp; Total acumulado: ${this._hwUserPoints} pts</div>
+        <div class="hw-points">⭐ +${act.pts} pts al completarlo &nbsp;·&nbsp; Total: ${this._hwUserPoints} pts</div>
+        <div style="padding:0 14px 12px;">
+          <button id="hw-lohice-btn" onclick="App._hwCompletarActividad()"
+            style="width:100%;padding:15px;border:none;border-radius:14px;background:${color};color:#fff;font-family:var(--fH);font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 20px ${color}44;">
+            ✅ ¡Lo hice! &nbsp;+${act.pts} pts reales
+          </button>
+        </div>
         <div class="hw-actions">
           <button class="hw-action-btn primary" onclick="App.sideNav('grabar')">
             <span class="hw-a-ico">📹</span>Grabar Loop
@@ -10353,6 +10408,76 @@ Usá un tono cálido y entusiasta como guía local. No uses asteriscos ni markdo
       p.style.cssText=`left:50%;top:42%;background:${cols[Math.floor(Math.random()*cols.length)]};--tx:${Math.cos(a)*d}px;--ty:${Math.sin(a)*d-70}px;--dur:${.5+Math.random()*.4}s;width:${5+Math.random()*7}px;height:${5+Math.random()*7}px;`;
       document.body.appendChild(p);
       setTimeout(()=>p.remove(),950);
+    }
+  },
+
+  async _hwCompletarActividad() {
+    if (!this._user || this._uid === 'public') {
+      this._showAuthGate('sumar puntos', () => this._hwCompletarActividad());
+      return;
+    }
+    const p = this._hwPendiente;
+    if (!p) return;
+
+    const btn = document.getElementById('hw-lohice-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '⏳ Guardando...'; }
+
+    try {
+      const now = Date.now();
+      const uid = this._uid;
+      const db  = this._db;
+
+      // 1. Guardar en colección "completados"
+      await db.collection('completados').add({
+        uid,
+        displayName : this._user.displayName || 'Looper',
+        photoURL    : this._user.photoURL    || '',
+        actividad   : p.act.full,
+        icon        : p.act.icon,
+        categoria   : this._hwCat,
+        pts         : p.act.pts,
+        ts          : now,
+        createdAt   : now,
+      });
+
+      // 2. Actualizar/crear doc del usuario en "usuarios_pts"
+      const uRef = db.collection('usuarios_pts').doc(uid);
+      const uDoc = await uRef.get();
+      if (uDoc.exists) {
+        await uRef.update({
+          pts          : firebase.firestore.FieldValue.increment(p.act.pts),
+          actividades  : firebase.firestore.FieldValue.increment(1),
+          ultimaActiv  : now,
+          displayName  : this._user.displayName || 'Looper',
+          photoURL     : this._user.photoURL    || '',
+        });
+      } else {
+        await uRef.set({
+          uid,
+          displayName  : this._user.displayName || 'Looper',
+          photoURL     : this._user.photoURL    || '',
+          pts          : p.act.pts,
+          actividades  : 1,
+          ultimaActiv  : now,
+          createdAt    : now,
+        });
+      }
+
+      // 3. Actualizar UI local
+      this._hwUserPoints += p.act.pts;
+      this._hwPendiente   = null;
+
+      if (btn) {
+        btn.style.background = '#1D9E75';
+        btn.innerHTML = `✅ +${p.act.pts} pts sumados! Total: ${this._hwUserPoints} pts`;
+      }
+      this._hwParticles(p.color);
+      this.toast(`🎉 +${p.act.pts} puntos! Ya tenés ${this._hwUserPoints} en total.`);
+
+    } catch(e) {
+      console.error('[hwCompletar]', e);
+      if (btn) { btn.disabled = false; btn.textContent = '✅ ¡Lo hice! — Reintentar'; }
+      this.toast('❌ Error al guardar. Revisá tu conexión.');
     }
   },
 
